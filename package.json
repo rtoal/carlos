@@ -9,6 +9,7 @@
     "example": "examples"
   },
   "scripts": {
+    "lint": "node_modules/.bin/eslint src",
     "test": "c8 node_modules/.bin/mocha"
   },
   "repository": {

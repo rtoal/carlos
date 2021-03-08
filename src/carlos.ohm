@@ -1,0 +1,113 @@
+Carlos {
+  Program     = Statement+
+
+  Statement   = Declaration
+              | IncDec
+              | Var "=" Exp                         --assign
+              | Call
+              | break
+              | return Exp?                         --return
+              | IfStmt
+              | ForStmt
+
+  Declaration = VarDecl | StructDecl | FunDecl 
+  VarDecl     = (let | const) id "=" Exp
+  StructDecl  = struct id "{" Fields "}"
+  Fields      = "(" ListOf<Field, ","> ")"
+  Field       = id ":" TypeExp
+  FunDecl     = function id Params (":" TypeExp)? Block
+  Params      = "(" ListOf<Param, ","> ")"
+  Param       = id ":" TypeExp
+
+  TypeExp     = "[" TypeExp "]"                     --array
+              | TypeExps "->" TypeExp               --function
+              | TypeExp "?"                         --optional
+              | id                                  --named
+  TypeExps    = "(" ListOf<TypeExp, ","> ")"
+
+  IncDec      = ("++" | "--") Var                   --prefix
+              | Var ("++" | "--")                   --postfix
+  IfStmt      = if Exp Block else (Block | IfStmt)  --long
+              | if Exp Block                        --short
+  ForStmt     = for Block                           --forever
+              | for Exp Block                       --while
+              | for Exp times Block                 --times
+              | for id in Range Block               --iteration
+  Block       = "{" Statement* "}"
+
+  Exp         = Exp1 "?" Exp1 ":" Exp               --conditional
+              | Exp1
+  Exp1        = Exp1 "??" Exp2                      --optionalelse
+              | Exp2
+  Exp2        = Exp3 ("||" Exp3)+                   --or
+              | Exp3 ("&&" Exp3)+                   --and
+              | Exp3
+  Exp3        = Exp4 ("|" Exp4)+                    --bitor
+              | Exp4 ("^" Exp4)+                    --bitxor
+              | Exp4 ("&" Exp4)+                    --bitand
+              | Exp4
+  Exp4        = Exp5 relop Exp5                     --relational
+              | Exp5
+  Exp5        = Exp5 ("<<" | ">>") Exp6             --shift
+              | Exp6
+  Exp6        = "-"? Exp6 ("+" | "-") Exp7          --additive
+              | Exp7
+  Exp7        = Exp7 ("*"| "/" | "%") Exp8          --multiplicative
+              | Exp8
+  Exp8        = Exp9 "**" Exp8                      --exponential
+              | Exp9
+              | "#" Exp9                            --length
+  Exp9        = Exp10
+              | Exp11
+  Exp10       = true
+              | false
+              | floatlit
+              | intlit
+              | stringlit
+              | "emptyArrayOf" "(" TypeExp ")"      --emptyarray
+              | some Exp                            --wrappedopt
+              | no TypeExp                          --emptyopt
+              | "[" Args "]"                        --arrayexp
+              | id "{" Args "}"                     --structexp
+              | "(" Exp ")"                         --parens
+  Exp11       = Call
+              | Var
+  Call        = Exp11 "(" Args ")"
+  Var         = Exp11 "[" Exp "]"                   --subscript
+              | Exp11 "." id                        --member
+              | Exp11 "?." id                       --optmember
+              | id                                  --id
+  Args        = ListOf<Exp, ",">
+  Range       = Exp ("..." | "..<") Exp              --numeric
+              | Exp                                  --collection
+  relop       = "<=" | "<" | "==" | "!=" | ">=" | ">"
+
+  intlit      = digit+
+  floatlit    = digit+ "." digit+ (("E" | "e") ("+" | "-")? digit+)?
+  stringlit   = "\"" char* "\""
+  char        = ~"\n" ~"\r" ~"\\" ~"\"" any
+              | "\\" ("n" | "t" | "\"" | "\\")      --escape
+              | "\\u{" h h? h? h? h? h? "}"         --codepoint
+  h           = hexDigit
+
+  let         = "let" ~alnum
+  const       = "const" ~alnum
+  struct      = "struct" ~alnum
+  function    = "function" ~alnum
+  if          = "if" ~alnum
+  else        = "else" ~alnum
+  for         = "for" ~alnum
+  in          = "in" ~alnum
+  times       = "times" ~alnum
+  break       = "break" ~alnum
+  return      = "return" ~alnum
+  some        = "some" ~alnum
+  no          = "no" ~alnum
+  true        = "true" ~alnum
+  false       = "false" ~alnum
+  keyword     = let | const | struct | function | if | else | for | in
+              | times | break | return | some | no | true | false
+  id          = ~keyword letter alnum*
+
+  space      += "//" (~"\n" any)* ("\n" | end)      --comment
+}

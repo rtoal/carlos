@@ -1,0 +1,36 @@
+{
+  "name": "carlos-lang",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/carlos.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "c8 node_modules/.bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rtoal/carlos-lang.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rtoal/carlos-lang/issues"
+  },
+  "homepage": "https://github.com/rtoal/carlos-lang#readme",
+  "dependencies": {
+    "ohm-js": "^15.4.1"
+  },
+  "devDependencies": {
+    "c8": "^7.6.0",
+    "eslint": "^7.21.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "mocha": "^8.3.1",
+    "prettier": "^2.2.1"
+  }
+}

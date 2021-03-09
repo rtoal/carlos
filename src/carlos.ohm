@@ -2,8 +2,7 @@ Carlos {
   Program     = Statement+
 
   Statement   = Declaration
-              | IncDec
-              | Var "=" Exp                         --assign
+              | Assignment
               | Call
               | break
               | return Exp?                         --return
@@ -12,21 +11,22 @@ Carlos {
 
   Declaration = VarDecl | StructDecl | FunDecl 
   VarDecl     = (let | const) id "=" Exp
-  StructDecl  = struct id "{" Fields "}"
-  Fields      = "(" ListOf<Field, ","> ")"
+  StructDecl  = struct id "{" Field* "}"
   Field       = id ":" TypeExp
   FunDecl     = function id Params (":" TypeExp)? Block
   Params      = "(" ListOf<Param, ","> ")"
   Param       = id ":" TypeExp
 
   TypeExp     = "[" TypeExp "]"                     --array
-              | TypeExps "->" TypeExp               --function
+              | "(" TypeExps ")" "->" TypeExp       --function
               | TypeExp "?"                         --optional
               | id                                  --named
-  TypeExps    = "(" ListOf<TypeExp, ","> ")"
+  TypeExps    = ListOf<TypeExp, ",">
 
-  IncDec      = ("++" | "--") Var                   --prefix
+  Assignment  = ("++" | "--") Var                   --prefix
               | Var ("++" | "--")                   --postfix
+              | Var "=" Exp                         --assign
+
   IfStmt      = if Exp Block else (Block | IfStmt)  --long
               | if Exp Block                        --short
   ForStmt     = for Block                           --forever
@@ -37,7 +37,7 @@ Carlos {
 
   Exp         = Exp1 "?" Exp1 ":" Exp               --conditional
               | Exp1
-  Exp1        = Exp1 "??" Exp2                      --optionalelse
+  Exp1        = Exp1 "??" Exp2                      --unwrapelse
               | Exp2
   Exp2        = Exp3 ("||" Exp3)+                   --or
               | Exp3 ("&&" Exp3)+                   --and
@@ -46,20 +46,19 @@ Carlos {
               | Exp4 ("^" Exp4)+                    --bitxor
               | Exp4 ("&" Exp4)+                    --bitand
               | Exp4
-  Exp4        = Exp5 relop Exp5                     --relational
+  Exp4        = Exp5 relop Exp5                     --compare
               | Exp5
   Exp5        = Exp5 ("<<" | ">>") Exp6             --shift
               | Exp6
-  Exp6        = "-"? Exp6 ("+" | "-") Exp7          --additive
+  Exp6        = Exp6 ("+" | "-") Exp7               --add
               | Exp7
-  Exp7        = Exp7 ("*"| "/" | "%") Exp8          --multiplicative
+  Exp7        = Exp7 ("*"| "/" | "%") Exp8          --multiply
               | Exp8
-  Exp8        = Exp9 "**" Exp8                      --exponential
+  Exp8        = Exp9 "**" Exp8                      --power
               | Exp9
               | "#" Exp9                            --length
-  Exp9        = Exp10
-              | Exp11
-  Exp10       = true
+              | "-" Exp9                            --negate
+  Exp9        = true
               | false
               | floatlit
               | intlit
@@ -67,19 +66,20 @@ Carlos {
               | "emptyArrayOf" "(" TypeExp ")"      --emptyarray
               | some Exp                            --wrappedopt
               | no TypeExp                          --emptyopt
-              | "[" Args "]"                        --arrayexp
-              | id "{" Args "}"                     --structexp
+              | "[" NonemptyListOf<Exp, ","> "]"    --arrayexp
+              | id "{" ListOf<Exp, ","> "}"         --structexp
               | "(" Exp ")"                         --parens
-  Exp11       = Call
               | Var
-  Call        = Exp11 "(" Args ")"
-  Var         = Exp11 "[" Exp "]"                   --subscript
-              | Exp11 "." id                        --member
-              | Exp11 "?." id                       --optmember
-              | id                                  --id
-  Args        = ListOf<Exp, ",">
-  Range       = Exp ("..." | "..<") Exp              --numeric
-              | Exp                                  --collection
+              
+  Var         = Var "[" Exp "]"                     --subscript
+              | Var "." id                          --member
+              | Var  "?." id                        --unwrapmember
+              | Call
+              | id
+  Call        = Var "(" ListOf<Exp, ","> ")"
+
+  Range       = Exp ("..." | "..<") Exp             --numeric
+              | Exp                                 --collection
   relop       = "<=" | "<" | "==" | "!=" | ">=" | ">"
 
   intlit      = digit+

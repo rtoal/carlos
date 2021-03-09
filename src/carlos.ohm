@@ -64,10 +64,9 @@ Carlos {
               | intlit
               | stringlit
               | "emptyArrayOf" "(" TypeExp ")"      --emptyarray
+              | "[" NonemptyListOf<Exp, ","> "]"    --arrayexp
               | some Exp                            --wrappedopt
               | no TypeExp                          --emptyopt
-              | "[" NonemptyListOf<Exp, ","> "]"    --arrayexp
-              | id "{" ListOf<Exp, ","> "}"         --structexp
               | "(" Exp ")"                         --parens
               | Var
               

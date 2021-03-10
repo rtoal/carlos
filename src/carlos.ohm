@@ -74,7 +74,7 @@ Carlos {
               | Var "." id                          --member
               | Var  "?." id                        --unwrapmember
               | Call
-              | id
+              | id                                  --id
   Call        = Var "(" ListOf<Exp, ","> ")"
 
   Range       = Exp ("..." | "..<") Exp             --numeric

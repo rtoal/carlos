@@ -43,15 +43,10 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.OptionalType(baseType.ast())
   },
   TypeExp_named(id) {
-    return new ast.TypeName(id.sourceString)
+    return new ast.TypeId(id.sourceString)
   },
   TypeExps(memberTypeList) {
     return memberTypeList.asIteration().ast()
-  },
-  Assignment_prefix(operator, variable) {
-    return operator.sourceString === "++"
-      ? new ast.Increment(variable.ast())
-      : new ast.Decrement(variable.ast())
   },
   Assignment_postfix(variable, operator) {
     return operator.sourceString === "++"
@@ -156,7 +151,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Var_member(object, _dot, field) {
     return new ast.MemberExpression(object.ast(), field.sourceString)
   },
-  Var_unwrapmember(object, _dot, field) {
+  Var_unwrapmember(object, _questionDot, field) {
     return new ast.MemberExpression(object.ast(), field.sourceString)
   },
   Var_id(id) {

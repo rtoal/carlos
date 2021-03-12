@@ -23,8 +23,7 @@ Carlos {
               | id                                  --named
   TypeExps    = ListOf<TypeExp, ",">
 
-  Assignment  = ("++" | "--") Var                   --prefix
-              | Var ("++" | "--")                   --postfix
+  Assignment  = Var ("++" | "--")                   --postfix
               | Var "=" Exp                         --assign
 
   IfStmt      = if Exp Block else (Block | IfStmt)  --long

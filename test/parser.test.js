@@ -1,5 +1,6 @@
 import assert from "assert"
 import parse from "../src/parser.js"
+import * as ast from "../src/ast.js"
 
 const syntaxChecks = [
   ["simplest syntactically correct program", "break"],
@@ -15,7 +16,7 @@ const syntaxChecks = [
   ["array type for param", "function f(x: [[[boolean]]]) {}"],
   ["array type returned", "function f(): [[int]] {}"],
   ["optional types", "function f(c: int?): float {}"],
-  ["assignments", "++a a-- --b c++ abc=9*3 a=1"],
+  ["assignments", "a-- c++ abc=9*3 a=1"],
   ["call in statement", "let x = 1\nf(100)\nprint(1)"],
   ["call in exp", "print(5 * f(x, y, 2 * y))"],
   ["short if", "if true { print(1) }"],
@@ -56,6 +57,41 @@ const syntaxChecks = [
   ["comments with no text", "print(1)//\nprint(0)//"],
 ]
 
+const breakNode = new ast.BreakStatement()
+const returnNode = new ast.ShortReturnStatement()
+const letXbe1Node = new ast.VariableDeclaration("x", false, 1)
+const constXbe1Node = new ast.VariableDeclaration("x", true, 1)
+const printIdNode = new ast.IdentifierExpression("print")
+const print1CallNode = new ast.Call(printIdNode, [1])
+const noParamFunDeclNode = new ast.FunctionDeclaration("f", [], null, [])
+const paramXNode = new ast.Parameter("x", new ast.TypeId("int"))
+const oneParamFunDeclNode = new ast.FunctionDeclaration(
+  "f",
+  [paramXNode],
+  null,
+  []
+)
+
+const astChecks = [
+  ["smallest", "break", [breakNode]],
+  ["vardecs", "let x = 1 const x = 1", [letXbe1Node, constXbe1Node]],
+  [
+    "multiple statements",
+    "print(1)\nbreak\nreturn return",
+    [print1CallNode, breakNode, returnNode, returnNode],
+  ],
+  [
+    "function with no params, no return type",
+    "function f() {}",
+    [noParamFunDeclNode],
+  ],
+  [
+    "function with one param, no return type",
+    "function f(x: int) {}",
+    [oneParamFunDeclNode],
+  ],
+]
+
 const syntaxErrors = [
   ["non-letter in an identifier", "let ab😭c = 2", /Line 1, col 7:/],
   ["malformed number", "let x= 2.", /Line 1, col 10:/],
@@ -91,6 +127,11 @@ describe("The parser", () => {
   for (const [scenario, source] of syntaxChecks) {
     it(`recognizes ${scenario}`, () => {
       assert(parse(source))
+    })
+  }
+  for (const [scenario, source, tree] of astChecks) {
+    it(`produces the correct AST for ${scenario}`, () => {
+      assert.deepStrictEqual(parse(source), new ast.Program(tree))
     })
   }
   for (const [scenario, source, errorMessagePattern] of syntaxErrors) {

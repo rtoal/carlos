@@ -7,30 +7,6 @@ function must(condition, errorMessage) {
   }
 }
 
-// In this language, basic types are only compatible if equivalent
-Type.prototype.isAssignableTo = function (target) {
-  return this === target
-}
-
-ArrayType.prototype.isAssignableTo = function (target) {
-  return (
-    target.constructor === ArrayType &&
-    this.baseType.isAssignableTo(target.baseType)
-  )
-}
-
-// Contravariance for parameters and covariance for return types
-FunctionType.prototype.isAssignableTo = function (target) {
-  return (
-    target.constructor === FunctionType &&
-    this.returnType.isAssignableTo(target.returnType) &&
-    this.parameterTypes.length === target.parameterTypes.length &&
-    this.parameterTypes.every((t, i) =>
-      target.parameterTypes[i].isAssignableTo(t)
-    )
-  )
-}
-
 const check = {
   isNumeric(e) {
     must(
@@ -139,7 +115,7 @@ class Context {
     return this[node.constructor.name](node)
   }
   Program(p) {
-    return (new p.statements() = this.analyze(p.statements))
+    p.statements = this.analyze(p.statements)
     return p
   }
   TypeId(t) {

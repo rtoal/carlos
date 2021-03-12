@@ -31,6 +31,9 @@ export class Type {
   static STRING = new Type("string")
   static VOID = new Type("void")
   static TYPE = new Type("type")
+  isAssignableTo(target) {
+    return this === target
+  }
 }
 
 export class FunctionType {
@@ -42,6 +45,16 @@ export class FunctionType {
       this.returnType.name
     }`
   }
+  isAssignableTo(target) {
+    return (
+      target.constructor === FunctionType &&
+      this.returnType.isAssignableTo(target.returnType) &&
+      this.parameterTypes.length === target.parameterTypes.length &&
+      this.parameterTypes.every((t, i) =>
+        target.parameterTypes[i].isAssignableTo(t)
+      )
+    )
+  }
 }
 
 export class ArrayType {
@@ -51,6 +64,9 @@ export class ArrayType {
   get name() {
     return `[${this.baseType.name}]`
   }
+  isAssignableTo(target) {
+    return target.constructor === ArrayType && this.baseType === target.baseType
+  }
 }
 
 export class OptionalType {
@@ -59,6 +75,11 @@ export class OptionalType {
   }
   get name() {
     return `${this.baseType.name}?`
+  }
+  isAssignableTo(target) {
+    return (
+      target.constructor === OptionalType && this.baseType === target.baseType
+    )
   }
 }
 

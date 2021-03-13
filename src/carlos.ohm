@@ -1,92 +1,85 @@
 Carlos {
   Program     = Statement+
 
-  Statement   = Declaration
-              | Assignment
-              | Call
-              | break
-              | return Exp?                         --return
+  Statement   = (let | const) id "=" Exp ";"                --vardecl
+              | StructDecl
+              | FunDecl
+              | Var ("++" | "--") ";"                       --bump
+              | Var "=" Exp ";"                             --assign
+              | Var_call ";"                                --call   
+              | break ";"                                   --break
+              | return Exp? ";"                             --return
               | IfStmt
               | ForStmt
 
-  Declaration = VarDecl | StructDecl | FunDecl 
-  VarDecl     = (let | const) id "=" Exp
   StructDecl  = struct id "{" Field* "}"
   Field       = id ":" TypeExp
+
   FunDecl     = function id Params (":" TypeExp)? Block
   Params      = "(" ListOf<Param, ","> ")"
   Param       = id ":" TypeExp
 
-  TypeExp     = "[" TypeExp "]"                     --array
-              | "(" TypeExps ")" "->" TypeExp       --function
-              | TypeExp "?"                         --optional
-              | id                                  --named
-  TypeExps    = ListOf<TypeExp, ",">
+  TypeExp     = "[" TypeExp "]"                             --array
+              | "(" ListOf<TypeExp, ","> ")" "->" TypeExp   --function
+              | TypeExp "?"                                 --optional
+              | id                                          --named
 
-  Assignment  = Var ("++" | "--")                   --postfix
-              | Var "=" Exp                         --assign
-
-  IfStmt      = if Exp Block else (Block | IfStmt)  --long
-              | if Exp Block                        --short
-  ForStmt     = for Block                           --forever
-              | for Exp Block                       --while
-              | for Exp times Block                 --times
-              | for id in Range Block               --iteration
+  IfStmt      = if Exp Block else (Block | IfStmt)          --long
+              | if Exp Block                                --short
+  ForStmt     = for Block                                   --forever
+              | for Exp Block                               --while
+              | for Exp times Block                         --times
+              | for id in Exp ("..." | "..<") Exp Block     --range
+              | for id in Exp Block                         --collection
   Block       = "{" Statement* "}"
 
-  Exp         = Exp1 "?" Exp1 ":" Exp               --conditional
+  Exp         = Exp1 "?" Exp1 ":" Exp                       --conditional
               | Exp1
-  Exp1        = Exp1 "??" Exp2                      --unwrapelse
+  Exp1        = Exp1 "??" Exp2                              --unwrapelse
               | Exp2
-  Exp2        = Exp3 ("||" Exp3)+                   --or
-              | Exp3 ("&&" Exp3)+                   --and
+  Exp2        = Exp3 ("||" Exp3)+                           --or
+              | Exp3 ("&&" Exp3)+                           --and
               | Exp3
-  Exp3        = Exp4 ("|" Exp4)+                    --bitor
-              | Exp4 ("^" Exp4)+                    --bitxor
-              | Exp4 ("&" Exp4)+                    --bitand
+  Exp3        = Exp4 ("|" Exp4)+                            --bitor
+              | Exp4 ("^" Exp4)+                            --bitxor
+              | Exp4 ("&" Exp4)+                            --bitand
               | Exp4
-  Exp4        = Exp5 relop Exp5                     --compare
+  Exp4        = Exp5 ("<="|"<"|"=="|"!="|">="|">") Exp5     --compare
               | Exp5
-  Exp5        = Exp5 ("<<" | ">>") Exp6             --shift
+  Exp5        = Exp5 ("<<" | ">>") Exp6                     --shift
               | Exp6
-  Exp6        = Exp6 ("+" | "-") Exp7               --add
+  Exp6        = Exp6 ("+" | "-") Exp7                       --add
               | Exp7
-  Exp7        = Exp7 ("*"| "/" | "%") Exp8          --multiply
+  Exp7        = Exp7 ("*"| "/" | "%") Exp8                  --multiply
               | Exp8
-  Exp8        = Exp9 "**" Exp8                      --power
+  Exp8        = Exp9 "**" Exp8                              --power
               | Exp9
-              | "#" Exp9                            --length
-              | "-" Exp9                            --negate
+              | "#" Exp9                                    --length
+              | "-" Exp9                                    --negate
   Exp9        = true
               | false
               | floatlit
               | intlit
               | stringlit
-              | "emptyArrayOf" "(" TypeExp ")"      --emptyarray
-              | "[" NonemptyListOf<Exp, ","> "]"    --arrayexp
-              | some Exp                            --wrappedopt
-              | no TypeExp                          --emptyopt
-              | "(" Exp ")"                         --parens
+              | "[]" "(" of TypeExp ")"                     --emptyarray
+              | "[" NonemptyListOf<Exp, ","> "]"            --arrayexp
+              | some Exp                                    --wrappedopt
+              | no TypeExp                                  --emptyopt
+              | "(" Exp ")"                                 --parens
               | Var
               
-  Var         = Var "[" Exp "]"                     --subscript
-              | Var "." id                          --member
-              | Var  "?." id                        --unwrapmember
-              | Call
-              | id                                  --id
-  Call        = Var "(" ListOf<Exp, ","> ")"
-
-  Range       = Exp ("..." | "..<") Exp             --numeric
-              | Exp                                 --collection
-  relop       = "<=" | "<" | "==" | "!=" | ">=" | ">"
+  Var         = Var "[" Exp "]"                             --subscript
+              | Var ("." | "?.") id                         --member
+              | Var "(" ListOf<Exp, ","> ")"                --call
+              | id                                          --id
 
   intlit      = digit+
   floatlit    = digit+ "." digit+ (("E" | "e") ("+" | "-")? digit+)?
   stringlit   = "\"" char* "\""
-  char        = ~"\n" ~"\r" ~"\\" ~"\"" any
-              | "\\" ("n" | "t" | "\"" | "\\")      --escape
-              | "\\u{" h h? h? h? h? h? "}"         --codepoint
-  h           = hexDigit
+  char        = ~"\x00".."\x1f" ~"\\" ~"\"" any
+              | "\\" ("n" | "t" | "\"" | "\\")              --escape
+              | "\\u{" hex hex? hex? hex? hex? hex? "}"     --codepoint
+  hex         = hexDigit
 
   let         = "let" ~alnum
   const       = "const" ~alnum
@@ -96,6 +89,7 @@ Carlos {
   else        = "else" ~alnum
   for         = "for" ~alnum
   in          = "in" ~alnum
+  of          = "of" ~alnum
   times       = "times" ~alnum
   break       = "break" ~alnum
   return      = "return" ~alnum
@@ -104,8 +98,8 @@ Carlos {
   true        = "true" ~alnum
   false       = "false" ~alnum
   keyword     = let | const | struct | function | if | else | for | in
-              | times | break | return | some | no | true | false
+              | times | break | return | of | some | no | true | false
   id          = ~keyword letter alnum*
 
-  space      += "//" (~"\n" any)* ("\n" | end)      --comment
+  space      += "//" (~"\n" any)* ("\n" | end)              --comment
 }

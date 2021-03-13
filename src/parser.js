@@ -8,7 +8,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Program(body) {
     return new ast.Program(body.ast())
   },
-  VarDecl(kind, id, _eq, initializer) {
+  Statement_vardecl(kind, id, _eq, initializer, _semi) {
     const [name, readOnly] = [id.sourceString, kind.sourceString == "const"]
     return new ast.VariableDeclaration(name, readOnly, initializer.ast())
   },
@@ -36,8 +36,8 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   TypeExp_array(_left, baseType, _right) {
     return new ast.ArrayType(baseType.ast())
   },
-  TypeExp_function(_left, inputTypes, _right, _arrow, outputType) {
-    return new ast.FunctionType(inputTypes.ast(), outputType.ast())
+  TypeExp_function(_left, inTypes, _right, _arrow, outType) {
+    return new ast.FunctionType(inTypes.asIteration().ast(), outType.ast())
   },
   TypeExp_optional(baseType, _questionMark) {
     return new ast.OptionalType(baseType.ast())
@@ -45,21 +45,21 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   TypeExp_named(id) {
     return new ast.TypeId(id.sourceString)
   },
-  TypeExps(memberTypeList) {
-    return memberTypeList.asIteration().ast()
-  },
-  Assignment_postfix(variable, operator) {
+  Statement_bump(variable, operator, _semi) {
     return operator.sourceString === "++"
       ? new ast.Increment(variable.ast())
       : new ast.Decrement(variable.ast())
   },
-  Assignment_assign(variable, _eq, expression) {
+  Statement_assign(variable, _eq, expression, _semi) {
     return new ast.Assignment(variable.ast(), expression.ast())
   },
-  break(_) {
+  Statement_call(call, _semi) {
+    return call.ast()
+  },
+  Statement_break(_break, _semi) {
     return new ast.BreakStatement()
   },
-  Statement_return(_return, expression) {
+  Statement_return(_return, expression, _semi) {
     const returnValueTree = expression.ast()
     if (returnValueTree.length === 0) {
       return new ast.ShortReturnStatement()
@@ -81,8 +81,17 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   ForStmt_times(_for, count, _times, body) {
     return new ast.ForTimesStatement(count.ast(), body.ast())
   },
-  ForStmt_iteration(_for, id, _in, range, body) {
-    return new ast.ForStatement(id.sourceString, range.ast(), body.ast())
+  ForStmt_range(_for, id, _in, low, op, high, body) {
+    return new ast.ForRangeStatement(
+      id.sourceString,
+      low.ast(),
+      op.sourceString,
+      high.ast(),
+      body.ast()
+    )
+  },
+  ForStmt_collection(_for, id, _in, collection, body) {
+    return new ast.ForStatement(id.sourceString, collection.ast(), body.ast())
   },
   Block(_open, body, _close) {
     // This one is fun, don't wrap the statements, just return the list
@@ -130,7 +139,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Exp8_negate(op, operand) {
     return new ast.UnaryExpression(op.sourceString, operand.ast())
   },
-  Exp9_emptyarray(_keyword, _left, type, _right) {
+  Exp9_emptyarray(_keyword, _left, _of, type, _right) {
     return new ast.EmptyArray(type.ast())
   },
   Exp9_arrayexp(_left, args, _right) {
@@ -151,20 +160,11 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Var_member(object, _dot, field) {
     return new ast.MemberExpression(object.ast(), field.sourceString)
   },
-  Var_unwrapmember(object, _questionDot, field) {
-    return new ast.MemberExpression(object.ast(), field.sourceString)
-  },
   Var_id(id) {
     return new ast.IdentifierExpression(id.sourceString)
   },
-  Call(callee, _left, args, _right) {
+  Var_call(callee, _left, args, _right) {
     return new ast.Call(callee.ast(), args.asIteration().ast())
-  },
-  Range_numeric(low, kind, high) {
-    return new ast.NumericRange(low.ast(), kind.sourceString, high.ast())
-  },
-  Range_collection(expression) {
-    return expression.ast()
   },
   true(_) {
     return true

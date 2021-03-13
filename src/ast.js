@@ -188,6 +188,12 @@ export class ForTimesStatement {
   }
 }
 
+export class ForRangeStatement {
+  constructor(iterator, low, op, high, body) {
+    Object.assign(this, { iterator, low, high, op, body })
+  }
+}
+
 export class ForStatement {
   constructor(iterator, range, body) {
     Object.assign(this, { iterator, range, body })

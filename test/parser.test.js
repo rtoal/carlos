@@ -75,11 +75,11 @@ const oneParamFunDeclNode = new ast.FunctionDeclaration(
 )
 
 const astChecks = [
-  ["smallest", "break", [breakNode]],
-  ["vardecs", "let x = 1 const x = 1", [letXbe1Node, constXbe1Node]],
+  ["smallest", "break;", [breakNode]],
+  ["vardecs", "let x = 1; const x = 1;", [letXbe1Node, constXbe1Node]],
   [
     "multiple statements",
-    "print(1)\nbreak\nreturn return",
+    "print(1);break;return;return;",
     [print1CallNode, breakNode, returnNode, returnNode],
   ],
   [
@@ -131,11 +131,11 @@ describe("The parser", () => {
       assert(parse(source))
     })
   }
-  // for (const [scenario, source, tree] of astChecks) {
-  //   it(`produces the correct AST for ${scenario}`, () => {
-  //     assert.deepStrictEqual(parse(source), new ast.Program(tree))
-  //   })
-  // }
+  for (const [scenario, source, tree] of astChecks) {
+    it(`produces the correct AST for ${scenario}`, () => {
+      assert.deepStrictEqual(parse(source), new ast.Program(tree))
+    })
+  }
   for (const [scenario, source, errorMessagePattern] of syntaxErrors) {
     it(`throws on ${scenario}`, () => {
       assert.throws(() => parse(source), errorMessagePattern)

@@ -38,16 +38,8 @@ const semanticErrors = [
   ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
   ["bad types for ||", "print(false||1);", /a boolean but got a int/],
   ["bad types for &&", "print(false&&1);", /a boolean but got a int/],
-  [
-    "bad types for ==",
-    "print(false==1);",
-    /Operands do not have the same type/,
-  ],
-  [
-    "bad types for !=",
-    "print(false==1);",
-    /Operands do not have the same type/,
-  ],
+  ["bad types for ==", "print(false==1);", /Operands do not have the same type/],
+  ["bad types for !=", "print(false==1);", /Operands do not have the same type/],
   ["bad types for +", "print(false+1);", /number or string but got a boolean/],
   ["bad types for -", "print(false-1);", /a number but got a boolean/],
   ["bad types for *", "print(false*1);", /a number but got a boolean/],
@@ -60,11 +52,7 @@ const semanticErrors = [
   ["bad types for negation", "print(-true);", /a number but got a boolean/],
   ["non-boolean if test", "if 1 {}", /a boolean but got a int/],
   ["non-boolean for test", "for 1 {}", /a boolean but got a int/],
-  [
-    "shadowing",
-    "let x = 1;\nfor true {let x = 1;}",
-    /Identifier x already declared/,
-  ],
+  ["shadowing", "let x = 1;\nfor true {let x = 1;}", /Identifier x already declared/],
   ["break outside loop", "break;", /'break' can only appear in a loop/],
   [
     "break inside function",

@@ -67,12 +67,7 @@ const printIdNode = new ast.IdentifierExpression("print")
 const print1CallNode = new ast.Call(printIdNode, [1n])
 const noParamFunDeclNode = new ast.FunctionDeclaration("f", [], null, [])
 const paramXNode = new ast.Parameter("x", new ast.TypeId("int"))
-const oneParamFunDeclNode = new ast.FunctionDeclaration(
-  "f",
-  [paramXNode],
-  null,
-  []
-)
+const oneParamFunDeclNode = new ast.FunctionDeclaration("f", [paramXNode], null, [])
 
 const astChecks = [
   ["smallest", "break;", [breakNode]],
@@ -82,11 +77,7 @@ const astChecks = [
     "print(1);break;return;return;",
     [print1CallNode, breakNode, returnNode, returnNode],
   ],
-  [
-    "function with no params, no return type",
-    "function f() {}",
-    [noParamFunDeclNode],
-  ],
+  ["function with no params, no return type", "function f() {}", [noParamFunDeclNode]],
   [
     "function with one param, no return type",
     "function f(x: int) {}",

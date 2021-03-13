@@ -1,5 +1,4 @@
-const source = `
-  let a = 1024
+  let a = 1024;
   function f() {
     const b = true;
   }
@@ -7,5 +6,4 @@ const source = `
     let b = 5;
     return b;
   }
-  print(x + x);
-`
+  print(a + a);

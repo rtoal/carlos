@@ -99,10 +99,10 @@ const semanticChecks = [
     `function square(x: int): int { return x * x; }
      function compose(): (int)->int { return square; }`,
   ],
-  ["built-in constants", "print(25 * π);"],
+  ["built-in constants", "print(25.0 * π);"],
   ["built-in sin", "print(sin(π));"],
   ["built-in cos", "print(cos(93.999));"],
-  ["built-in hypot", "print(hypot(-4, 3.00001));"],
+  ["built-in hypot", "print(hypot(-4.0, 3.00001));"],
 ]
 
 const semanticErrors = [
@@ -122,24 +122,24 @@ const semanticErrors = [
     "print(false==1);",
     /Operands do not have the same type/,
   ],
-  ["bad types for +", "print(false+1);", /a int but got a boolean/],
-  ["bad types for -", "print(false-1);", /a int but got a boolean/],
-  ["bad types for *", "print(false*1);", /a int but got a boolean/],
-  ["bad types for /", "print(false/1);", /a int but got a boolean/],
-  ["bad types for **", "print(false**1);", /a int but got a boolean/],
-  ["bad types for <", "print(false<1);", /a int but got a boolean/],
-  ["bad types for <=", "print(false<=1);", /a int but got a boolean/],
-  ["bad types for >", "print(false>1);", /a int but got a boolean/],
-  ["bad types for >=", "print(false>=1);", /a number but got a boolean/],
+  ["bad types for +", "print(false+1);", /number or string but got a boolean/],
+  ["bad types for -", "print(false-1);", /a number but got a boolean/],
+  ["bad types for *", "print(false*1);", /a number but got a boolean/],
+  ["bad types for /", "print(false/1);", /a number but got a boolean/],
+  ["bad types for **", "print(false**1);", /a number but got a boolean/],
+  ["bad types for <", "print(false<1);", /number or string but got a boolean/],
+  ["bad types for <=", "print(false<=1);", /number or string but got a bool/],
+  ["bad types for >", "print(false>1);", /number or string but got a bool/],
+  ["bad types for >=", "print(false>=1);", /number or string but got a bool/],
   ["bad types for negation", "print(-true);", /a number but got a boolean/],
-  ["non-boolean if test", "if 1 {}", /a boolean but got a number/],
-  ["non-boolean for test", "for 1 {}", /a boolean but got a number/],
+  ["non-boolean if test", "if 1 {}", /a boolean but got a int/],
+  ["non-boolean for test", "for 1 {}", /a boolean but got a int/],
   [
     "shadowing",
     "let x = 1;\nfor true {let x = 1;}",
     /Identifier x already declared/,
   ],
-  ["break outside loop", "break", /'break' can only appear in a loop/],
+  ["break outside loop", "break;", /'break' can only appear in a loop/],
   [
     "break inside function",
     "for true {function f() {break;}}",
@@ -157,30 +157,30 @@ const semanticErrors = [
   ],
   [
     "Too many args",
-    "function f(x: int) {}\nf(1,2)",
+    "function f(x: int) {}\nf(1,2);",
     /1 parameter\(s\) required but 2 argument\(s\) passed/,
   ],
   [
     "Too few args",
-    "function f(x: int) {}\nf()",
+    "function f(x: int) {}\nf();",
     /1 parameter\(s\) required but 0 argument\(s\) passed/,
   ],
   [
     "Parameter type mismatch",
-    "function f(x: int) {}\nf(false)",
+    "function f(x: int) {}\nf(false);",
     /Cannot assign a boolean to a int/,
   ],
-  ["call of non-function", "let x = 1\nprint x()", /Call of non-function/],
+  ["call of non-function", "let x = 1;\nprint(x());", /Call of non-function/],
   [
     "function type mismatch",
-    `function f(x: int, y: (boolean)->void): int { return 1 }
-     function g(z: boolean): int { return 5 }
-     f(2, g)`,
+    `function f(x: int, y: (boolean)->void): int { return 1; }
+     function g(z: boolean): int { return 5; }
+     f(2, g);`,
     /Cannot assign a \(boolean\)->int to a \(boolean\)->void/,
   ],
   [
     "bad call to a standard library function",
-    "print(sin(true))",
+    "print(sin(true));",
     /Cannot assign a boolean to a float/,
   ],
 ]

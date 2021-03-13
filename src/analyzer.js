@@ -31,7 +31,7 @@ const check = {
   },
   isTypeAssignable(from, { to }) {
     must(
-      from.isAssignableTo(to),
+      to === Type.ANY || from.isAssignableTo(to),
       `Cannot assign a ${from.name} to a ${to.name}`
     )
   },

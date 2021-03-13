@@ -29,6 +29,7 @@ export const constants = {
 }
 
 export const functions = {
+  print: makeFunction("print", new FunctionType([Type.ANY], Type.VOID)),
   sin: makeFunction("sin", floatFloatType),
   cos: makeFunction("cos", floatFloatType),
   exp: makeFunction("exp", floatFloatType),

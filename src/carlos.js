@@ -11,7 +11,7 @@ import generate from "./generator.js"
 
 const help = `Carlos compiler
 
-Syntax: src/carlos <filename> <outputType>
+Syntax: carlos <filename> <outputType>
 
 Prints to stdout according to <outputType>, which must be one of:
 
@@ -38,8 +38,8 @@ function compile(source, outputType) {
 Program.prototype[util.inspect.custom] = function () {
   // Return a compact and pretty string representation of the node graph,
   // taking care of cycles. Written here from scratch because the built-in
-  // inspect function, while nice, isn't nice enough. Added properly to the
-  // AST root class's prototype so it automatically runs on console.log.
+  // inspect function, while nice, isn't nice enough. Defined properly in
+  // the AST root class prototype so it automatically runs on console.log.
   const tags = new Map()
 
   function tag(node) {

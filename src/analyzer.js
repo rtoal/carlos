@@ -206,12 +206,12 @@ class Context {
     s.test = this.analyze(s.test)
     check.isBoolean(s.test, "if")
     s.consequent = this.newChild().analyze(s.consequent)
-    if (s.alternative.constructor === Array) {
+    if (s.alternate.constructor === Array) {
       // It's a block of statements, make a new context
-      s.alternative = this.newChild().analyze(s.alternative)
-    } else if (s.alternative) {
+      s.alternate = this.newChild().analyze(s.alternate)
+    } else if (s.alternate) {
       // It's a trailing if-statement, so same context
-      s.alternative = this.analyze(s.alternative)
+      s.alternate = this.analyze(s.alternate)
     }
     return s
   }

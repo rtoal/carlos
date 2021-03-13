@@ -141,7 +141,7 @@ export class BreakStatement {
 
 export class ReturnStatement {
   constructor(expression) {
-    Object.assign(this, { expression })
+    this.expression = expression
   }
 }
 
@@ -150,8 +150,8 @@ export class ShortReturnStatement {
 }
 
 export class IfStatement {
-  constructor(test, consequent, alternative) {
-    Object.assign(this, { test, consequent, alternative })
+  constructor(test, consequent, alternate) {
+    Object.assign(this, { test, consequent, alternate })
   }
 }
 
@@ -229,7 +229,7 @@ export class UnaryExpression {
 
 export class SomeExpression {
   constructor(expression) {
-    Object.assign(this, { expression })
+    this.expression = expression
   }
 }
 
@@ -240,8 +240,8 @@ export class EmptyOptional {
 }
 
 export class SubscriptExpression {
-  constructor(array, element) {
-    Object.assign(this, { array, element })
+  constructor(array, index) {
+    Object.assign(this, { array, index })
   }
 }
 
@@ -253,7 +253,7 @@ export class EmptyArray {
 
 export class ArrayLiteral {
   constructor(args) {
-    Object.assign(this, { args })
+    this.args = args
   }
 }
 
@@ -275,15 +275,18 @@ export class NumericRange {
   }
 }
 
+// Appears in the syntax tree only and disappears after semantic analysis
+// since references to the Id node will be replaced with references to the
+// actual variable or function node the the id refers to.
 export class IdentifierExpression {
   constructor(name) {
     this.name = name
   }
 }
 
-// Not a type, but rather a wrapper for a string designating a type to be
-// looked up during static analysis. Similar to IdentifierExpressions in
-// that these are syntax nodes only disappear after analysis.
+// Appears in the syntax tree only and disappears after semantic analysis
+// since references to the Id node will be replaced with references to the
+// actual type node the the id refers to.
 export class TypeId {
   constructor(name) {
     this.name = name

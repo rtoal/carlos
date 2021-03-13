@@ -66,8 +66,8 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     }
     return new ast.ReturnStatement(returnValueTree[0])
   },
-  IfStmt_long(_if, test, consequent, _else, alternative) {
-    return new ast.IfStatement(test.ast(), consequent.ast(), alternative.ast())
+  IfStmt_long(_if, test, consequent, _else, alternate) {
+    return new ast.IfStatement(test.ast(), consequent.ast(), alternate.ast())
   },
   IfStmt_short(_if, test, consequent) {
     return new ast.ShortIfStatement(test.ast(), consequent.ast())
@@ -94,7 +94,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.ForStatement(id.sourceString, collection.ast(), body.ast())
   },
   Block(_open, body, _close) {
-    // This one is fun, don't wrap the statements, just return the list
+    // No need for a block node, just return the list of statements
     return body.ast()
   },
   Exp_conditional(test, _questionMark, consequent, _colon, alternate) {

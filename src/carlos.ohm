@@ -22,7 +22,7 @@ Carlos {
   TypeExp     = "[" TypeExp "]"                             --array
               | "(" ListOf<TypeExp, ","> ")" "->" TypeExp   --function
               | TypeExp "?"                                 --optional
-              | id                                          --named
+              | id                                          --id
 
   IfStmt      = if Exp Block else (Block | IfStmt)          --long
               | if Exp Block                                --short
@@ -68,17 +68,18 @@ Carlos {
               | "(" Exp ")"                                 --parens
               | Var
               
-  Var         = Var "[" Exp "]"                             --subscript
+  Var         = Var ("[" | "?[") Exp "]"                    --subscript
               | Var ("." | "?.") id                         --member
-              | Var "(" ListOf<Exp, ","> ")"                --call
+              | Var ("(" | "?(") ListOf<Exp, ","> ")"       --call
               | id                                          --id
 
   intlit      = digit+
   floatlit    = digit+ "." digit+ (("E" | "e") ("+" | "-")? digit+)?
   stringlit   = "\"" char* "\""
-  char        = ~"\x00".."\x1f" ~"\\" ~"\"" any
+  char        = ~control ~"\\" ~"\"" any
               | "\\" ("n" | "t" | "\"" | "\\")              --escape
               | "\\u{" hex hex? hex? hex? hex? hex? "}"     --codepoint
+  control     = "\x00".."\x1f" | "\x80".."\x9f"
   hex         = hexDigit
 
   let         = "let" ~alnum

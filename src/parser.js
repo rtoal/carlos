@@ -173,7 +173,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return false
   },
   intlit(_digits) {
-    return Number(this.sourceString)
+    return BigInt(this.sourceString)
   },
   floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
     return Number(this.sourceString)

@@ -61,10 +61,10 @@ const syntaxChecks = [
 
 const breakNode = new ast.BreakStatement()
 const returnNode = new ast.ShortReturnStatement()
-const letXbe1Node = new ast.VariableDeclaration("x", false, 1)
-const constXbe1Node = new ast.VariableDeclaration("x", true, 1)
+const letXbe1Node = new ast.VariableDeclaration("x", false, 1n)
+const constXbe1Node = new ast.VariableDeclaration("x", true, 1n)
 const printIdNode = new ast.IdentifierExpression("print")
-const print1CallNode = new ast.Call(printIdNode, [1])
+const print1CallNode = new ast.Call(printIdNode, [1n])
 const noParamFunDeclNode = new ast.FunctionDeclaration("f", [], null, [])
 const paramXNode = new ast.Parameter("x", new ast.TypeId("int"))
 const oneParamFunDeclNode = new ast.FunctionDeclaration(

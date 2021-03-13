@@ -77,74 +77,82 @@ const expectedAst = `
 `.slice(1, -1)
 
 const semanticChecks = [
-  ["return in nested if", "function f() {if true {return}}"],
-  ["break in nested if", "for false {if true {break}}"],
-  ["assigned functions", "function f() {}\nlet g = f\ng = f"],
-  ["call of assigned functions", "function f(x: int) {}\nlet g=f\ng(1)"],
+  ["return in nested if", "function f() {if true {return;}}"],
+  ["break in nested if", "for false {if true {break;}}"],
+  ["assigned functions", "function f() {}\nlet g = f;g = f;"],
+  ["call of assigned functions", "function f(x: int) {}\nlet g=f;g(1);"],
   [
     "call of assigned function in expression",
     `function f(x: int, y: boolean): int {}
-    let g = f
-    print(g(1, true))
-    f = g // Type check here`,
+    let g = f;
+    print(g(1, true));
+    f = g; // Type check here`,
   ],
   [
     "pass a function to a function",
-    `function f(x: int, y: (boolean)->void): int { return 1 }
+    `function f(x: int, y: (boolean)->void): int { return 1; }
      function g(z: boolean) {}
-     f(2, g)`,
+     f(2, g);`,
   ],
   [
     "function return types",
-    `function square(x: int): int { return x * x }
-     function compose(): (int)->int { return square }`,
+    `function square(x: int): int { return x * x; }
+     function compose(): (int)->int { return square; }`,
   ],
-  ["built-in constants", "print(25 * π)"],
-  ["built-in sin", "print(sin(π))"],
-  ["built-in cos", "print(cos(93.999))"],
-  ["built-in hypot", "print(hypot(-4, 3.00001))"],
+  ["built-in constants", "print(25 * π);"],
+  ["built-in sin", "print(sin(π));"],
+  ["built-in cos", "print(cos(93.999));"],
+  ["built-in hypot", "print(hypot(-4, 3.00001));"],
 ]
 
 const semanticErrors = [
-  ["redeclarations", "print(x)", /Identifier x not declared/],
-  ["non declared ids", "let x = 1\nlet x = 1", /Identifier x already declared/],
-  ["assign to const", "const x = 1\nx = 2", /Cannot assign to constant x/],
-  ["assign bad type", "let x=1\nx=true", /Cannot assign a boolean to a int/],
-  ["bad types for ||", "print(false||1)", /a boolean but got a int/],
-  ["bad types for &&", "print(false&&1)", /a boolean but got a int/],
-  ["bad types for ==", "print(false==1)", /Operands do not have the same type/],
-  ["bad types for !=", "print(false==1)", /Operands do not have the same type/],
-  ["bad types for +", "print(false+1)", /a int but got a boolean/],
-  ["bad types for -", "print(false-1)", /a int but got a boolean/],
-  ["bad types for *", "print(false*1)", /a int but got a boolean/],
-  ["bad types for /", "print(false/1)", /a int but got a boolean/],
-  ["bad types for **", "print(false**1)", /a int but got a boolean/],
-  ["bad types for <", "print(false<1)", /a int but got a boolean/],
-  ["bad types for <=", "print(false<=1)", /a int but got a boolean/],
-  ["bad types for >", "print(false>1)", /a int but got a boolean/],
-  ["bad types for >=", "print(false>=1)", /a number but got a boolean/],
-  ["bad types for negation", "print(-true)", /a number but got a boolean/],
+  ["redeclarations", "print(x);", /Identifier x not declared/],
+  ["non declared ids", "let x = 1;let x = 1;", /Identifier x already declared/],
+  ["assign to const", "const x = 1;x = 2;", /Cannot assign to constant x/],
+  ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
+  ["bad types for ||", "print(false||1);", /a boolean but got a int/],
+  ["bad types for &&", "print(false&&1);", /a boolean but got a int/],
+  [
+    "bad types for ==",
+    "print(false==1);",
+    /Operands do not have the same type/,
+  ],
+  [
+    "bad types for !=",
+    "print(false==1);",
+    /Operands do not have the same type/,
+  ],
+  ["bad types for +", "print(false+1);", /a int but got a boolean/],
+  ["bad types for -", "print(false-1);", /a int but got a boolean/],
+  ["bad types for *", "print(false*1);", /a int but got a boolean/],
+  ["bad types for /", "print(false/1);", /a int but got a boolean/],
+  ["bad types for **", "print(false**1);", /a int but got a boolean/],
+  ["bad types for <", "print(false<1);", /a int but got a boolean/],
+  ["bad types for <=", "print(false<=1);", /a int but got a boolean/],
+  ["bad types for >", "print(false>1);", /a int but got a boolean/],
+  ["bad types for >=", "print(false>=1);", /a number but got a boolean/],
+  ["bad types for negation", "print(-true);", /a number but got a boolean/],
   ["non-boolean if test", "if 1 {}", /a boolean but got a number/],
   ["non-boolean for test", "for 1 {}", /a boolean but got a number/],
   [
     "shadowing",
-    "let x = 1\nfor true {let x = 1}",
+    "let x = 1;\nfor true {let x = 1;}",
     /Identifier x already declared/,
   ],
   ["break outside loop", "break", /'break' can only appear in a loop/],
   [
     "break inside function",
-    "for true {function f() {break}}",
+    "for true {function f() {break;}}",
     /'break' can only appear in a loop/,
   ],
   [
     "return expression from void function",
-    "function f() {return 1}",
+    "function f() {return 1;}",
     /Cannot return a value here/,
   ],
   [
     "return nothing when should have",
-    "function f(): int {return}",
+    "function f(): int {return;}",
     /Something should be returned here/,
   ],
   [

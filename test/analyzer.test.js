@@ -3,6 +3,10 @@ import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
 
 const semanticChecks = [
+  ["initialize with empty array", "let a = [](of int);"],
+  ["assign arrays", "let a = [](of int);let b=[1];a=b;b=a;"],
+  ["initialize with empty optional", "let a = no int;"],
+  ["assign optionals", "let a = no int;let b=some 1;a=b;b=a;"],
   ["return in nested if", "function f() {if true {return;}}"],
   ["break in nested if", "while false {if true {break;}}"],
   ["assigned functions", "function f() {}\nlet g = f;g = f;"],
@@ -37,6 +41,7 @@ const semanticErrors = [
   ["assign to const", "const x = 1;x = 2;", /Cannot assign to constant x/],
   ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
   ["assign bad array type", "let x=1;x=[true];", /Cannot assign a \[boolean\] to a int/],
+  ["assign bad optional type", "let x=1;x=some 2;", /Cannot assign a int\? to a int/],
   ["bad types for ||", "print(false||1);", /a boolean but got a int/],
   ["bad types for &&", "print(false&&1);", /a boolean but got a int/],
   ["bad types for ==", "print(false==1);", /Operands do not have the same type/],

@@ -235,15 +235,15 @@ export class SubscriptExpression {
   }
 }
 
-export class EmptyArray {
-  constructor(baseType) {
-    this.baseType = baseType
-  }
-}
-
 export class ArrayExpression {
   constructor(elements) {
     this.elements = elements
+  }
+}
+
+export class EmptyArray {
+  constructor(baseType) {
+    this.baseType = baseType
   }
 }
 

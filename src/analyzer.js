@@ -1,4 +1,4 @@
-import { Variable, Type, FunctionType, Function, ArrayType } from "./ast.js"
+import { Variable, Type, FunctionType, Function, ArrayType, OptionalType } from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 function must(condition, errorMessage) {
@@ -311,10 +311,13 @@ class Context {
     return e
   }
   SomeExpression(e) {
-    e.operand = this.analyze(e.operand)
+    e.expression = this.analyze(e.expression)
+    e.type = new OptionalType(e.expression.type)
     return e
   }
   EmptyOptional(e) {
+    e.baseType = this.analyze(e.baseType)
+    e.type = new OptionalType(e.baseType)
     return e
   }
   SubscriptExpression(e) {
@@ -323,14 +326,16 @@ class Context {
     e.element = this.analyze(e.element)
     return e
   }
-  EmptyArray(e) {
-    return e
-  }
   ArrayExpression(a) {
     a.elements = this.analyze(a.elements)
     check(a.elements).allHaveSameType()
     a.type = new ArrayType(a.elements[0].type)
     return a
+  }
+  EmptyArray(e) {
+    e.baseType = this.analyze(e.baseType)
+    e.type = new ArrayType(e.baseType)
+    return e
   }
   MemberExpression(e) {
     e.object = this.analyze(e.object)

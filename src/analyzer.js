@@ -1,4 +1,4 @@
-import { Variable, Type, FunctionType, Function } from "./ast.js"
+import { Variable, Type, FunctionType, Function, ArrayType } from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 function must(condition, errorMessage) {
@@ -29,14 +29,17 @@ const check = self => ({
   hasSameTypeAs(other) {
     must(self.type === other.type, "Operands do not have the same type")
   },
-  isTypeAssignableTo(other) {
+  allHaveSameType() {
     must(
-      other === Type.ANY || self.isAssignableTo(other),
-      `Cannot assign a ${self.name} to a ${other.name}`
+      self.slice(1).every(e => e.type === self[0].type),
+      "Not all elements have the same type"
     )
   },
   isAssignableTo(type) {
-    check(self.type).isTypeAssignableTo(type)
+    must(
+      type === Type.ANY || self.type.isAssignableTo(type),
+      `Cannot assign a ${self.type.name} to a ${type.name}`
+    )
   },
   isNotReadOnly() {
     must(!self.readOnly, `Cannot assign to constant ${self.name}`)
@@ -324,9 +327,9 @@ class Context {
     return e
   }
   ArrayExpression(a) {
-    a.arrayType = this.analyze(a.arrayType)
     a.elements = this.analyze(a.elements)
-    a.type = a.arrayType
+    check(a.elements).allHaveSameType()
+    a.type = new ArrayType(a.elements[0].type)
     return a
   }
   MemberExpression(e) {

@@ -36,6 +36,7 @@ const semanticErrors = [
   ["non declared ids", "let x = 1;let x = 1;", /Identifier x already declared/],
   ["assign to const", "const x = 1;x = 2;", /Cannot assign to constant x/],
   ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
+  ["assign bad array type", "let x=1;x=[true];", /Cannot assign a \[boolean\] to a int/],
   ["bad types for ||", "print(false||1);", /a boolean but got a int/],
   ["bad types for &&", "print(false&&1);", /a boolean but got a int/],
   ["bad types for ==", "print(false==1);", /Operands do not have the same type/],

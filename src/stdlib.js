@@ -10,10 +10,7 @@ function makeFunction(name, type) {
 
 const floatsType = new ArrayType(Type.FLOAT)
 const floatFloatType = new FunctionType([Type.FLOAT], Type.FLOAT)
-const floatFloatFloatType = new FunctionType(
-  [Type.FLOAT, Type.FLOAT],
-  Type.FLOAT
-)
+const floatFloatFloatType = new FunctionType([Type.FLOAT, Type.FLOAT], Type.FLOAT)
 const stringToIntsType = new FunctionType([Type.STRING], floatsType)
 
 export const types = {

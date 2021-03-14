@@ -130,10 +130,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Exp8_power(left, op, right) {
     return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())
   },
-  Exp8_length(op, operand) {
-    return new ast.UnaryExpression(op.sourceString, operand.ast())
-  },
-  Exp8_negate(op, operand) {
+  Exp8_unary(op, operand) {
     return new ast.UnaryExpression(op.sourceString, operand.ast())
   },
   Exp9_emptyarray(_keyword, _left, _of, type, _right) {
@@ -141,9 +138,6 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   },
   Exp9_arrayexp(_left, args, _right) {
     return new ast.ArrayExpression(args.asIteration().ast())
-  },
-  Exp9_wrappedopt(_some, expression) {
-    return new ast.SomeExpression(expression.ast())
   },
   Exp9_emptyopt(_no, type) {
     return new ast.EmptyOptional(type.ast())

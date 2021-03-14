@@ -3,13 +3,15 @@ import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
 
 const semanticChecks = [
+  ["variable declarations", 'const x = 1; let y = "false";'],
+  ["complex array types", "function f(x: [[[int?]]?]) {}"],
   ["increment and decrement", "let x = 10; x--; x++;"],
   ["initialize with empty array", "let a = [](of int);"],
+  ["struct declaration", "struct S {f: (int)->boolean? g: string}"],
   ["assign arrays", "let a = [](of int);let b=[1];a=b;b=a;"],
   ["initialize with empty optional", "let a = no int;"],
-  ["conditionals with ints", "print(true ? 8 : 5);"],
-  ["conditionals with floats", "print(1<2 ? 8.0 : -5.22);"],
-  ["conditionals with strings", 'print(1<2 ? "x" : "y");'],
+  ["short return", "function f() { return; }"],
+  ["long return", "function f(): boolean { return true; }"],
   ["assign optionals", "let a = no int;let b=some 1;a=b;b=a;"],
   ["return in nested if", "function f() {if true {return;}}"],
   ["break in nested if", "while false {if true {break;}}"],
@@ -18,6 +20,12 @@ const semanticChecks = [
   ["for over collection", "for i in [2,3,5] {print(1);}"],
   ["for in range", "for i in 1..<10 {print(0);}"],
   ["repeat", "repeat 3 {let a = 1; print(a);}"],
+  ["conditionals with ints", "print(true ? 8 : 5);"],
+  ["conditionals with floats", "print(1<2 ? 8.0 : -5.22);"],
+  ["conditionals with strings", 'print(1<2 ? "x" : "y");'],
+  ["??", "print((some 5) ?? 0);"],
+  ["||", "print(true||1<2||false||!true);"],
+  ["&&", "print(true&&1<2&&false&&!true);"],
   ["assigned functions", "function f() {}\nlet g = f;g = f;"],
   ["call of assigned functions", "function f(x: int) {}\nlet g=f;g(1);"],
   [
@@ -49,8 +57,8 @@ const semanticChecks = [
 ]
 
 const semanticErrors = [
-  ["redeclarations", "print(x);", /Identifier x not declared/],
-  ["non declared ids", "let x = 1;let x = 1;", /Identifier x already declared/],
+  ["undeclared id", "print(x);", /Identifier x not declared/],
+  ["redeclared id", "let x = 1;let x = 1;", /Identifier x already declared/],
   ["assign to const", "const x = 1;x = 2;", /Cannot assign to constant x/],
   ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
   ["assign bad array type", "let x=1;x=[true];", /Cannot assign a \[boolean\] to a int/],

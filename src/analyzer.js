@@ -32,7 +32,7 @@ const check = self => ({
     must(self.type === Type.BOOLEAN, `Expected a boolean but got a ${self.type.name}`)
   },
   isInteger() {
-    must(self.type === Type.INT, `Expected an integer but got a ${self.type.name}`)
+    must(self.type === Type.INT, `Integer expected but got a ${self.type.name}`)
   },
   isAType() {
     must([Type, FunctionType].includes(self.constructor), "Type expected")
@@ -62,10 +62,10 @@ const check = self => ({
     must(!self.readOnly, `Cannot assign to constant ${self.name}`)
   },
   areAllDistinct() {
-    must(new Set(self.map(f => f.name)).size === self.length)
+    must(new Set(self.map(f => f.name)).size === self.length, "Fields must be distinct")
   },
-  isInObject(object) {
-    return object.type.fields.map(f => f.name).includes(self.name)
+  isInTheObject(object) {
+    must(object.type.fields.map(f => f.name).includes(self), "No such field")
   },
   isInsideALoop() {
     must(self.inLoop, "break can only appear in a loop")
@@ -295,8 +295,8 @@ class Context {
     e.optional = this.analyze(e.optional)
     e.alternate = this.analyze(e.alternate)
     check(e.optional).isAnOptional()
-    check(e.alternate).isAssignableTo(e.optional.baseType)
-    e.type = e.optional.baseType
+    check(e.alternate).isAssignableTo(e.optional.type.baseType)
+    e.type = e.optional.type
     return e
   }
   OrExpression(e) {
@@ -334,13 +334,19 @@ class Context {
   }
   UnaryExpression(e) {
     e.operand = this.analyze(e.operand)
-    check(e.operand).isNumeric()
-    e.type = e.operand.type
-    return e
-  }
-  SomeExpression(e) {
-    e.expression = this.analyze(e.expression)
-    e.type = new OptionalType(e.expression.type)
+    if (e.op === "#") {
+      check(e.operand).isAnArray()
+      e.type = Type.INT
+    } else if (e.op === "-") {
+      check(e.operand).isNumeric()
+      e.type = e.operand.type
+    } else if (e.op === "!") {
+      check(e.operand).isBoolean()
+      e.type = Type.BOOLEAN
+    } else {
+      // Operator is "some"
+      e.type = new OptionalType(e.operand.type)
+    }
     return e
   }
   EmptyOptional(e) {
@@ -367,7 +373,7 @@ class Context {
   }
   MemberExpression(e) {
     e.object = this.analyze(e.object)
-    check(e.field).isInObject(e.object)
+    check(e.field).isInTheObject(e.object)
     e.type = e.object.type.fields.find(f => f.name === e.field).type
     return e
   }

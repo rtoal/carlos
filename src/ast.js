@@ -217,12 +217,6 @@ export class UnaryExpression {
   }
 }
 
-export class SomeExpression {
-  constructor(expression) {
-    this.expression = expression
-  }
-}
-
 export class EmptyOptional {
   constructor(baseType) {
     this.baseType = baseType

@@ -19,9 +19,9 @@ Carlos {
   Params      = "(" ListOf<Param, ","> ")"
   Param       = id ":" TypeExp
 
-  TypeExp     = "[" TypeExp "]"                             --array
+  TypeExp     = TypeExp "?"                                 --optional
+              | "[" TypeExp "]"                             --array
               | "(" ListOf<TypeExp, ","> ")" "->" TypeExp   --function
-              | TypeExp "?"                                 --optional
               | id                                          --id
 
   IfStmt      = if Exp Block else (Block | IfStmt)          --long
@@ -53,8 +53,7 @@ Carlos {
               | Exp8
   Exp8        = Exp9 "**" Exp8                              --power
               | Exp9
-              | "#" Exp9                                    --length
-              | "-" Exp9                                    --negate
+              | ("#" | "-" | "!" | some) Exp9               --unary
   Exp9        = true
               | false
               | floatlit
@@ -62,7 +61,6 @@ Carlos {
               | stringlit
               | "[]" "(" of TypeExp ")"                     --emptyarray
               | "[" NonemptyListOf<Exp, ","> "]"            --arrayexp
-              | some Exp                                    --wrappedopt
               | no TypeExp                                  --emptyopt
               | "(" Exp ")"                                 --parens
               | Var

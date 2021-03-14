@@ -3,6 +3,7 @@ import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
 
 const semanticChecks = [
+  ["increment and decrement", "let x = 10; x--; x++;"],
   ["initialize with empty array", "let a = [](of int);"],
   ["assign arrays", "let a = [](of int);let b=[1];a=b;b=a;"],
   ["initialize with empty optional", "let a = no int;"],
@@ -12,6 +13,11 @@ const semanticChecks = [
   ["assign optionals", "let a = no int;let b=some 1;a=b;b=a;"],
   ["return in nested if", "function f() {if true {return;}}"],
   ["break in nested if", "while false {if true {break;}}"],
+  ["long if", "if true {print(1);} else {print(3);}"],
+  ["else if", "if true {print(1);} else if true {print(0);} else {print(3);}"],
+  ["for over collection", "for i in [2,3,5] {print(1);}"],
+  ["for in range", "for i in 1..<10 {print(0);}"],
+  ["repeat", "repeat 3 {let a = 1; print(a);}"],
   ["assigned functions", "function f() {}\nlet g = f;g = f;"],
   ["call of assigned functions", "function f(x: int) {}\nlet g=f;g(1);"],
   [
@@ -33,6 +39,7 @@ const semanticChecks = [
      function compose(): (int)->int { return square; }`,
   ],
   ["member exp", "struct S {x: int} let y = S(1);print(y.x);"],
+  ["subscript exp", "let a=[1,2];print(a[0]);"],
   ["built-in constants", "print(25.0 * π);"],
   ["built-in sin", "print(sin(π));"],
   ["built-in cos", "print(cos(93.999));"],
@@ -46,6 +53,7 @@ const semanticErrors = [
   ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
   ["assign bad array type", "let x=1;x=[true];", /Cannot assign a \[boolean\] to a int/],
   ["assign bad optional type", "let x=1;x=some 2;", /Cannot assign a int\? to a int/],
+  ["unwrap non-optional", "print(1??2);", /Optional expected/],
   ["bad types for ||", "print(false||1);", /a boolean but got a int/],
   ["bad types for &&", "print(false&&1);", /a boolean but got a int/],
   ["bad types for ==", "print(false==1);", /Operands do not have the same type/],

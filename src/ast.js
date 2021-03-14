@@ -114,14 +114,14 @@ export class Parameter {
 }
 
 export class Increment {
-  constructor(op, operand) {
-    Object.assign(this, { op, operand })
+  constructor(variable) {
+    this.variable = variable
   }
 }
 
 export class Decrement {
-  constructor(op, operand) {
-    Object.assign(this, { op, operand })
+  constructor(variable) {
+    this.variable = variable
   }
 }
 

@@ -31,8 +31,17 @@ const check = self => ({
   isBoolean() {
     must(self.type === Type.BOOLEAN, `Expected a boolean but got a ${self.type.name}`)
   },
+  isInteger() {
+    must(self.type === Type.INT, `Expected an integer but got a ${self.type.name}`)
+  },
   isAType() {
     must([Type, FunctionType].includes(self.constructor), "Type expected")
+  },
+  isAnOptional() {
+    must(self.type.constructor === OptionalType, "Optional expected")
+  },
+  isAnArray() {
+    must(self.type.constructor === ArrayType, "Array expected")
   },
   hasSameTypeAs(other) {
     must(self.type === other.type, "Operands do not have the same type")
@@ -256,12 +265,12 @@ class Context {
     return s
   }
   ForRangeStatement(s) {
-    s.low = this.analyze(s.collection)
+    s.low = this.analyze(s.low)
     check(s.low).isInteger()
-    s.high = this.analyze(s.collection)
+    s.high = this.analyze(s.high)
     check(s.high).isInteger()
     s.iterator = new Variable(s.iterator, true)
-    s.iterator.type = s.collection.type.baseType
+    s.iterator.type = Type.INT
     s.body = this.newChild({ inLoop: true }).analyze(s.body)
     return s
   }
@@ -285,7 +294,7 @@ class Context {
   UnwrapElse(e) {
     e.optional = this.analyze(e.optional)
     e.alternate = this.analyze(e.alternate)
-    check(e.optional).isOptional()
+    check(e.optional).isAnOptional()
     check(e.alternate).isAssignableTo(e.optional.baseType)
     e.type = e.optional.baseType
     return e
@@ -342,7 +351,7 @@ class Context {
   SubscriptExpression(e) {
     e.array = this.analyze(e.array)
     e.type = e.array.type.baseType
-    e.element = this.analyze(e.element)
+    e.index = this.analyze(e.index)
     return e
   }
   ArrayExpression(a) {

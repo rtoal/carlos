@@ -1,4 +1,12 @@
-import { Variable, Type, FunctionType, Function, ArrayType, OptionalType } from "./ast.js"
+import {
+  Variable,
+  Type,
+  FunctionType,
+  Function,
+  ArrayType,
+  OptionalType,
+  StructDeclaration,
+} from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 function must(condition, errorMessage) {
@@ -44,6 +52,12 @@ const check = self => ({
   isNotReadOnly() {
     must(!self.readOnly, `Cannot assign to constant ${self.name}`)
   },
+  areAllDistinct() {
+    must(new Set(self.map(f => f.name)).size === self.length)
+  },
+  isInObject(object) {
+    return object.type.fields.map(f => f.name).includes(self.name)
+  },
   isInsideALoop() {
     must(self.inLoop, "break can only appear in a loop")
   },
@@ -51,7 +65,10 @@ const check = self => ({
     must(self.function, "Return can only appear in a function")
   },
   isCallable() {
-    must(self.type.constructor === FunctionType, "Call of non-function")
+    must(
+      self.constructor === StructDeclaration || self.type.constructor == FunctionType,
+      "Call of non-function or non-constructor"
+    )
   },
   returnsNothing() {
     must(self.type.returnType === Type.VOID, "Something should be returned here")
@@ -62,17 +79,19 @@ const check = self => ({
   isReturnableFrom(f) {
     check(self).isAssignableTo(f.type.returnType)
   },
-  matchParametersOf(callee) {
+  match(targetTypes) {
     // self is the array of arguments
-    const paramCount = callee.type.parameterTypes.length
-    const argCount = self.length
     must(
-      paramCount === argCount,
-      `${paramCount} parameter(s) required but ${argCount} argument(s) passed`
+      targetTypes.length === self.length,
+      `${targetTypes.length} argument(s) required but ${self.length} passed`
     )
-    callee.type.parameterTypes.forEach((parameterType, i) =>
-      check(self[i]).isAssignableTo(parameterType)
-    )
+    targetTypes.forEach((type, i) => check(self[i]).isAssignableTo(type))
+  },
+  matchParametersOf(calleeType) {
+    check(self).match(calleeType.parameterTypes)
+  },
+  matchFieldsOf(structType) {
+    check(self).match(structType.fields.map(f => f.type))
   },
 })
 
@@ -340,14 +359,20 @@ class Context {
   MemberExpression(e) {
     e.object = this.analyze(e.object)
     check(e.field).isInObject(e.object)
+    e.type = e.object.type.fields.find(f => f.name === e.field).type
     return e
   }
   Call(c) {
     c.callee = this.analyze(c.callee)
     check(c.callee).isCallable()
     c.args = this.analyze(c.args)
-    check(c.args).matchParametersOf(c.callee)
-    c.type = c.callee.type.returnType
+    if (c.callee.constructor === StructDeclaration) {
+      check(c.args).matchFieldsOf(c.callee)
+      c.type = c.callee // weird but seems ok for now
+    } else {
+      check(c.args).matchParametersOf(c.callee.type)
+      c.type = c.callee.type.returnType
+    }
     return c
   }
   IdentifierExpression(e) {

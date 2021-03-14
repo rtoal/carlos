@@ -6,6 +6,9 @@ const semanticChecks = [
   ["initialize with empty array", "let a = [](of int);"],
   ["assign arrays", "let a = [](of int);let b=[1];a=b;b=a;"],
   ["initialize with empty optional", "let a = no int;"],
+  ["conditionals with ints", "print(true ? 8 : 5);"],
+  ["conditionals with floats", "print(1<2 ? 8.0 : -5.22);"],
+  ["conditionals with strings", 'print(1<2 ? "x" : "y");'],
   ["assign optionals", "let a = no int;let b=some 1;a=b;b=a;"],
   ["return in nested if", "function f() {if true {return;}}"],
   ["break in nested if", "while false {if true {break;}}"],
@@ -29,6 +32,7 @@ const semanticChecks = [
     `function square(x: int): int { return x * x; }
      function compose(): (int)->int { return square; }`,
   ],
+  ["member exp", "struct S {x: int} let y = S(1);print(y.x);"],
   ["built-in constants", "print(25.0 * π);"],
   ["built-in sin", "print(sin(π));"],
   ["built-in cos", "print(cos(93.999));"],
@@ -78,12 +82,12 @@ const semanticErrors = [
   [
     "Too many args",
     "function f(x: int) {}\nf(1,2);",
-    /1 parameter\(s\) required but 2 argument\(s\) passed/,
+    /1 argument\(s\) required but 2 passed/,
   ],
   [
     "Too few args",
     "function f(x: int) {}\nf();",
-    /1 parameter\(s\) required but 0 argument\(s\) passed/,
+    /1 argument\(s\) required but 0 passed/,
   ],
   [
     "Parameter type mismatch",

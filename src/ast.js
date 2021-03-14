@@ -27,6 +27,18 @@ export class Type {
   }
 }
 
+export class ArrayType {
+  constructor(baseType) {
+    this.baseType = baseType
+  }
+  get name() {
+    return `[${this.baseType.name}]`
+  }
+  isAssignableTo(target) {
+    return target.constructor === ArrayType && this.baseType === target.baseType
+  }
+}
+
 export class FunctionType {
   constructor(parameterTypes, returnType) {
     Object.assign(this, { parameterTypes, returnType })
@@ -41,18 +53,6 @@ export class FunctionType {
       this.parameterTypes.length === target.parameterTypes.length &&
       this.parameterTypes.every((t, i) => target.parameterTypes[i].isAssignableTo(t))
     )
-  }
-}
-
-export class ArrayType {
-  constructor(baseType) {
-    this.baseType = baseType
-  }
-  get name() {
-    return `[${this.baseType.name}]`
-  }
-  isAssignableTo(target) {
-    return target.constructor === ArrayType && this.baseType === target.baseType
   }
 }
 
@@ -74,6 +74,7 @@ export class VariableDeclaration {
   }
 }
 
+// These nodes are created during semantic analysis only
 export class Variable {
   constructor(name, readOnly) {
     Object.assign(this, { name, readOnly })
@@ -98,10 +99,11 @@ export class FunctionDeclaration {
   }
 }
 
+// These nodes are created during semantic analysis only
 export class Function {
   constructor(name) {
-    // All other properties added during semantic analysis
     Object.assign(this, { name })
+    // Other properties set after construction
   }
 }
 
@@ -174,8 +176,8 @@ export class ForRangeStatement {
 }
 
 export class ForStatement {
-  constructor(iterator, range, body) {
-    Object.assign(this, { iterator, range, body })
+  constructor(iterator, collection, body) {
+    Object.assign(this, { iterator, collection, body })
   }
 }
 
@@ -239,9 +241,9 @@ export class EmptyArray {
   }
 }
 
-export class ArrayLiteral {
-  constructor(args) {
-    this.args = args
+export class ArrayExpression {
+  constructor(elements) {
+    this.elements = elements
   }
 }
 
@@ -254,12 +256,6 @@ export class MemberExpression {
 export class Call {
   constructor(callee, args) {
     Object.assign(this, { callee, args })
-  }
-}
-
-export class NumericRange {
-  constructor(low, high, open) {
-    Object.assign(this, { low, high, open })
   }
 }
 

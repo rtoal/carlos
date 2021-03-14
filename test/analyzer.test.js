@@ -53,11 +53,11 @@ const semanticErrors = [
   ["non-boolean if test", "if 1 {}", /a boolean but got a int/],
   ["non-boolean while test", "while 1 {}", /a boolean but got a int/],
   ["shadowing", "let x = 1;\nwhile true {let x = 1;}", /Identifier x already declared/],
-  ["break outside loop", "break;", /'break' can only appear in a loop/],
+  ["break outside loop", "break;", /break can only appear in a loop/],
   [
     "break inside function",
     "while true {function f() {break;}}",
-    /'break' can only appear in a loop/,
+    /break can only appear in a loop/,
   ],
   [
     "return expression from void function",

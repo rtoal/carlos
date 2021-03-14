@@ -140,7 +140,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.EmptyArray(type.ast())
   },
   Exp9_arrayexp(_left, args, _right) {
-    return new ast.ArrayLiteral(args.asIteration().ast())
+    return new ast.ArrayExpression(args.asIteration().ast())
   },
   Exp9_wrappedopt(_some, expression) {
     return new ast.SomeExpression(expression.ast())

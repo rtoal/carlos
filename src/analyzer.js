@@ -231,9 +231,9 @@ class Context {
     s.body = this.newChild({ inLoop: true }).analyze(s.body)
     return s
   }
-  ForTimesStatement(s) {
+  RepeatStatement(s) {
     s.count = this.analyze(s.count)
-    check.isInteger(s.test, "for-times")
+    check.isInteger(s.test, "repeat")
     s.body = this.newChild({ inLoop: true }).analyze(s.body)
     return s
   }

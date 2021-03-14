@@ -42,7 +42,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   TypeExp_optional(baseType, _questionMark) {
     return new ast.OptionalType(baseType.ast())
   },
-  TypeExp_named(id) {
+  TypeExp_id(id) {
     return new ast.TypeId(id.sourceString)
   },
   Statement_bump(variable, operator, _semi) {
@@ -72,16 +72,13 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   IfStmt_short(_if, test, consequent) {
     return new ast.ShortIfStatement(test.ast(), consequent.ast())
   },
-  ForStmt_forever(_for, body) {
-    return new ast.ForeverStatement(body.ast())
-  },
-  ForStmt_while(_for, test, body) {
+  LoopStmt_while(_while, test, body) {
     return new ast.WhileStatement(test.ast(), body.ast())
   },
-  ForStmt_times(_for, count, _times, body) {
-    return new ast.ForTimesStatement(count.ast(), body.ast())
+  LoopStmt_repeat(_repeat, count, body) {
+    return new ast.RepeatStatement(count.ast(), body.ast())
   },
-  ForStmt_range(_for, id, _in, low, op, high, body) {
+  LoopStmt_range(_for, id, _in, low, op, high, body) {
     return new ast.ForRangeStatement(
       id.sourceString,
       low.ast(),
@@ -90,7 +87,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
       body.ast()
     )
   },
-  ForStmt_collection(_for, id, _in, collection, body) {
+  LoopStmt_collection(_for, id, _in, collection, body) {
     return new ast.ForStatement(id.sourceString, collection.ast(), body.ast())
   },
   Block(_open, body, _close) {

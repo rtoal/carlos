@@ -32,18 +32,14 @@ export class FunctionType {
     Object.assign(this, { parameterTypes, returnType })
   }
   get name() {
-    return `(${this.parameterTypes.map(t => t.name).join(",")})->${
-      this.returnType.name
-    }`
+    return `(${this.parameterTypes.map(t => t.name).join(",")})->${this.returnType.name}`
   }
   isAssignableTo(target) {
     return (
       target.constructor === FunctionType &&
       this.returnType.isAssignableTo(target.returnType) &&
       this.parameterTypes.length === target.parameterTypes.length &&
-      this.parameterTypes.every((t, i) =>
-        target.parameterTypes[i].isAssignableTo(t)
-      )
+      this.parameterTypes.every((t, i) => target.parameterTypes[i].isAssignableTo(t))
     )
   }
 }
@@ -68,9 +64,7 @@ export class OptionalType {
     return `${this.baseType.name}?`
   }
   isAssignableTo(target) {
-    return (
-      target.constructor === OptionalType && this.baseType === target.baseType
-    )
+    return target.constructor === OptionalType && this.baseType === target.baseType
   }
 }
 
@@ -161,19 +155,13 @@ export class ShortIfStatement {
   }
 }
 
-export class ForeverStatement {
-  constructor(body) {
-    this.body = body
-  }
-}
-
 export class WhileStatement {
   constructor(test, body) {
     Object.assign(this, { test, body })
   }
 }
 
-export class ForTimesStatement {
+export class RepeatStatement {
   constructor(count, body) {
     Object.assign(this, { count, body })
   }

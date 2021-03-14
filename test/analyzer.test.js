@@ -4,7 +4,7 @@ import analyze from "../src/analyzer.js"
 
 const semanticChecks = [
   ["return in nested if", "function f() {if true {return;}}"],
-  ["break in nested if", "for false {if true {break;}}"],
+  ["break in nested if", "while false {if true {break;}}"],
   ["assigned functions", "function f() {}\nlet g = f;g = f;"],
   ["call of assigned functions", "function f(x: int) {}\nlet g=f;g(1);"],
   [
@@ -51,12 +51,12 @@ const semanticErrors = [
   ["bad types for >=", "print(false>=1);", /number or string but got a bool/],
   ["bad types for negation", "print(-true);", /a number but got a boolean/],
   ["non-boolean if test", "if 1 {}", /a boolean but got a int/],
-  ["non-boolean for test", "for 1 {}", /a boolean but got a int/],
-  ["shadowing", "let x = 1;\nfor true {let x = 1;}", /Identifier x already declared/],
+  ["non-boolean while test", "while 1 {}", /a boolean but got a int/],
+  ["shadowing", "let x = 1;\nwhile true {let x = 1;}", /Identifier x already declared/],
   ["break outside loop", "break;", /'break' can only appear in a loop/],
   [
     "break inside function",
-    "for true {function f() {break;}}",
+    "while true {function f() {break;}}",
     /'break' can only appear in a loop/,
   ],
   [

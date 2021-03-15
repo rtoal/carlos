@@ -365,6 +365,7 @@ class Context {
     e.array = this.analyze(e.array)
     e.type = e.array.type.baseType
     e.index = this.analyze(e.index)
+    check(e.index).isInteger()
     return e
   }
   ArrayExpression(a) {

@@ -33,6 +33,9 @@ const semanticChecks = [
   // ["ok to != arrays", "print([1]!=[5,8]);"],
   ["shifts", "print(1<<3<<5<<8>>2>>0);"],
   ["arithmetic", "let x=1;print(2*3+5**-3/2-5%8);"],
+  ["optional types", "let x = no int; x = some 100;"],
+  ["variables", "let x=[[[[1]]]]; print(x[0][0][0][0]+2);"],
+  // ["nested structs", "struct S {z: S?} let x = S(no S);"],
   ["array length", "print(#[1,2,3]);"],
   ["assigned functions", "function f() {}\nlet g = f;g = f;"],
   ["call of assigned functions", "function f(x: int) {}\nlet g=f;g(1);"],
@@ -54,6 +57,7 @@ const semanticChecks = [
     `function square(x: int): int { return x * x; }
      function compose(): (int)->int { return square; }`,
   ],
+  ["struct parameters", "struct S {} function f(x: S) {}"],
   ["array parameters", "function f(x: [int?]) {}"],
   ["optional parameters", "function f(x: [int], y: string?) {}"],
   ["member exp", "struct S {x: int} let y = S(1);print(y.x);"],

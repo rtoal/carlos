@@ -27,24 +27,20 @@ export class Type {
   }
 }
 
-export class ArrayType {
+export class ArrayType extends Type {
   constructor(baseType) {
+    super(`[${baseType.name}]`)
     this.baseType = baseType
-  }
-  get name() {
-    return `[${this.baseType.name}]`
   }
   isAssignableTo(target) {
     return target.constructor === ArrayType && this.baseType === target.baseType
   }
 }
 
-export class FunctionType {
+export class FunctionType extends Type {
   constructor(parameterTypes, returnType) {
+    super(`(${parameterTypes.map(t => t.name).join(",")})->${returnType.name}`)
     Object.assign(this, { parameterTypes, returnType })
-  }
-  get name() {
-    return `(${this.parameterTypes.map(t => t.name).join(",")})->${this.returnType.name}`
   }
   isAssignableTo(target) {
     return (
@@ -56,12 +52,10 @@ export class FunctionType {
   }
 }
 
-export class OptionalType {
+export class OptionalType extends Type {
   constructor(baseType) {
+    super(`${baseType.name}?`)
     this.baseType = baseType
-  }
-  get name() {
-    return `${this.baseType.name}?`
   }
   isAssignableTo(target) {
     return target.constructor === OptionalType && this.baseType === target.baseType
@@ -81,9 +75,10 @@ export class Variable {
   }
 }
 
-export class StructDeclaration {
+export class StructDeclaration extends Type {
   constructor(name, fields) {
-    Object.assign(this, { name, fields })
+    super(name)
+    this.fields = fields
   }
 }
 

@@ -35,7 +35,7 @@ const check = self => ({
     must(self.type === Type.INT, `Expected an integer, found ${self.type.name}`)
   },
   isAType() {
-    must([Type, FunctionType].includes(self.constructor), "Type expected")
+    must([Type, StructDeclaration].includes(self.constructor), "Type expected")
   },
   isAnOptional() {
     must(self.type.constructor === OptionalType, "Optional expected")
@@ -172,9 +172,10 @@ class Context {
     return d
   }
   StructDeclaration(d) {
+    // Add early to allow recursion
+    this.add(d.name, d) // TODO is this ok?
     d.fields = this.analyze(d.fields)
     check(d.fields).areAllDistinct()
-    this.add(d.name, d) // TODO is this ok?
   }
   Field(f) {
     f.type = this.analyze(f.type)

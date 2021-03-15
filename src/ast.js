@@ -22,9 +22,13 @@ export class Type {
   static VOID = new Type("void")
   static TYPE = new Type("type")
   static ANY = new Type("any")
+  // Equivalence: when are two types the same
   isEquivalentTo(target) {
     return this == target
   }
+  // T1 assignable to T2 is when x:T1 can be assigned to y:T2. By default
+  // this is only when two types are equivalent; however, for other kinds
+  // of types there may be special rules.
   isAssignableTo(target) {
     return this.isEquivalentTo(target)
   }
@@ -35,6 +39,8 @@ export class ArrayType extends Type {
     super(`[${baseType.name}]`)
     this.baseType = baseType
   }
+  // [T] equivalent to [U] only when T is equivalent to U. Same for
+  // assignability: we do NOT want arrays to be covariant!
   isEquivalentTo(target) {
     return target.constructor === ArrayType && this.baseType === target.baseType
   }
@@ -60,6 +66,8 @@ export class OptionalType extends Type {
     super(`${baseType.name}?`)
     this.baseType = baseType
   }
+  // T? equivalent to U? only when T is equivalent to U. Same for
+  // assignability: we do NOT want optionals to be covariant!
   isEquivalentTo(target) {
     return target.constructor === OptionalType && this.baseType === target.baseType
   }
@@ -83,6 +91,8 @@ export class StructDeclaration extends Type {
     super(name)
     this.fields = fields
   }
+  // We are explicitly not overriding equivalence or assignability rules
+  // here. Structs have name equivalence.
 }
 
 export class Field {
@@ -100,7 +110,7 @@ export class FunctionDeclaration {
 // These nodes are created during semantic analysis only
 export class Function {
   constructor(name) {
-    Object.assign(this, { name })
+    this.name = name
     // Other properties set after construction
   }
 }

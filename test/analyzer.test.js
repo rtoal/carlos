@@ -163,13 +163,32 @@ const semanticErrors = [
   ["Non-type in field type", "let x=1;struct S {y:x}", /Type expected/],
 ]
 
-// Test cases for expected semantic graphs after processing the AST
-const letX1 = new ast.VariableDeclaration("x", false, 1n)
-const varX = new ast.Variable("x", false)
-letX1.variable = varX
-varX.type = ast.Type.INT
+// Test cases for expected semantic graphs after processing the AST. In general
+// this suite of cases should have a test for each kind of node, including
+// nodes that get rewritten as well as those that are just "passed through"
+// by the analyzer. For now, we're just testing the various rewrites only.
 
-const graphChecks = [["new variable", "let x=1;", [letX1]]]
+const typeInt = ast.Type.INT
+const typeVoid = ast.Type.VOID
+const varX = Object.assign(new ast.Variable("x", false), { type: ast.Type.INT })
+const letX1 = Object.assign(new ast.VariableDeclaration("x", false, 1n), {
+  variable: varX,
+})
+const paramX = new ast.Parameter("x", typeInt)
+const intToVoidType = new ast.FunctionType([typeInt], typeVoid)
+const funDeclF = Object.assign(new ast.FunctionDeclaration("f", [paramX], typeVoid, []), {
+  function: Object.assign(new ast.Function("f"), {
+    type: intToVoidType,
+  }),
+})
+const fieldX = new ast.Field("x", typeInt)
+const structS = new ast.StructDeclaration("S", [fieldX])
+
+const graphChecks = [
+  ["new variable gets created", "let x=1;", [letX1]],
+  ["function types resolved", "function f(x: int) {}", [funDeclF]],
+  ["field type resolved", "struct S {x: int}", [structS]],
+]
 
 describe("The analyzer", () => {
   for (const [scenario, source] of semanticChecks) {

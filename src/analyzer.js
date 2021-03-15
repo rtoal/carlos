@@ -176,6 +176,7 @@ class Context {
     this.add(d.name, d) // TODO is this ok?
     d.fields = this.analyze(d.fields)
     check(d.fields).areAllDistinct()
+    return d
   }
   Field(f) {
     f.type = this.analyze(f.type)

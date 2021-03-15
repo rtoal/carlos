@@ -1,7 +1,9 @@
 import assert from "assert"
 import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
+import * as ast from "../src/ast.js"
 
+// Programs that are semantically correct
 const semanticChecks = [
   ["variable declarations", 'const x = 1; let y = "false";'],
   ["complex array types", "function f(x: [[[int?]]?]) {}"],
@@ -29,8 +31,8 @@ const semanticChecks = [
   ["&&", "print(true&&1<2&&false&&!true);"],
   ["bit ops", "print((1&2)|(9^3));"],
   ["relations", 'print(1<=2 && "x">"y" && 3.5<1.2);'],
-  // ["ok to == arrays", "print([1]==[5,8]);"],
-  // ["ok to != arrays", "print([1]!=[5,8]);"],
+  ["ok to == arrays", "print([1]==[5,8]);"],
+  ["ok to != arrays", "print([1]!=[5,8]);"],
   ["shifts", "print(1<<3<<5<<8>>2>>0);"],
   ["arithmetic", "let x=1;print(2*3+5**-3/2-5%8);"],
   ["array length", "print(#[1,2,3]);"],
@@ -71,6 +73,7 @@ const semanticChecks = [
   ["built-in hypot", "print(hypot(-4.0, 3.00001));"],
 ]
 
+// Programs that are syntactically correct but have semantic errors
 const semanticErrors = [
   ["non-distinct fields", "struct S {x: boolean x: int}", /Fields must be distinct/],
   ["non-int increment", "let x=false;x++;", /an integer, found boolean/],
@@ -129,7 +132,9 @@ const semanticErrors = [
   ["bad types for not", 'print(!"hello");', /a boolean, found string/],
   ["non-integer index", "let a=[1];print(a[false]);", /integer, found boolean/],
   ["no such field", "struct S{} let x=S(); print(x.y);", /No such field/],
+  ["diff type array elements", "print([3,3.0]);", /Not all elements have the same type/],
   ["shadowing", "let x = 1;\nwhile true {let x = 1;}", /Identifier x already declared/],
+  ["call of uncallable", "let x = 1;\nprint(x());", /Call of non-function/],
   [
     "Too many args",
     "function f(x: int) {}\nf(1,2);",
@@ -145,7 +150,6 @@ const semanticErrors = [
     "function f(x: int) {}\nf(false);",
     /Cannot assign a boolean to a int/,
   ],
-  ["call of non-function", "let x = 1;\nprint(x());", /Call of non-function/],
   [
     "function type mismatch",
     `function f(x: int, y: (boolean)->void): int { return 1; }
@@ -153,12 +157,19 @@ const semanticErrors = [
      f(2, g);`,
     /Cannot assign a \(boolean\)->int to a \(boolean\)->void/,
   ],
-  [
-    "bad call to a standard library function",
-    "print(sin(true));",
-    /Cannot assign a boolean to a float/,
-  ],
+  ["bad call to stdlib sin()", "print(sin(true));", /Cannot assign a boolean to a float/],
+  ["Non-type in param", "let x=1;function f(y:x){}", /Type expected/],
+  ["Non-type in return type", "let x=1;function f():x{return 1;}", /Type expected/],
+  ["Non-type in field type", "let x=1;struct S {y:x}", /Type expected/],
 ]
+
+// Test cases for expected semantic graphs after processing the AST
+const letX1 = new ast.VariableDeclaration("x", false, 1n)
+const varX = new ast.Variable("x", false)
+letX1.variable = varX
+varX.type = ast.Type.INT
+
+const graphChecks = [["new variable", "let x=1;", [letX1]]]
 
 describe("The analyzer", () => {
   for (const [scenario, source] of semanticChecks) {
@@ -169,6 +180,11 @@ describe("The analyzer", () => {
   for (const [scenario, source, errorMessagePattern] of semanticErrors) {
     it(`throws on ${scenario}`, () => {
       assert.throws(() => analyze(parse(source)), errorMessagePattern)
+    })
+  }
+  for (const [scenario, source, graph] of graphChecks) {
+    it(`properly rewrites the AST for ${scenario}`, () => {
+      assert.deepStrictEqual(analyze(parse(source)), new ast.Program(graph))
     })
   }
 })

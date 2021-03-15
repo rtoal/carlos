@@ -44,7 +44,7 @@ const check = self => ({
     must(self.type.constructor === ArrayType, "Array expected")
   },
   hasSameTypeAs(other) {
-    must(self.type === other.type, "Operands do not have the same type")
+    must(self.type.isEquivalentTo(other.type), "Operands do not have the same type")
   },
   allHaveSameType() {
     must(

@@ -22,8 +22,11 @@ export class Type {
   static VOID = new Type("void")
   static TYPE = new Type("type")
   static ANY = new Type("any")
+  isEquivalentTo(target) {
+    return this == target
+  }
   isAssignableTo(target) {
-    return this === target
+    return this.isEquivalentTo(target)
   }
 }
 
@@ -32,7 +35,7 @@ export class ArrayType extends Type {
     super(`[${baseType.name}]`)
     this.baseType = baseType
   }
-  isAssignableTo(target) {
+  isEquivalentTo(target) {
     return target.constructor === ArrayType && this.baseType === target.baseType
   }
 }
@@ -57,7 +60,7 @@ export class OptionalType extends Type {
     super(`${baseType.name}?`)
     this.baseType = baseType
   }
-  isAssignableTo(target) {
+  isEquivalentTo(target) {
     return target.constructor === OptionalType && this.baseType === target.baseType
   }
 }

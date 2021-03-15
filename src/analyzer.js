@@ -19,20 +19,20 @@ const check = self => ({
   isNumeric() {
     must(
       [Type.INT, Type.FLOAT].includes(self.type),
-      `Expected a number but got a ${self.type.name}`
+      `Expected a number, found ${self.type.name}`
     )
   },
   isNumericOrString() {
     must(
       [Type.INT, Type.FLOAT, Type.STRING].includes(self.type),
-      `Expected a number or string but got a ${self.type.name}`
+      `Expected a number or string, found ${self.type.name}`
     )
   },
   isBoolean() {
-    must(self.type === Type.BOOLEAN, `Expected a boolean but got a ${self.type.name}`)
+    must(self.type === Type.BOOLEAN, `Expected a boolean, found ${self.type.name}`)
   },
   isInteger() {
-    must(self.type === Type.INT, `Integer expected but got a ${self.type.name}`)
+    must(self.type === Type.INT, `Expected an integer, found ${self.type.name}`)
   },
   isAType() {
     must([Type, FunctionType].includes(self.constructor), "Type expected")
@@ -68,7 +68,7 @@ const check = self => ({
     must(object.type.fields.map(f => f.name).includes(self), "No such field")
   },
   isInsideALoop() {
-    must(self.inLoop, "break can only appear in a loop")
+    must(self.inLoop, "Break can only appear in a loop")
   },
   isInsideAFunction(context) {
     must(self.function, "Return can only appear in a function")
@@ -204,10 +204,12 @@ class Context {
   }
   Increment(s) {
     s.variable = this.analyze(s.variable)
+    check(s.variable).isInteger()
     return s
   }
   Decrement(s) {
     s.variable = this.analyze(s.variable)
+    check(s.variable).isInteger()
     return s
   }
   Assignment(s) {
@@ -314,11 +316,15 @@ class Context {
   BinaryExpression(e) {
     e.left = this.analyze(e.left)
     e.right = this.analyze(e.right)
-    if (["+"].includes(e.op)) {
+    if (["&", "|", "^", "<<", ">>"].includes(e.op)) {
+      check(e.left).isInteger()
+      check(e.right).isInteger()
+      e.type = Type.INT
+    } else if (["+"].includes(e.op)) {
       check(e.left).isNumericOrString()
       check(e.left).hasSameTypeAs(e.right)
       e.type = e.left.type
-    } else if (["-", "*", "/", "**"].includes(e.op)) {
+    } else if (["-", "*", "/", "%", "**"].includes(e.op)) {
       check(e.left).isNumeric()
       check(e.left).hasSameTypeAs(e.right)
       e.type = e.left.type

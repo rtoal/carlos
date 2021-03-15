@@ -106,14 +106,17 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Exp2_and(first, _ors, rest) {
     return new ast.AndExpression([first.ast(), ...rest.ast()])
   },
-  Exp3_bitor(left, op, right) {
-    return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())
+  Exp3_bitor(left, ops, right) {
+    const [op, operands] = [ops.sourceString[0], [left.ast(), ...right.ast()]]
+    return operands.reduce((x, y) => new ast.BinaryExpression(op, x, y))
   },
-  Exp3_bitxor(left, op, right) {
-    return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())
+  Exp3_bitxor(left, ops, right) {
+    const [op, operands] = [ops.sourceString[0], [left.ast(), ...right.ast()]]
+    return operands.reduce((x, y) => new ast.BinaryExpression(op, x, y))
   },
-  Exp3_bitand(left, op, right) {
-    return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())
+  Exp3_bitand(left, ops, right) {
+    const [op, operands] = [ops.sourceString[0], [left.ast(), ...right.ast()]]
+    return operands.reduce((x, y) => new ast.BinaryExpression(op, x, y))
   },
   Exp4_compare(left, op, right) {
     return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())

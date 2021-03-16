@@ -1,9 +1,9 @@
-  let a = 1024;
-  function f() {
-    const b = true;
-  }
-  function g(): int {
-    let b = 5;
-    return b;
-  }
-  print(a + a);
+let a = 1024;
+function f() {
+  const b = true;
+}
+function g(): int {
+  let b = 5;
+  return b;
+}
+print(a + a);

@@ -2,7 +2,10 @@ import assert from "assert"
 import parse from "../src/parser.js"
 import * as ast from "../src/ast.js"
 
-// Test cases for expected AST fragments
+// It is horribly tedious and would be ugly to expand out every test AST
+// using the very, very long names for the AST classes, and the deep
+// nesting that occurs even with small programs. So let's predefine a
+// bunch of tree fragments.
 const breakNode = new ast.BreakStatement()
 const returnNode = new ast.ShortReturnStatement()
 const letXbe1Node = new ast.VariableDeclaration("x", false, 1n)
@@ -12,6 +15,9 @@ const print1CallNode = new ast.Call(printIdNode, [1n])
 const noParamFunDeclNode = new ast.FunctionDeclaration("f", [], null, [])
 const paramXNode = new ast.Parameter("x", new ast.TypeId("int"))
 const oneParamFunDeclNode = new ast.FunctionDeclaration("f", [paramXNode], null, [])
+
+// Text fixture is a list of triples with the test case name, the source
+// code, and the expected AST (without the Program node, for simplicity)
 const astChecks = [
   ["smallest", "break;", [breakNode]],
   ["vardecs", "let x = 1; const x = 1;", [letXbe1Node, constXbe1Node]],

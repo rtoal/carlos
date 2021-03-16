@@ -168,25 +168,31 @@ const semanticErrors = [
 // nodes that get rewritten as well as those that are just "passed through"
 // by the analyzer. For now, we're just testing the various rewrites only.
 
-const typeInt = ast.Type.INT
-const typeVoid = ast.Type.VOID
-const varX = Object.assign(new ast.Variable("x", false), { type: ast.Type.INT })
+const Int = ast.Type.INT
+const Void = ast.Type.VOID
+const intToVoidType = new ast.FunctionType([Int], Void)
+
+const varX = Object.assign(new ast.Variable("x", false), { type: Int })
+
 const letX1 = Object.assign(new ast.VariableDeclaration("x", false, 1n), {
   variable: varX,
 })
-const paramX = new ast.Parameter("x", typeInt)
-const intToVoidType = new ast.FunctionType([typeInt], typeVoid)
-const funDeclF = Object.assign(new ast.FunctionDeclaration("f", [paramX], typeVoid, []), {
-  function: Object.assign(new ast.Function("f"), {
-    type: intToVoidType,
-  }),
-})
-const fieldX = new ast.Field("x", typeInt)
-const structS = new ast.StructDeclaration("S", [fieldX])
+const assignX2 = new ast.Assignment(varX, 2n)
+
+const funDeclF = Object.assign(
+  new ast.FunctionDeclaration("f", [new ast.Parameter("x", Int)], Void, []),
+  {
+    function: Object.assign(new ast.Function("f"), {
+      type: intToVoidType,
+    }),
+  }
+)
+
+const structS = new ast.StructDeclaration("S", [new ast.Field("x", Int)])
 
 const graphChecks = [
-  ["new variable gets created", "let x=1;", [letX1]],
-  ["function types resolved", "function f(x: int) {}", [funDeclF]],
+  ["Variable created & resolved", "let x=1; x=2;", [letX1, assignX2]],
+  ["functions created & resolved", "function f(x: int) {}", [funDeclF]],
   ["field type resolved", "struct S {x: int}", [structS]],
 ]
 

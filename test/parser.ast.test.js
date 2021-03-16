@@ -2,42 +2,53 @@ import assert from "assert"
 import parse from "../src/parser.js"
 import * as ast from "../src/ast.js"
 
-// It is horribly tedious and would be ugly to expand out every test AST
-// using the very, very long names for the AST classes, and the deep
-// nesting that occurs even with small programs. So let's predefine a
-// bunch of tree fragments.
-const breakNode = new ast.BreakStatement()
-const returnNode = new ast.ShortReturnStatement()
-const letXbe1Node = new ast.VariableDeclaration("x", false, 1n)
-const constXbe1Node = new ast.VariableDeclaration("x", true, 1n)
-const printIdNode = new ast.IdentifierExpression("print")
-const print1CallNode = new ast.Call(printIdNode, [1n])
-const noParamFunDeclNode = new ast.FunctionDeclaration("f", [], null, [])
-const paramXNode = new ast.Parameter("x", new ast.TypeId("int"))
-const oneParamFunDeclNode = new ast.FunctionDeclaration("f", [paramXNode], null, [])
+// TODO: This test case needs a lot more work
+const source = `
+  let x = 1;
+  const y = "hello";
+  return [1.0, 2.0];
+  return x.y;
+  function f(x: int): [bool] {
+    if (false) {break;}
+  }
+  struct S {
+    m: (string, int?)->bool
+  }
+  f(3 * 7 ?? 1 && 2);
+`
 
-// Text fixture is a list of triples with the test case name, the source
-// code, and the expected AST (without the Program node, for simplicity)
-const astChecks = [
-  ["smallest", "break;", [breakNode]],
-  ["vardecs", "let x = 1; const x = 1;", [letXbe1Node, constXbe1Node]],
-  [
-    "multiple statements",
-    "print(1);break;return;return;",
-    [print1CallNode, breakNode, returnNode, returnNode],
-  ],
-  ["function with no params, no return type", "function f() {}", [noParamFunDeclNode]],
-  [
-    "function with one param, no return type",
-    "function f(x: int) {}",
-    [oneParamFunDeclNode],
-  ],
-]
+const expectedAST = new ast.Program([
+  new ast.VariableDeclaration("x", false, 1n),
+  new ast.VariableDeclaration("y", true, "hello"),
+  new ast.ReturnStatement(new ast.ArrayExpression([1, 2])),
+  new ast.ReturnStatement(
+    new ast.MemberExpression(new ast.IdentifierExpression("x"), "y")
+  ),
+  new ast.FunctionDeclaration(
+    "f",
+    [new ast.Parameter("x", new ast.TypeId("int"))],
+    new ast.ArrayType(new ast.TypeId("bool")),
+    [new ast.ShortIfStatement(false, [new ast.BreakStatement()])]
+  ),
+  new ast.StructDeclaration("S", [
+    new ast.Field(
+      "m",
+      new ast.FunctionType(
+        [new ast.TypeId("string"), new ast.OptionalType(new ast.TypeId("int"))],
+        new ast.TypeId("bool")
+      )
+    ),
+  ]),
+  new ast.Call(new ast.IdentifierExpression("f"), [
+    new ast.UnwrapElse(
+      new ast.BinaryExpression("*", 3n, 7n),
+      new ast.AndExpression([1n, 2n])
+    ),
+  ]),
+])
 
 describe("The parser", () => {
-  for (const [scenario, source, tree] of astChecks) {
-    it(`produces the correct AST for ${scenario}`, () => {
-      assert.deepStrictEqual(parse(source), new ast.Program(tree))
-    })
-  }
+  it("produces a correct AST", () => {
+    assert.deepStrictEqual(parse(source), expectedAST)
+  })
 })

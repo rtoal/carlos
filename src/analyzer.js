@@ -48,7 +48,7 @@ const check = self => ({
   },
   allHaveSameType() {
     must(
-      self.slice(1).every(e => e.type === self[0].type),
+      self.slice(1).every(e => e.type.isEquivalentTo(self[0].type)),
       "Not all elements have the same type"
     )
   },

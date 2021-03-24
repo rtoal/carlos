@@ -45,7 +45,9 @@ export class ArrayType extends Type {
   // [T] equivalent to [U] only when T is equivalent to U. Same for
   // assignability: we do NOT want arrays to be covariant!
   isEquivalentTo(target) {
-    return target.constructor === ArrayType && this.baseType === target.baseType
+    return (
+      target.constructor === ArrayType && this.baseType.isEquivalentTo(target.baseType)
+    )
   }
 }
 

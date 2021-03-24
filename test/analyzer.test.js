@@ -46,6 +46,7 @@ const semanticChecks = [
   ["struct of arrays and opts", "struct S{x: [int] y: string??}"],
   ["assigned functions", "function f() {}\nlet g = f;g = f;"],
   ["call of assigned functions", "function f(x: int) {}\nlet g=f;g(1);"],
+  ["type equivalence of nested arrays", "function f(x: [[int]]) {} print(f([[1],[2]]));"],
   [
     "call of assigned function in expression",
     `function f(x: int, y: boolean): int {}

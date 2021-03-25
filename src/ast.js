@@ -6,7 +6,7 @@
 // by phase.
 
 export class Program {
-  // Example: let x = 1; print(x * 5);
+  // Example: let x = 1; print(x * 5); print("done");
   constructor(statements) {
     this.statements = statements
   }
@@ -30,7 +30,9 @@ export class Type {
   }
   // T1 assignable to T2 is when x:T1 can be assigned to y:T2. By default
   // this is only when two types are equivalent; however, for other kinds
-  // of types there may be special rules.
+  // of types there may be special rules. For example, in a language with
+  // supertypes and subtypes, an object of a subtype would be assignable
+  // to a variable constrained to a supertype.
   isAssignableTo(target) {
     return this.isEquivalentTo(target)
   }
@@ -42,12 +44,15 @@ export class ArrayType extends Type {
     super(`[${baseType.name}]`)
     this.baseType = baseType
   }
-  // [T] equivalent to [U] only when T is equivalent to U. Same for
-  // assignability: we do NOT want arrays to be covariant!
+  // [T] equivalent to [U] only when T is equivalent to U.
   isEquivalentTo(target) {
     return (
       target.constructor === ArrayType && this.baseType.isEquivalentTo(target.baseType)
     )
+  }
+  // Arrays are INVARIANT in Carlos!
+  isAssignableTo(target) {
+    return this.isEquivalentTo(target)
   }
 }
 
@@ -58,6 +63,7 @@ export class FunctionType extends Type {
     Object.assign(this, { parameterTypes, returnType })
   }
   isAssignableTo(target) {
+    // Functions are covariant on return types, contravariant on parameters.
     return (
       target.constructor === FunctionType &&
       this.returnType.isAssignableTo(target.returnType) &&
@@ -73,15 +79,20 @@ export class OptionalType extends Type {
     super(`${baseType.name}?`)
     this.baseType = baseType
   }
-  // T? equivalent to U? only when T is equivalent to U. Same for
-  // assignability: we do NOT want optionals to be covariant!
+  // T? equivalent to U? only when T is equivalent to U.
   isEquivalentTo(target) {
-    return target.constructor === OptionalType && this.baseType === target.baseType
+    return (
+      target.constructor === OptionalType && this.baseType.isEquivalentTo(target.baseType)
+    )
+  }
+  // Optionals are INVARIANT in Carlos!
+  isAssignableTo(target) {
+    return this.isEquivalentTo(target)
   }
 }
 
 export class VariableDeclaration {
-  // Example: const dozen = 12
+  // Example: const dozen = 12;
   constructor(name, readOnly, initializer) {
     Object.assign(this, { name, readOnly, initializer })
   }
@@ -296,17 +307,8 @@ export class Call {
 
 // Appears in the syntax tree only and disappears after semantic analysis
 // since references to the Id node will be replaced with references to the
-// actual variable or function node the the id refers to.
-export class IdentifierExpression {
-  constructor(name) {
-    this.name = name
-  }
-}
-
-// Appears in the syntax tree only and disappears after semantic analysis
-// since references to the Id node will be replaced with references to the
-// actual type node the the id refers to.
-export class TypeId {
+// actual variable or function or type node the the id refers to.
+export class Identifier {
   constructor(name) {
     this.name = name
   }

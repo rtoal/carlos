@@ -6,7 +6,7 @@ Carlos {
               | FunDecl
               | Var ("++" | "--") ";"                       --bump
               | Var "=" Exp ";"                             --assign
-              | Var_call ";"                                --call   
+              | Var_call ";"                                --call
               | break ";"                                   --break
               | return Exp? ";"                             --return
               | IfStmt
@@ -64,7 +64,7 @@ Carlos {
               | no TypeExp                                  --emptyopt
               | "(" Exp ")"                                 --parens
               | Var
-              
+
   Var         = Var ("[" | "?[") Exp "]"                    --subscript
               | Var ("." | "?.") id                         --member
               | Var ("(" | "?(") ListOf<Exp, ","> ")"       --call

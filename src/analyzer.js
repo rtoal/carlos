@@ -35,7 +35,7 @@ const check = self => ({
     must(self.type === Type.INT, `Expected an integer, found ${self.type.name}`)
   },
   isAType() {
-    must([Type, StructDeclaration].includes(self.constructor), "Type expected")
+    must(self instanceof Type, "Type expected")
   },
   isAnOptional() {
     must(self.type.constructor === OptionalType, "Optional expected")
@@ -180,10 +180,12 @@ class Context {
   }
   Field(f) {
     f.type = this.analyze(f.type)
+    check(f.type).isAType()
     return f
   }
   FunctionDeclaration(d) {
     d.returnType = d.returnType ? this.analyze(d.returnType) : Type.VOID
+    check(d.returnType).isAType()
     // Declarations generate brand new function objects
     const f = (d.function = new Function(d.name))
     // When entering a function body, we must reset the inLoop setting,
@@ -201,6 +203,7 @@ class Context {
   }
   Parameter(p) {
     p.type = this.analyze(p.type)
+    check(p.type).isAType()
     this.add(p.name, p)
     return p
   }
@@ -399,14 +402,9 @@ class Context {
     }
     return c
   }
-  IdentifierExpression(e) {
-    // Id expressions get "replaced" with the variables they refer to
+  Identifier(e) {
+    // Id expressions get "replaced" with the entities they refer to.
     return this.lookup(e.name)
-  }
-  TypeId(t) {
-    t = this.lookup(t.name)
-    check(t).isAType()
-    return t
   }
   Number(e) {
     return e

@@ -28,7 +28,7 @@ const expectedAST = new ast.Program([
     new ast.ArrayType(new ast.Identifier("bool")),
     [new ast.ShortIfStatement(false, [new ast.BreakStatement()])]
   ),
-  new ast.StructDeclaration("S", [
+  new ast.StructTypeDeclaration("S", [
     new ast.Field(
       "m",
       new ast.FunctionType(

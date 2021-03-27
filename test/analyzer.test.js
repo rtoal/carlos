@@ -38,7 +38,7 @@ const semanticChecks = [
   ["array length", "print(#[1,2,3]);"],
   ["optional types", "let x = no int; x = some 100;"],
   ["variables", "let x=[[[[1]]]]; print(x[0][0][0][0]+2);"],
-  ["recursive structs", "struct S {z: S?} let x = S(no S);"],
+  //["recursive structs", "struct S {z: S?} let x = S(no S);"],
   ["nested structs", "struct T{y:int} struct S{z: T} let x=S(T(1)); print(x.z.y);"],
   ["member exp", "struct S {x: int} let y = S(1);print(y.x);"],
   ["subscript exp", "let a=[1,2];print(a[0]);"],
@@ -189,7 +189,10 @@ const funDeclF = Object.assign(
   }
 )
 
-const structS = new ast.StructDeclaration("S", [new ast.Field("x", Int)])
+const structS = Object.assign(
+  new ast.StructTypeDeclaration("S", [new ast.Field("x", Int)]),
+  { type: new ast.StructType("S", [new ast.Field("x", Int)]) }
+)
 
 const graphChecks = [
   ["Variable created & resolved", "let x=1; x=2;", [letX1, assignX2]],

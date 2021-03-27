@@ -46,7 +46,7 @@ export default function generate(program) {
       }
       return targetName(v)
     },
-    StructDeclaration(d) {
+    StructTypeDeclaration(d) {
       // Intentionally empty, JS does not need type declarations
     },
     Field(f) {

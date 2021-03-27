@@ -13,7 +13,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.VariableDeclaration(name, readOnly, initializer.ast())
   },
   StructDecl(_struct, id, _left, fields, _right) {
-    return new ast.StructDeclaration(id.sourceString, fields.ast())
+    return new ast.StructTypeDeclaration(id.sourceString, fields.ast())
   },
   Field(id, _colon, type) {
     return new ast.Field(id.sourceString, type.ast())

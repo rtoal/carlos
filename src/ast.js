@@ -12,7 +12,43 @@ export class Program {
   }
 }
 
-// Type objects are not created during the parse; only type identifiers are.
+export class VariableDeclaration {
+  // Example: const dozen = 12;
+  constructor(name, readOnly, initializer) {
+    Object.assign(this, { name, readOnly, initializer })
+  }
+}
+
+export class StructTypeDeclaration {
+  // Example: struct S {x: int?, y: [double]}
+  constructor(name, fields) {
+    Object.assign(this, { name, fields })
+  }
+}
+
+export class Field {
+  constructor(name, type) {
+    Object.assign(this, { name, type })
+  }
+}
+
+export class FunctionDeclaration {
+  // Example: function f(x: [int?], y: string): Vector {}
+  constructor(name, parameters, returnType, body) {
+    Object.assign(this, { name, parameters, returnType, body })
+  }
+}
+
+export class Parameter {
+  // Example: x: boolean
+  constructor(name, type) {
+    Object.assign(this, { name, type })
+  }
+}
+
+// Complete Type objects are not created during the parsing; instead, we
+// only know identifiers for the base types. During semantic analysis the
+// type identifiers will be replaced with real type objects.
 export class Type {
   constructor(name) {
     this.name = name
@@ -44,14 +80,14 @@ export class ArrayType extends Type {
     super(`[${baseType.name}]`)
     this.baseType = baseType
   }
-  // [T] equivalent to [U] only when T is equivalent to U.
   isEquivalentTo(target) {
+    // [T] equivalent to [U] only when T is equivalent to U.
     return (
       target.constructor === ArrayType && this.baseType.isEquivalentTo(target.baseType)
     )
   }
-  // Arrays are INVARIANT in Carlos!
   isAssignableTo(target) {
+    // Arrays are INVARIANT in Carlos!
     return this.isEquivalentTo(target)
   }
 }
@@ -61,6 +97,14 @@ export class FunctionType extends Type {
   constructor(parameterTypes, returnType) {
     super(`(${parameterTypes.map(t => t.name).join(",")})->${returnType.name}`)
     Object.assign(this, { parameterTypes, returnType })
+  }
+  isEquivalentTo(target) {
+    return (
+      target.constructor === FunctionType &&
+      this.returnType.isEquivalentTo(target.returnType) &&
+      this.parameterTypes.length === target.parameterTypes.length &&
+      this.parameterTypes.every((t, i) => target.parameterTypes[i].isEquivalentTo(t))
+    )
   }
   isAssignableTo(target) {
     // Functions are covariant on return types, contravariant on parameters.
@@ -79,22 +123,15 @@ export class OptionalType extends Type {
     super(`${baseType.name}?`)
     this.baseType = baseType
   }
-  // T? equivalent to U? only when T is equivalent to U.
   isEquivalentTo(target) {
+    // T? equivalent to U? only when T is equivalent to U.
     return (
       target.constructor === OptionalType && this.baseType.isEquivalentTo(target.baseType)
     )
   }
-  // Optionals are INVARIANT in Carlos!
   isAssignableTo(target) {
+    // Optionals are INVARIANT in Carlos!
     return this.isEquivalentTo(target)
-  }
-}
-
-export class VariableDeclaration {
-  // Example: const dozen = 12;
-  constructor(name, readOnly, initializer) {
-    Object.assign(this, { name, readOnly, initializer })
   }
 }
 
@@ -105,26 +142,19 @@ export class Variable {
   }
 }
 
-export class StructDeclaration extends Type {
-  // Example: struct S {x: int?, y: [double]}
+// Created during semantic analysis only!
+export class StructType extends Type {
   constructor(name, fields) {
     super(name)
     this.fields = fields
   }
-  // We are explicitly not overriding equivalence or assignability rules
-  // here. Structs have name equivalence.
-}
-
-export class Field {
-  constructor(name, type) {
-    Object.assign(this, { name, type })
+  isEquivalentTo(target) {
+    // We're restrictive: requiring the same exact type object for equivalence
+    return this == target
   }
-}
-
-export class FunctionDeclaration {
-  // Example: function f(x: [int?], y: string): Vector {}
-  constructor(name, parameters, returnType, body) {
-    Object.assign(this, { name, parameters, returnType, body })
+  isAssignableTo(target) {
+    // We're restrictive: requiring the same exact type object for assignment
+    return this.isEquivalentTo(target)
   }
 }
 
@@ -133,13 +163,6 @@ export class Function {
   constructor(name) {
     this.name = name
     // Other properties set after construction
-  }
-}
-
-export class Parameter {
-  // Example: x: boolean
-  constructor(name, type) {
-    Object.assign(this, { name, type })
   }
 }
 
@@ -243,7 +266,7 @@ export class OrExpression {
 }
 
 export class AndExpression {
-  // Example: swim && bike && run
+  // Example: swim() && bike() && run()
   constructor(conjuncts) {
     this.conjuncts = conjuncts
   }

@@ -5,7 +5,8 @@ import {
   Function,
   ArrayType,
   OptionalType,
-  StructDeclaration,
+  StructTypeDeclaration,
+  StructType,
 } from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
@@ -75,7 +76,7 @@ const check = self => ({
   },
   isCallable() {
     must(
-      self.constructor === StructDeclaration || self.type.constructor == FunctionType,
+      self.constructor === StructType || self.type.constructor == FunctionType,
       "Call of non-function or non-constructor"
     )
   },
@@ -171,11 +172,12 @@ class Context {
     this.add(d.variable.name, d.variable)
     return d
   }
-  StructDeclaration(d) {
+  StructTypeDeclaration(d) {
     // Add early to allow recursion
-    this.add(d.name, d) // TODO is this ok?
     d.fields = this.analyze(d.fields)
     check(d.fields).areAllDistinct()
+    d.type = new StructType(d.name, d.fields)
+    this.add(d.name, d.type)
     return d
   }
   Field(f) {
@@ -393,7 +395,7 @@ class Context {
     c.callee = this.analyze(c.callee)
     check(c.callee).isCallable()
     c.args = this.analyze(c.args)
-    if (c.callee.constructor === StructDeclaration) {
+    if (c.callee.constructor === StructType) {
       check(c.args).matchFieldsOf(c.callee)
       c.type = c.callee // weird but seems ok for now
     } else {

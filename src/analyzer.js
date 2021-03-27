@@ -5,7 +5,6 @@ import {
   Function,
   ArrayType,
   OptionalType,
-  StructTypeDeclaration,
   StructType,
 } from "./ast.js"
 import * as stdlib from "./stdlib.js"
@@ -15,6 +14,65 @@ function must(condition, errorMessage) {
     throw new Error(errorMessage)
   }
 }
+
+Object.assign(Type.prototype, {
+  // Equivalence: when are two types the same
+  isEquivalentTo(target) {
+    return this == target
+  },
+  // T1 assignable to T2 is when x:T1 can be assigned to y:T2. By default
+  // this is only when two types are equivalent; however, for other kinds
+  // of types there may be special rules. For example, in a language with
+  // supertypes and subtypes, an object of a subtype would be assignable
+  // to a variable constrained to a supertype.
+  isAssignableTo(target) {
+    return this.isEquivalentTo(target)
+  },
+})
+
+Object.assign(ArrayType.prototype, {
+  isEquivalentTo(target) {
+    // [T] equivalent to [U] only when T is equivalent to U.
+    return (
+      target.constructor === ArrayType && this.baseType.isEquivalentTo(target.baseType)
+    )
+  },
+  isAssignableTo(target) {
+    // Arrays are INVARIANT in Carlos!
+    return this.isEquivalentTo(target)
+  },
+})
+
+Object.assign(FunctionType.prototype, {
+  isEquivalentTo(target) {
+    return (
+      target.constructor === FunctionType &&
+      this.returnType.isEquivalentTo(target.returnType) &&
+      this.parameterTypes.length === target.parameterTypes.length &&
+      this.parameterTypes.every((t, i) => target.parameterTypes[i].isEquivalentTo(t))
+    )
+  },
+  isAssignableTo(target) {
+    // Functions are covariant on return types, contravariant on parameters.
+    return (
+      target.constructor === FunctionType &&
+      this.returnType.isAssignableTo(target.returnType) &&
+      this.parameterTypes.length === target.parameterTypes.length &&
+      this.parameterTypes.every((t, i) => target.parameterTypes[i].isAssignableTo(t))
+    )
+  },
+})
+
+Object.assign(StructType.prototype, {
+  isEquivalentTo(target) {
+    // We're restrictive: requiring the same exact type object for equivalence
+    return this == target
+  },
+  isAssignableTo(target) {
+    // We're restrictive: requiring the same exact type object for assignment
+    return this.isEquivalentTo(target)
+  },
+})
 
 const check = self => ({
   isNumeric() {
@@ -151,19 +209,6 @@ class Context {
     p.statements = this.analyze(p.statements)
     return p
   }
-  ArrayType(t) {
-    t.baseType = this.analyze(t.baseType)
-    return t
-  }
-  FunctionType(t) {
-    t.parameterTypes = this.analyze(t.parameterTypes)
-    t.returnType = this.analyze(t.returnType)
-    return t
-  }
-  OptionalType(t) {
-    t.baseType = this.analyze(t.baseType)
-    return t
-  }
   VariableDeclaration(d) {
     // Declarations generate brand new variable objects
     d.initializer = this.analyze(d.initializer)
@@ -208,6 +253,19 @@ class Context {
     check(p.type).isAType()
     this.add(p.name, p)
     return p
+  }
+  ArrayType(t) {
+    t.baseType = this.analyze(t.baseType)
+    return t
+  }
+  FunctionType(t) {
+    t.parameterTypes = this.analyze(t.parameterTypes)
+    t.returnType = this.analyze(t.returnType)
+    return t
+  }
+  OptionalType(t) {
+    t.baseType = this.analyze(t.baseType)
+    return t
   }
   Increment(s) {
     s.variable = this.analyze(s.variable)
@@ -397,7 +455,7 @@ class Context {
     c.args = this.analyze(c.args)
     if (c.callee.constructor === StructType) {
       check(c.args).matchFieldsOf(c.callee)
-      c.type = c.callee // weird but seems ok for now
+      c.type = c.callee
     } else {
       check(c.args).matchParametersOf(c.callee.type)
       c.type = c.callee.type.returnType

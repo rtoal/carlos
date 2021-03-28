@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/rtoal/carlos-lang/main/docs/carlos-logo.png" width=100 height=100>
+<img src="https://raw.githubusercontent.com/rtoal/carlos-lang/main/docs/carlos-logo.png" height=150>
 
 # Carlos
 

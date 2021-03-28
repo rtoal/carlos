@@ -14,10 +14,10 @@
 //   - while-false becomes a no-op
 //   - repeat-0 is a no-op
 //   - for-loop over empty array is a no-op
-//   - for-loop with loa > high is a no-op
+//   - for-loop with low > high is a no-op
 //   - if-true and if-false reduce to only the taken arm
 
-import { Variable, UnaryExpression } from "./ast.js"
+import * as ast from "./ast.js"
 
 export default function optimize(node) {
   return optimizers[node.constructor.name](node)
@@ -58,7 +58,7 @@ const optimizers = {
     s.source = optimize(s.source)
     s.target = optimize(s.target)
     if (s.source === s.target) {
-      return null
+      return []
     }
     return s
   },
@@ -85,7 +85,7 @@ const optimizers = {
     s.test = optimize(s.test)
     s.consequent = optimize(s.consequent)
     if (s.test.constructor === Boolean) {
-      return s.test ? s.consequent : null
+      return s.test ? s.consequent : []
     }
     return s
   },
@@ -93,16 +93,16 @@ const optimizers = {
     s.test = optimize(s.test)
     if (s.test === false) {
       // while false is a no-op
-      return null
+      return []
     }
     s.body = optimize(s.body)
     return s
   },
   RepeatStatement(s) {
-    s.count = optimize(s.test)
-    if (s.test === 0) {
+    s.count = optimize(s.count)
+    if (s.count === 0) {
       // repeat 0 times is a no-op
-      return null
+      return []
     }
     s.body = optimize(s.body)
     return s
@@ -114,7 +114,7 @@ const optimizers = {
     if (s.low.constructor === Number) {
       if (s.high.constructor === Number) {
         if (s.low > s.high) {
-          return s.body
+          return []
         }
       }
     }
@@ -123,8 +123,8 @@ const optimizers = {
   ForStatement(s) {
     s.collection = optimize(s.collection)
     s.body = optimize(s.body)
-    if (s.collection.constructor === EmptyArray) {
-      return s.body
+    if (s.collection.constructor === ast.EmptyArray) {
+      return []
     }
     return s
   },
@@ -140,7 +140,7 @@ const optimizers = {
   UnwrapElse(e) {
     e.optional = optimize(e.optional)
     e.alternate = optimize(e.alternate)
-    if (e.optional.constructor === this.EmptyOptional) {
+    if (e.optional.constructor === ast.EmptyOptional) {
       return e.alternate
     }
     return e
@@ -174,8 +174,8 @@ const optimizers = {
   BinaryExpression(e) {
     e.left = optimize(e.left)
     e.right = optimize(e.right)
-    if (e.left.constructor === Number) {
-      if (e.right.constructor === Number) {
+    if ([Number, BigInt].includes(e.left.constructor)) {
+      if ([Number, BigInt].includes(e.right.constructor)) {
         if (e.op === "+") {
           return e.left + e.right
         } else if (e.op === "-") {
@@ -204,7 +204,7 @@ const optimizers = {
       } else if (e.left === 1 && e.op === "*") {
         return e.right
       } else if (e.left === 0 && e.op === "-") {
-        return new UnaryExpression("-", e.right)
+        return new ast.UnaryExpression("-", e.right)
       } else if (e.left === 1 && e.op === "**") {
         return 1
       } else if (e.left === 0 && ["*", "/"].includes(e.op)) {
@@ -269,7 +269,7 @@ const optimizers = {
     return e
   },
   Array(a) {
-    // Optimizing arrays involves flattening an removing nulls
-    return a.flatMap(optimize).filter(s => s !== null)
+    // Flatmap since each element can be an array
+    return a.flatMap(optimize)
   },
 }

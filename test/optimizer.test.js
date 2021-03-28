@@ -7,12 +7,11 @@ const x = new ast.Variable("x", false)
 const xpp = new ast.Increment(x)
 const xmm = new ast.Decrement(x)
 const return1p1 = new ast.ReturnStatement(new ast.BinaryExpression("+", 1, 1))
+const return2 = new ast.ReturnStatement(2)
+const returnX = new ast.ReturnStatement(x)
 const onePlusTwo = new ast.BinaryExpression("+", 1, 2)
-const identity = Object.assign(new ast.Function("id"), {
-  parameters: [new ast.Parameter("x")],
-  type: new ast.FunctionType([ast.Type.INT], ast.Type.INT),
-  body: new ast.ReturnStatement(x),
-})
+const identity = Object.assign(new ast.Function("id"), { body: returnX })
+const intFun = body => new ast.FunctionDeclaration("f", [], "int", body)
 const callIdentity = args => new ast.Call(identity, args)
 const or = (...disjuncts) => new ast.OrExpression(disjuncts)
 const and = (...conjuncts) => new ast.AndExpression(conjuncts)
@@ -70,11 +69,7 @@ const tests = [
   ["optimizes away nil", unwrapElse(emptyOptional, 3), 3],
   ["optimizes conditional true", conditional(true, 55, 89), 55],
   ["optimizes conditional false", conditional(false, 55, 89), 89],
-  [
-    "optimizes in functions",
-    new ast.FunctionDeclaration("f", [], "int", return1p1),
-    new ast.FunctionDeclaration("f", [], "int", new ast.ReturnStatement(2)),
-  ],
+  ["optimizes in functions", intFun(return1p1), intFun(return2)],
   ["optimizes in subscripts", sub(x, onePlusTwo), sub(x, 3)],
   ["optimizes in array literals", array(0, onePlusTwo, 9), array(0, 3, 9)],
   ["optimizes in arguments", callIdentity([times(3, 5)]), callIdentity([15])],

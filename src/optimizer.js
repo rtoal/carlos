@@ -39,9 +39,6 @@ const optimizers = {
     d.body = optimize(d.body)
     return d
   },
-  Parameter(p) {
-    return p
-  },
   Variable(v) {
     return v
   },
@@ -118,7 +115,7 @@ const optimizers = {
         }
       }
     }
-    return e
+    return s
   },
   ForStatement(s) {
     s.collection = optimize(s.collection)

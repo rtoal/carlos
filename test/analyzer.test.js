@@ -65,6 +65,7 @@ const semanticChecks = [
     `function square(x: int): int { return x * x; }
      function compose(): (int)->int { return square; }`,
   ],
+  ["function assign", "function f() {} let g = f; let h = [g, f];"],
   ["struct parameters", "struct S {} function f(x: S) {}"],
   ["array parameters", "function f(x: [int?]) {}"],
   ["optional parameters", "function f(x: [int], y: string?) {}"],

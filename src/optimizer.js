@@ -45,6 +45,9 @@ const optimizers = {
   Function(f) {
     return f
   },
+  Parameter(p) {
+    return p
+  },
   Increment(s) {
     return s
   },

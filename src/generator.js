@@ -3,7 +3,7 @@
 // Invoke generate(program) with the program node to get back the JavaScript
 // translation as a string.
 
-import { IfStatement, Type } from "./ast.js"
+import { IfStatement, Type, StructType } from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 export default function generate(program) {
@@ -39,6 +39,8 @@ export default function generate(program) {
       gen(p.statements)
     },
     VariableDeclaration(d) {
+      // We don't care about const vs. let in the generated code. The analyzer
+      // has already checked we never wrote to a const, so let is always fine.
       output.push(`let ${gen(d.variable)} = ${gen(d.initializer)};`)
     },
     StructTypeDeclaration(d) {
@@ -85,12 +87,12 @@ export default function generate(program) {
     IfStatement(s) {
       output.push(`if (${gen(s.test)}) {`)
       gen(s.consequent)
-      if (s.alternative.constructor === IfStatement) {
+      if (s.alternate.constructor === IfStatement) {
         output.push("} else")
-        gen(s.alternative)
+        gen(s.alternate)
       } else {
         output.push("} else {")
-        gen(s.alternative)
+        gen(s.alternate)
         output.push("}")
       }
     },
@@ -105,22 +107,28 @@ export default function generate(program) {
       output.push("}")
     },
     RepeatStatement(s) {
-      // TODO
-      // output.push(`while (${gen(s.test)}) {`)
-      // gen(s.body)
-      // output.push("}")
+      const i = targetName({ name: "i" })
+      output.push(`for (let ${i} = 0; ${i} < ${gen(s.count)}; ${i}++) {`)
+      gen(s.body)
+      output.push("}")
     },
     ForRangeStatement(s) {
-      // TODO
+      const i = targetName(s.iterator)
+      const op = s.op === "..." ? "<=" : "<"
+      output.push(`for (let ${i} = ${gen(s.low)}; ${i}${op}${gen(s.high)} ${i}++) {`)
+      gen(s.body)
+      output.push("}")
     },
     ForStatement(s) {
-      // TODO
+      output.push(`for (let ${gen(s.iterator)} of ${gen(s.collection)}) {`)
+      gen(s.body)
+      output.push("}")
     },
     Conditional(e) {
-      // TODO
+      return `((${gen(e.test)}) ? (${gen(e.consequent)}) : (${gen(e.alternate)}))`
     },
     UnwrapElse(e) {
-      // TODO
+      return `((${gen(e.optional)}) ?? (${gen(e.alternate)}))`
     },
     OrExpression(e) {
       return `(${gen(e.disjuncts).join(" || ")})`
@@ -136,10 +144,10 @@ export default function generate(program) {
       return `${e.op}(${gen(e.operand)})`
     },
     EmptyOptional(e) {
-      // TODO
+      return "undefined"
     },
     SubscriptExpression(e) {
-      return `${gen(e.array)}[${gen(e.element)}]`
+      return `${gen(e.array)}[${gen(e.index)}]`
     },
     ArrayExpression(e) {
       return `[${gen(e.elements).join(",")}]`
@@ -148,11 +156,17 @@ export default function generate(program) {
       return "[]"
     },
     MemberExpression(e) {
-      return `(${gen(e.object)}.${gen(e.field)})`
+      return `(${gen(e.object)}['${gen(e.field)}'])`
     },
     Call(c) {
-      const callee = standardFunctions.get(c.callee) ?? gen(c.callee)
-      const targetCode = `${callee}(${gen(c.args).join(", ")})`
+      console.log(`GEN FOR CALL ${util.inspect(c.callee)}`)
+      if (standardFunctions.has(c.callee)) {
+        return standardFunctions.get(c.callee)(gen(c.args))
+      }
+      if (c.callee.type.constructor === StructType) {
+        return `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
+      }
+      const targetCode = `${gen(c.callee)}(${gen(c.args).join(", ")})`
       if (c.callee.type.returnType !== Type.VOID) {
         return targetCode
       }

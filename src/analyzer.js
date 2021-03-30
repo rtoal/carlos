@@ -111,6 +111,12 @@ const check = self => ({
       "Not all elements have the same type"
     )
   },
+  isNotRecursive() {
+    must(
+      !self.fields.map(f => f.type).includes(self),
+      "Struct type must not be recursive"
+    )
+  },
   isAssignableTo(type) {
     must(
       type === Type.ANY || self.type.isAssignableTo(type),
@@ -218,11 +224,12 @@ class Context {
     return d
   }
   StructTypeDeclaration(d) {
-    // Add early to allow recursion
-    d.fields = this.analyze(d.fields)
-    check(d.fields).areAllDistinct()
     d.type = new StructType(d.name, d.fields)
+    // Add early to allow recursion
     this.add(d.name, d.type)
+    d.type.fields = d.fields = this.analyze(d.fields)
+    check(d.fields).areAllDistinct()
+    check(d.type).isNotRecursive()
     return d
   }
   Field(f) {

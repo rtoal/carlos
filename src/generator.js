@@ -159,7 +159,6 @@ export default function generate(program) {
       return `(${gen(e.object)}['${gen(e.field)}'])`
     },
     Call(c) {
-      console.log(`GEN FOR CALL ${util.inspect(c.callee)}`)
       if (standardFunctions.has(c.callee)) {
         return standardFunctions.get(c.callee)(gen(c.args))
       }

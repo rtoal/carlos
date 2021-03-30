@@ -84,16 +84,6 @@ export class OptionalType extends Type {
     super(`${baseType.name}?`)
     this.baseType = baseType
   }
-  isEquivalentTo(target) {
-    // T? equivalent to U? only when T is equivalent to U.
-    return (
-      target.constructor === OptionalType && this.baseType.isEquivalentTo(target.baseType)
-    )
-  }
-  isAssignableTo(target) {
-    // Optionals are INVARIANT in Carlos!
-    return this.isEquivalentTo(target)
-  }
 }
 
 // Created during semantic analysis only!

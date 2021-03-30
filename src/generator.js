@@ -46,6 +46,9 @@ export default function generate(program) {
     StructTypeDeclaration(d) {
       // TODO - output class & constructor?
     },
+    StructType(t) {
+      return targetName(t)
+    },
     Field(f) {
       // TODO?
     },
@@ -156,7 +159,7 @@ export default function generate(program) {
       return "[]"
     },
     MemberExpression(e) {
-      return `(${gen(e.object)}['${gen(e.field)}'])`
+      return `(${gen(e.object)}[${gen(e.field)}])`
     },
     Call(c) {
       if (standardFunctions.has(c.callee)) {
@@ -181,7 +184,7 @@ export default function generate(program) {
       return e
     },
     String(e) {
-      return e
+      return JSON.stringify(e)
     },
     Array(a) {
       return a.map(gen)

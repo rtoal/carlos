@@ -35,6 +35,9 @@ const optimizers = {
   StructTypeDeclaration(d) {
     return d
   },
+  StructType(d) {
+    return d
+  },
   FunctionDeclaration(d) {
     d.body = optimize(d.body)
     return d

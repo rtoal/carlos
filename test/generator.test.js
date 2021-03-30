@@ -28,7 +28,7 @@ const fixtures = [
     name: "iffy",
     source: `
       let x = 0;
-      if (x == 0) { print(1); }
+      if (x == 0) { print("1"); }
       if (x == 0) { print(1); } else { print(2); }
       if (x == 0) { print(1); } else if (x == 2) { print(3); }
       if (x == 0) { print(1); } else if (x == 2) { print(3); } else { print(4); }
@@ -36,7 +36,7 @@ const fixtures = [
     expected: dedent`
       let x_1 = 0;
       if ((x_1 === 0)) {
-        print_2(1);
+        print_2("1");
       }
       if ((x_1 === 0)) {
         print_2(1);
@@ -125,6 +125,18 @@ const fixtures = [
       let b_2 = [10,20,30];
       let c_3 = [];
       print_4((a_1[1] || (b_2[0] < 88)));
+    `,
+  },
+  {
+    name: "structs",
+    source: `
+      struct S { x: int }
+      let x = S(3);
+      print(x.x);
+    `,
+    expected: dedent`
+      let x_1 = S_2(3);
+      print_3((x_1["x"]));
     `,
   },
 ]

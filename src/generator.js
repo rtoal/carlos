@@ -118,7 +118,7 @@ export default function generate(program) {
     ForRangeStatement(s) {
       const i = targetName(s.iterator)
       const op = s.op === "..." ? "<=" : "<"
-      output.push(`for (let ${i} = ${gen(s.low)}; ${i}${op}${gen(s.high)} ${i}++) {`)
+      output.push(`for (let ${i} = ${gen(s.low)}; ${i} ${op} ${gen(s.high)}; ${i}++) {`)
       gen(s.body)
       output.push("}")
     },

@@ -12,20 +12,24 @@ const fixtures = [
   {
     name: "small",
     source: `
-      let x = 3.1 * 7.0;
+      let x = 3 * 7;
+      x++;
+      x--;
       let y = true;
-      y = 5.0 ** -x / -100.0 > - x || false;
-      print((y && y) || false || (x*2.0) != 5.0);
+      y = 5 ** -x / -100 > - x || false;
+      print((y && y) || false || (x*2) != 5);
     `,
     expected: dedent`
-      let x_1 = 21.7;
+      let x_1 = 21;
+      x_1++;
+      x_1--;
       let y_2 = true;
-      y_2 = ((((5 ** -(x_1)) / -100) > -(x_1)) || false);
+      y_2 = ((((5 ** -(x_1)) / -(100)) > -(x_1)) || false);
       print_3(((y_2 && y_2) || false || ((x_1 * 2) !== 5)));
     `,
   },
   {
-    name: "iffy",
+    name: "if",
     source: `
       let x = 0;
       if (x == 0) { print("1"); }
@@ -61,7 +65,7 @@ const fixtures = [
     `,
   },
   {
-    name: "whiley",
+    name: "while",
     source: `
       let x = 0;
       while x < 5 {
@@ -118,13 +122,13 @@ const fixtures = [
       let a = [true, false, true];
       let b = [10, 40 - 20, 30];
       const c = [](of [int]);
-      print(a[1] || (b[0] < 88));
+      print(a[1] || (b[0] < 88 ? false : true));
     `,
     expected: dedent`
       let a_1 = [true,false,true];
       let b_2 = [10,20,30];
       let c_3 = [];
-      print_4((a_1[1] || (b_2[0] < 88)));
+      print_4((a_1[1] || (((b_2[0] < 88)) ? (false) : (true))));
     `,
   },
   {
@@ -137,6 +141,41 @@ const fixtures = [
     expected: dedent`
       let x_1 = S_2(3);
       print_3((x_1["x"]));
+    `,
+  },
+  {
+    name: "optionals",
+    source: `
+      let x = no int;
+      let y = x ?? 2;
+    `,
+    expected: dedent`
+      let x_1 = undefined;
+      let y_2 = ((x_1) ?? (2));
+    `,
+  },
+  {
+    name: "for loops",
+    source: `
+      for i in 1..<50 {
+        print(i);
+      }
+      for j in [10, 20, 30] {
+        print(j);
+      }
+      repeat 3 {
+        // hello
+      }
+    `,
+    expected: dedent`
+      for (let i_1 = 1; i_1 < 50; i_1++) {
+        print_2(i_1);
+      }
+      for (let j_3 of [10,20,30]) {
+        print_2(j_3);
+      }
+      for (let i_4 = 0; i_4 < 3; i_4++) {
+      }
     `,
   },
 ]

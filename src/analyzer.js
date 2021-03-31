@@ -345,7 +345,9 @@ class Context {
     check(s.high).isInteger()
     s.iterator = new Variable(s.iterator, true)
     s.iterator.type = Type.INT
-    s.body = this.newChild({ inLoop: true }).analyze(s.body)
+    const bodyContext = this.newChild({ inLoop: true })
+    bodyContext.add(s.iterator.name, s.iterator)
+    s.body = bodyContext.analyze(s.body)
     return s
   }
   ForStatement(s) {
@@ -353,7 +355,9 @@ class Context {
     check(s.collection).isAnArray()
     s.iterator = new Variable(s.iterator, true)
     s.iterator.type = s.collection.type.baseType
-    s.body = this.newChild({ inLoop: true }).analyze(s.body)
+    const bodyContext = this.newChild({ inLoop: true })
+    bodyContext.add(s.iterator.name, s.iterator)
+    s.body = bodyContext.analyze(s.body)
     return s
   }
   Conditional(e) {

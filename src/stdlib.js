@@ -1,5 +1,13 @@
 import { Type, FunctionType, Variable, Function, ArrayType } from "./ast.js"
 
+Type.BOOLEAN = new Type("boolean")
+Type.INT = new Type("int")
+Type.FLOAT = new Type("float")
+Type.STRING = new Type("string")
+Type.VOID = new Type("void")
+Type.TYPE = new Type("type")
+Type.ANY = new Type("any")
+
 function makeConstant(name, type, value) {
   return Object.assign(new Variable(name, true), { type, value })
 }

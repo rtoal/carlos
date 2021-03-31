@@ -53,13 +53,6 @@ export class Type {
   constructor(name) {
     this.name = name
   }
-  static BOOLEAN = new Type("boolean")
-  static INT = new Type("int")
-  static FLOAT = new Type("float")
-  static STRING = new Type("string")
-  static VOID = new Type("void")
-  static TYPE = new Type("type")
-  static ANY = new Type("any")
 }
 
 export class ArrayType extends Type {

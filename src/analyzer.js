@@ -63,6 +63,19 @@ Object.assign(FunctionType.prototype, {
   },
 })
 
+Object.assign(OptionalType.prototype, {
+  isEquivalentTo(target) {
+    // T? equivalent to U? only when T is equivalent to U.
+    return (
+      target.constructor === OptionalType && this.baseType.isEquivalentTo(target.baseType)
+    )
+  },
+  isAssignableTo(target) {
+    // Optionals are INVARIANT in Carlos!
+    return this.isEquivalentTo(target)
+  },
+})
+
 Object.assign(StructType.prototype, {
   isEquivalentTo(target) {
     // We're restrictive: requiring the same exact type object for equivalence

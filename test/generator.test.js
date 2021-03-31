@@ -171,6 +171,8 @@ const fixtures = [
       repeat 3 {
         // hello
       }
+      for k in 1...10 {
+      }
     `,
     expected: dedent`
       for (let i_1 = 1; i_1 < 50; i_1++) {
@@ -180,6 +182,8 @@ const fixtures = [
         console.log(j_2);
       }
       for (let i_3 = 0; i_3 < 3; i_3++) {
+      }
+      for (let k_4 = 1; k_4 <= 10; k_4++) {
       }
     `,
   },

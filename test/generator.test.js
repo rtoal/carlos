@@ -139,7 +139,7 @@ const fixtures = [
       print(x.x);
     `,
     expected: dedent`
-      let x_1 = S_2(3);
+      let x_1 = new S_2(3);
       print_3((x_1["x"]));
     `,
   },

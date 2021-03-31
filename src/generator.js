@@ -165,7 +165,7 @@ export default function generate(program) {
       if (standardFunctions.has(c.callee)) {
         return standardFunctions.get(c.callee)(gen(c.args))
       }
-      if (c.callee.type.constructor === StructType) {
+      if (c.callee.constructor === StructType) {
         return `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
       }
       const targetCode = `${gen(c.callee)}(${gen(c.args).join(", ")})`

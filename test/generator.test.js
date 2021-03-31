@@ -25,7 +25,7 @@ const fixtures = [
       x_1--;
       let y_2 = true;
       y_2 = ((((5 ** -(x_1)) / -(100)) > -(x_1)) || false);
-      print_3(((y_2 && y_2) || false || ((x_1 * 2) !== 5)));
+      console.log(((y_2 && y_2) || false || ((x_1 * 2) !== 5)));
     `,
   },
   {
@@ -40,27 +40,27 @@ const fixtures = [
     expected: dedent`
       let x_1 = 0;
       if ((x_1 === 0)) {
-        print_2("1");
+        console.log("1");
       }
       if ((x_1 === 0)) {
-        print_2(1);
+        console.log(1);
       } else {
-        print_2(2);
+        console.log(2);
       }
       if ((x_1 === 0)) {
-        print_2(1);
+        console.log(1);
       } else {
         if ((x_1 === 2)) {
-          print_2(3);
+          console.log(3);
         }
       }
       if ((x_1 === 0)) {
-        print_2(1);
+        console.log(1);
       } else
         if ((x_1 === 2)) {
-          print_2(3);
+          console.log(3);
         } else {
-          print_2(4);
+          console.log(4);
         }
     `,
   },
@@ -83,7 +83,7 @@ const fixtures = [
       while ((x_1 < 5)) {
         let y_2 = 0;
         while ((y_2 < 5)) {
-          print_3((x_1 * y_2));
+          console.log((x_1 * y_2));
           y_2 = (y_2 + 1);
           break;
         }
@@ -107,13 +107,13 @@ const fixtures = [
     expected: dedent`
       let z_1 = 0.5;
       function f_2(x_3, y_4) {
-        print_5((Math.sin(x_3) > Math.PI));
+        console.log((Math.sin(x_3) > Math.PI));
         return;
       }
-      function g_6() {
+      function g_5() {
         return false;
       }
-      f_2(z_1, g_6());
+      f_2(z_1, g_5());
     `,
   },
   {
@@ -128,7 +128,7 @@ const fixtures = [
       let a_1 = [true,false,true];
       let b_2 = [10,20,30];
       let c_3 = [];
-      print_4((a_1[1] || (((b_2[0] < 88)) ? (false) : (true))));
+      console.log((a_1[1] || (((b_2[0] < 88)) ? (false) : (true))));
     `,
   },
   {
@@ -140,7 +140,7 @@ const fixtures = [
     `,
     expected: dedent`
       let x_1 = new S_2(3);
-      print_3((x_1["x"]));
+      console.log((x_1["x"]));
     `,
   },
   {
@@ -169,12 +169,12 @@ const fixtures = [
     `,
     expected: dedent`
       for (let i_1 = 1; i_1 < 50; i_1++) {
-        print_2(i_1);
+        console.log(i_1);
       }
-      for (let j_3 of [10,20,30]) {
-        print_2(j_3);
+      for (let j_2 of [10,20,30]) {
+        console.log(j_2);
       }
-      for (let i_4 = 0; i_4 < 3; i_4++) {
+      for (let i_3 = 0; i_3 < 3; i_3++) {
       }
     `,
   },

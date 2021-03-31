@@ -10,6 +10,7 @@ export default function generate(program) {
   const output = []
 
   const standardFunctions = new Map([
+    [stdlib.functions.print, x => `console.log(${x})`],
     [stdlib.functions.sin, x => `Math.sin(${x})`],
     [stdlib.functions.cos, x => `Math.cos(${x})`],
     [stdlib.functions.exp, x => `Math.exp(${x})`],
@@ -162,13 +163,11 @@ export default function generate(program) {
       return `(${gen(e.object)}[${gen(e.field)}])`
     },
     Call(c) {
-      if (standardFunctions.has(c.callee)) {
-        return standardFunctions.get(c.callee)(gen(c.args))
-      }
-      if (c.callee.constructor === StructType) {
-        return `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
-      }
-      const targetCode = `${gen(c.callee)}(${gen(c.args).join(", ")})`
+      const targetCode = standardFunctions.has(c.callee)
+        ? standardFunctions.get(c.callee)(gen(c.args))
+        : c.callee.constructor === StructType
+        ? `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
+        : `${gen(c.callee)}(${gen(c.args).join(", ")})`
       if (c.callee.type.returnType !== Type.VOID) {
         return targetCode
       }

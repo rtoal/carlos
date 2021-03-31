@@ -45,13 +45,19 @@ export default function generate(program) {
       output.push(`let ${gen(d.variable)} = ${gen(d.initializer)};`)
     },
     StructTypeDeclaration(d) {
-      // TODO - output class & constructor?
+      output.push(`class ${gen(d.type)} {`)
+      output.push(`constructor(${gen(d.fields).join(",")}) {`)
+      for (let field of d.fields) {
+        output.push(`this[${JSON.stringify(gen(field))}] = ${gen(field)};`)
+      }
+      output.push("}")
+      output.push("}")
     },
     StructType(t) {
       return targetName(t)
     },
     Field(f) {
-      // TODO?
+      return targetName(f)
     },
     FunctionDeclaration(d) {
       output.push(`function ${gen(d.function)}(${gen(d.parameters).join(", ")}) {`)
@@ -160,7 +166,7 @@ export default function generate(program) {
       return "[]"
     },
     MemberExpression(e) {
-      return `(${gen(e.object)}[${gen(e.field)}])`
+      return `(${gen(e.object)}[${JSON.stringify(gen(e.field))}])`
     },
     Call(c) {
       const targetCode = standardFunctions.has(c.callee)

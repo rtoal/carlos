@@ -470,7 +470,8 @@ class Context {
   MemberExpression(e) {
     e.object = this.analyze(e.object)
     check(e.field).isInTheObject(e.object)
-    e.type = e.object.type.fields.find(f => f.name === e.field).type
+    e.field = e.object.type.fields.find(f => f.name === e.field)
+    e.type = e.field.type
     return e
   }
   Call(c) {

@@ -139,8 +139,13 @@ const fixtures = [
       print(x.x);
     `,
     expected: dedent`
-      let x_1 = new S_2(3);
-      console.log((x_1["x"]));
+      class S_1 {
+      constructor(x_2) {
+      this["x_2"] = x_2;
+      }
+      }
+      let x_3 = new S_1(3);
+      console.log((x_3["x_2"]));
     `,
   },
   {

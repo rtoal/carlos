@@ -1,0 +1,1 @@
+let a = [](of int);let b=[1];a=b;b=a;

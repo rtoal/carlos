@@ -53,6 +53,7 @@ Program.prototype[util.inspect.custom] = function () {
   function* lines() {
     function view(e) {
       if (tags.has(e)) return `#${tags.get(e)}`
+      if (typeof e === "symbol") return e.description
       if (Array.isArray(e)) return `[${e.map(view)}]`
       return util.inspect(e)
     }

@@ -21,23 +21,23 @@ const expectedAST = new ast.Program([
   new ast.VariableDeclaration("x", false, 1n),
   new ast.VariableDeclaration("y", true, "hello"),
   new ast.ReturnStatement(new ast.ArrayExpression([1, 2])),
-  new ast.ReturnStatement(new ast.MemberExpression(new ast.Identifier("x"), "y")),
+  new ast.ReturnStatement(new ast.MemberExpression(Symbol.for("x"), "y")),
   new ast.FunctionDeclaration(
     "f",
-    [new ast.Parameter("x", new ast.Identifier("int"))],
-    new ast.ArrayType(new ast.Identifier("bool")),
+    [new ast.Parameter("x", Symbol.for("int"))],
+    new ast.ArrayType(Symbol.for("bool")),
     [new ast.ShortIfStatement(false, [new ast.BreakStatement()])]
   ),
   new ast.StructTypeDeclaration("S", [
     new ast.Field(
       "m",
       new ast.FunctionType(
-        [new ast.Identifier("string"), new ast.OptionalType(new ast.Identifier("int"))],
-        new ast.Identifier("bool")
+        [Symbol.for("string"), new ast.OptionalType(Symbol.for("int"))],
+        Symbol.for("bool")
       )
     ),
   ]),
-  new ast.Call(new ast.Identifier("f"), [
+  new ast.Call(Symbol.for("f"), [
     new ast.UnwrapElse(
       new ast.BinaryExpression("*", 3n, 7n),
       new ast.AndExpression([1n, 2n])

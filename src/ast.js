@@ -46,44 +46,48 @@ export class Parameter {
   }
 }
 
-// Complete Type objects are not created during the parsing; instead, we
-// only know identifiers for the base types. During semantic analysis the
-// type identifiers will be replaced with real type objects.
-export class Type {
-  constructor(name) {
-    this.name = name
-  }
-}
+export class Type {}
 
 export class ArrayType extends Type {
   // Example: [int]
   constructor(baseType) {
-    super(`[${baseType.name}]`)
+    super()
     this.baseType = baseType
+  }
+  get description() {
+    return `[${this.baseType.description}]`
   }
 }
 
 export class FunctionType extends Type {
   // Example: (boolean,[string]?)->float
   constructor(parameterTypes, returnType) {
-    super(`(${parameterTypes.map(t => t.name).join(",")})->${returnType.name}`)
+    super()
     Object.assign(this, { parameterTypes, returnType })
+  }
+  get description() {
+    return `(${this.parameterTypes.map(t => t.description).join(",")})->${
+      this.returnType.description
+    }`
   }
 }
 
 export class OptionalType extends Type {
   // Example: string?
   constructor(baseType) {
-    super(`${baseType.name}?`)
+    super()
     this.baseType = baseType
+  }
+  get description() {
+    return `${this.baseType.description}?`
   }
 }
 
 // Created during semantic analysis only!
 export class StructType extends Type {
   constructor(name, fields) {
-    super(name)
-    this.fields = fields
+    super()
+    Object.assign(this, { name, fields })
   }
 }
 

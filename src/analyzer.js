@@ -91,20 +91,20 @@ const check = self => ({
   isNumeric() {
     must(
       [Type.INT, Type.FLOAT].includes(self.type),
-      `Expected a number, found ${self.type.name}`
+      `Expected a number, found ${self.type.description}`
     )
   },
   isNumericOrString() {
     must(
       [Type.INT, Type.FLOAT, Type.STRING].includes(self.type),
-      `Expected a number or string, found ${self.type.name}`
+      `Expected a number or string, found ${self.type.description}`
     )
   },
   isBoolean() {
-    must(self.type === Type.BOOLEAN, `Expected a boolean, found ${self.type.name}`)
+    must(self.type === Type.BOOLEAN, `Expected a boolean, found ${self.type.description}`)
   },
   isInteger() {
-    must(self.type === Type.INT, `Expected an integer, found ${self.type.name}`)
+    must(self.type === Type.INT, `Expected an integer, found ${self.type.description}`)
   },
   isAType() {
     must(self instanceof Type, "Type expected")
@@ -133,7 +133,7 @@ const check = self => ({
   isAssignableTo(type) {
     must(
       type === Type.ANY || self.type.isAssignableTo(type),
-      `Cannot assign a ${self.type.name} to a ${type.name}`
+      `Cannot assign a ${self.type.description} to a ${type.description}`
     )
   },
   isNotReadOnly() {
@@ -487,9 +487,9 @@ class Context {
     }
     return c
   }
-  Identifier(e) {
-    // Id expressions get "replaced" with the entities they refer to.
-    return this.lookup(e.name)
+  Symbol(e) {
+    // Symbols represent identifiers so get resolved to the entities referred to
+    return this.lookup(e.description)
   }
   Number(e) {
     return e

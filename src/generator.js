@@ -174,7 +174,7 @@ export default function generate(program) {
         : c.callee.constructor === StructType
         ? `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
         : `${gen(c.callee)}(${gen(c.args).join(", ")})`
-      if (c.callee.type.returnType !== Type.VOID) {
+      if (c.callee instanceof StructType || c.callee.type.returnType !== Type.VOID) {
         return targetCode
       }
       output.push(`${targetCode};`)

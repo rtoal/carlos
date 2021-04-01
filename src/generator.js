@@ -60,7 +60,7 @@ export default function generate(program) {
       return targetName(f)
     },
     FunctionDeclaration(d) {
-      output.push(`function ${gen(d.function)}(${gen(d.parameters).join(", ")}) {`)
+      output.push(`function ${gen(d.fun)}(${gen(d.fun.parameters).join(", ")}) {`)
       gen(d.body)
       output.push("}")
     },

@@ -32,16 +32,16 @@ export class StructTypeDeclaration {
   }
 }
 
-export class Field {
-  constructor(name, type) {
-    Object.assign(this, { name, type })
+export class FunctionDeclaration {
+  // Example: function f(x: [int?], y: string): Vector {}
+  constructor(fun, body) {
+    Object.assign(this, { fun, body })
   }
 }
 
-export class FunctionDeclaration {
-  // Example: function f(x: [int?], y: string): Vector {}
-  constructor(name, parameters, returnType, body) {
-    Object.assign(this, { name, parameters, returnType, body })
+export class Function {
+  constructor(name, parameters, returnType) {
+    Object.assign(this, { name, parameters, returnType })
   }
 }
 
@@ -96,11 +96,9 @@ export class StructType extends Type {
   }
 }
 
-// Created during semantic analysis only!
-export class Function {
-  constructor(name) {
-    this.name = name
-    // Other properties set after construction
+export class Field {
+  constructor(name, type) {
+    Object.assign(this, { name, type })
   }
 }
 

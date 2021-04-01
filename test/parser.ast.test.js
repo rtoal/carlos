@@ -23,9 +23,11 @@ const expectedAST = new ast.Program([
   new ast.ReturnStatement(new ast.ArrayExpression([1, 2])),
   new ast.ReturnStatement(new ast.MemberExpression(Symbol.for("x"), "y")),
   new ast.FunctionDeclaration(
-    "f",
-    [new ast.Parameter("x", Symbol.for("int"))],
-    new ast.ArrayType(Symbol.for("bool")),
+    new ast.Function(
+      "f",
+      [new ast.Parameter("x", Symbol.for("int"))],
+      new ast.ArrayType(Symbol.for("bool"))
+    ),
     [new ast.ShortIfStatement(false, [new ast.BreakStatement()])]
   ),
   new ast.StructTypeDeclaration(

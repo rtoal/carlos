@@ -180,13 +180,11 @@ const varX = Object.assign(new ast.Variable("x", false), { type: Int })
 const letX1 = new ast.VariableDeclaration(varX, 1n)
 const assignX2 = new ast.Assignment(varX, 2n)
 
-const funDeclF = Object.assign(
-  new ast.FunctionDeclaration("f", [new ast.Parameter("x", Int)], Void, []),
-  {
-    function: Object.assign(new ast.Function("f"), {
-      type: intToVoidType,
-    }),
-  }
+const functionF = new ast.FunctionDeclaration(
+  Object.assign(new ast.Function("f", [new ast.Parameter("x", Int)], Void), {
+    type: intToVoidType,
+  }),
+  []
 )
 
 const structS = Object.assign(
@@ -196,7 +194,7 @@ const structS = Object.assign(
 
 const graphChecks = [
   ["Variable created & resolved", "let x=1; x=2;", [letX1, assignX2]],
-  ["functions created & resolved", "function f(x: int) {}", [funDeclF]],
+  ["functions created & resolved", "function f(x: int) {}", [functionF]],
   ["field type resolved", "struct S {x: int}", [structS]],
 ]
 

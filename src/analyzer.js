@@ -249,20 +249,18 @@ class Context {
     return f
   }
   FunctionDeclaration(d) {
-    d.returnType = d.returnType ? this.analyze(d.returnType) : Type.VOID
-    check(d.returnType).isAType()
-    // Declarations generate brand new function objects
-    const f = (d.function = new Function(d.name))
+    d.fun.returnType = d.fun.returnType ? this.analyze(d.fun.returnType) : Type.VOID
+    check(d.fun.returnType).isAType()
     // When entering a function body, we must reset the inLoop setting,
     // because it is possible to declare a function inside a loop!
-    const childContext = this.newChild({ inLoop: false, forFunction: f })
-    d.parameters = childContext.analyze(d.parameters)
-    f.type = new FunctionType(
-      d.parameters.map(p => p.type),
-      d.returnType
+    const childContext = this.newChild({ inLoop: false, forFunction: d.fun })
+    d.fun.parameters = childContext.analyze(d.fun.parameters)
+    d.fun.type = new FunctionType(
+      d.fun.parameters.map(p => p.type),
+      d.fun.returnType
     )
     // Add before analyzing the body to allow recursion
-    this.add(f.name, f)
+    this.add(d.fun.name, d.fun)
     d.body = childContext.analyze(d.body)
     return d
   }

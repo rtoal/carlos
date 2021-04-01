@@ -26,9 +26,11 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   FunDecl(_fun, id, parameters, _colons, returnType, body) {
     const returnTypeTree = returnType.ast()
     return new ast.FunctionDeclaration(
-      id.sourceString,
-      parameters.ast(),
-      returnTypeTree.length === 0 ? null : returnTypeTree[0],
+      new ast.Function(
+        id.sourceString,
+        parameters.ast(),
+        returnTypeTree.length === 0 ? null : returnTypeTree[0]
+      ),
       body.ast()
     )
   },

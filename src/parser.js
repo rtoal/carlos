@@ -10,7 +10,10 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   },
   Statement_vardecl(kind, id, _eq, initializer, _semi) {
     const [name, readOnly] = [id.sourceString, kind.sourceString == "const"]
-    return new ast.VariableDeclaration(name, readOnly, initializer.ast())
+    return new ast.VariableDeclaration(
+      new ast.Variable(name, readOnly),
+      initializer.ast()
+    )
   },
   StructDecl(_struct, id, _left, fields, _right) {
     return new ast.StructTypeDeclaration(id.sourceString, fields.ast())

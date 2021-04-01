@@ -231,7 +231,6 @@ class Context {
   VariableDeclaration(d) {
     // Declarations generate brand new variable objects
     d.initializer = this.analyze(d.initializer)
-    d.variable = new Variable(d.name, d.readOnly)
     d.variable.type = d.initializer.type
     this.add(d.variable.name, d.variable)
     return d

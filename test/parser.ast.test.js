@@ -18,8 +18,8 @@ const source = `
 `
 
 const expectedAST = new ast.Program([
-  new ast.VariableDeclaration("x", false, 1n),
-  new ast.VariableDeclaration("y", true, "hello"),
+  new ast.VariableDeclaration(new ast.Variable("x", false), 1n),
+  new ast.VariableDeclaration(new ast.Variable("y", true), "hello"),
   new ast.ReturnStatement(new ast.ArrayExpression([1, 2])),
   new ast.ReturnStatement(new ast.MemberExpression(Symbol.for("x"), "y")),
   new ast.FunctionDeclaration(

@@ -177,9 +177,7 @@ const intToVoidType = new ast.FunctionType([Int], Void)
 
 const varX = Object.assign(new ast.Variable("x", false), { type: Int })
 
-const letX1 = Object.assign(new ast.VariableDeclaration("x", false, 1n), {
-  variable: varX,
-})
+const letX1 = new ast.VariableDeclaration(varX, 1n)
 const assignX2 = new ast.Assignment(varX, 2n)
 
 const funDeclF = Object.assign(

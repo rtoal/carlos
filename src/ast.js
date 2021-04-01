@@ -14,8 +14,14 @@ export class Program {
 
 export class VariableDeclaration {
   // Example: const dozen = 12;
-  constructor(name, readOnly, initializer) {
-    Object.assign(this, { name, readOnly, initializer })
+  constructor(variable, initializer) {
+    Object.assign(this, { variable, initializer })
+  }
+}
+
+export class Variable {
+  constructor(name, readOnly) {
+    Object.assign(this, { name, readOnly })
   }
 }
 
@@ -88,13 +94,6 @@ export class StructType extends Type {
   constructor(name, fields) {
     super()
     Object.assign(this, { name, fields })
-  }
-}
-
-// Created during semantic analysis only!
-export class Variable {
-  constructor(name, readOnly) {
-    Object.assign(this, { name, readOnly })
   }
 }
 

@@ -1,12 +1,14 @@
 import { Type, FunctionType, Variable, Function, ArrayType } from "./ast.js"
 
-// Create objects for the five basic types, as well as an object for
+// Create objects for the five basic types, as well as an object
+// for the ANY "pseudotype."" In the syntax, the basic types are
+// represented as JavaScript symbols, but during semantic analysis
+// these new objects are used instead.
 Type.BOOLEAN = Object.assign(new Type(), { description: "boolean" })
 Type.INT = Object.assign(new Type(), { description: "int" })
 Type.FLOAT = Object.assign(new Type(), { description: "float" })
 Type.STRING = Object.assign(new Type(), { description: "string" })
 Type.VOID = Object.assign(new Type(), { description: "void" })
-//Type.TYPE = Object.assign( new Type(), { name() { return  "type"}})
 Type.ANY = Object.assign(new Type(), { description: "any" })
 
 function makeConstant(name, type, value) {

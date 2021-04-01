@@ -267,12 +267,3 @@ export class Call {
     Object.assign(this, { callee, args })
   }
 }
-
-// Appears in the syntax tree only and disappears after semantic analysis
-// since references to the Id node will be replaced with references to the
-// actual variable or function or type node the the id refers to.
-export class Identifier {
-  constructor(name) {
-    this.name = name
-  }
-}

@@ -46,8 +46,8 @@ export default function generate(program) {
     },
     StructTypeDeclaration(d) {
       output.push(`class ${gen(d.type)} {`)
-      output.push(`constructor(${gen(d.fields).join(",")}) {`)
-      for (let field of d.fields) {
+      output.push(`constructor(${gen(d.type.fields).join(",")}) {`)
+      for (let field of d.type.fields) {
         output.push(`this[${JSON.stringify(gen(field))}] = ${gen(field)};`)
       }
       output.push("}")

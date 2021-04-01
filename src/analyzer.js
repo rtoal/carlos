@@ -229,18 +229,17 @@ class Context {
     return p
   }
   VariableDeclaration(d) {
-    // Declarations generate brand new variable objects
+    // Only analyze the declaration, not the variable
     d.initializer = this.analyze(d.initializer)
     d.variable.type = d.initializer.type
     this.add(d.variable.name, d.variable)
     return d
   }
   StructTypeDeclaration(d) {
-    d.type = new StructType(d.name, d.fields)
     // Add early to allow recursion
-    this.add(d.name, d.type)
-    d.type.fields = d.fields = this.analyze(d.fields)
-    check(d.fields).areAllDistinct()
+    this.add(d.type.name, d.type)
+    d.type.fields = this.analyze(d.type.fields)
+    check(d.type.fields).areAllDistinct()
     check(d.type).isNotRecursive()
     return d
   }

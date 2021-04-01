@@ -27,8 +27,8 @@ export class Variable {
 
 export class StructTypeDeclaration {
   // Example: struct S {x: int?, y: [double]}
-  constructor(name, fields) {
-    Object.assign(this, { name, fields })
+  constructor(type) {
+    this.type = type
   }
 }
 
@@ -89,7 +89,6 @@ export class OptionalType extends Type {
   }
 }
 
-// Created during semantic analysis only!
 export class StructType extends Type {
   constructor(name, fields) {
     super()

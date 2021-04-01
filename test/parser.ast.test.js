@@ -28,15 +28,17 @@ const expectedAST = new ast.Program([
     new ast.ArrayType(Symbol.for("bool")),
     [new ast.ShortIfStatement(false, [new ast.BreakStatement()])]
   ),
-  new ast.StructTypeDeclaration("S", [
-    new ast.Field(
-      "m",
-      new ast.FunctionType(
-        [Symbol.for("string"), new ast.OptionalType(Symbol.for("int"))],
-        Symbol.for("bool")
-      )
-    ),
-  ]),
+  new ast.StructTypeDeclaration(
+    new ast.StructType("S", [
+      new ast.Field(
+        "m",
+        new ast.FunctionType(
+          [Symbol.for("string"), new ast.OptionalType(Symbol.for("int"))],
+          Symbol.for("bool")
+        )
+      ),
+    ])
+  ),
   new ast.Call(Symbol.for("f"), [
     new ast.UnwrapElse(
       new ast.BinaryExpression("*", 3n, 7n),

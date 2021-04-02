@@ -8,14 +8,14 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Program(body) {
     return new ast.Program(body.ast())
   },
-  Statement_vardecl(kind, id, _eq, initializer, _semi) {
+  VarDecl(kind, id, _eq, initializer, _semicolon) {
     const [name, readOnly] = [id.sourceString, kind.sourceString == "const"]
     return new ast.VariableDeclaration(
       new ast.Variable(name, readOnly),
       initializer.ast()
     )
   },
-  StructDecl(_struct, id, _left, fields, _right) {
+  TypeDecl(_struct, id, _left, fields, _right) {
     return new ast.StructTypeDeclaration(
       new ast.StructType(id.sourceString, fields.ast())
     )
@@ -50,29 +50,27 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.OptionalType(baseType.ast())
   },
   TypeExp_id(id) {
-    // return new ast.Identifier(id.sourceString)
     return Symbol.for(id.sourceString)
   },
-  Statement_bump(variable, operator, _semi) {
+  Statement_bump(variable, operator, _semicolon) {
     return operator.sourceString === "++"
       ? new ast.Increment(variable.ast())
       : new ast.Decrement(variable.ast())
   },
-  Statement_assign(variable, _eq, expression, _semi) {
+  Statement_assign(variable, _eq, expression, _semicolon) {
     return new ast.Assignment(variable.ast(), expression.ast())
   },
-  Statement_call(call, _semi) {
+  Statement_call(call, _semicolon) {
     return call.ast()
   },
-  Statement_break(_break, _semi) {
+  Statement_break(_break, _semicolon) {
     return new ast.BreakStatement()
   },
-  Statement_return(_return, expression, _semi) {
-    const returnValueTree = expression.ast()
-    if (returnValueTree.length === 0) {
-      return new ast.ShortReturnStatement()
-    }
-    return new ast.ReturnStatement(returnValueTree[0])
+  Statement_return(_return, expression, _semicolon) {
+    return new ast.ReturnStatement(expression.ast())
+  },
+  Statement_shortreturn(_return, _semicolon) {
+    return new ast.ShortReturnStatement()
   },
   IfStmt_long(_if, test, consequent, _else, alternate) {
     return new ast.IfStatement(test.ast(), consequent.ast(), alternate.ast())
@@ -163,7 +161,6 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.MemberExpression(object.ast(), field.sourceString)
   },
   Var_id(id) {
-    // return new ast.Identifier(id.sourceString)
     return Symbol.for(id.sourceString)
   },
   Var_call(callee, _left, args, _right) {
@@ -181,7 +178,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
     return Number(this.sourceString)
   },
-  stringlit(_open, chars, _close) {
+  stringlit(_openQuote, chars, _closeQuote) {
     return chars.sourceString
   },
 })

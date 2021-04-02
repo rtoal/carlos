@@ -1,20 +1,21 @@
 Carlos {
   Program     = Statement+
 
-  Statement   = (let | const) id "=" Exp ";"                --vardecl
-              | StructDecl
+  Statement   = VarDecl
+              | TypeDecl
               | FunDecl
               | Var ("++" | "--") ";"                       --bump
               | Var "=" Exp ";"                             --assign
               | Var_call ";"                                --call
               | break ";"                                   --break
-              | return Exp? ";"                             --return
+              | return Exp ";"                              --return
+              | return ";"                                  --shortreturn
               | IfStmt
               | LoopStmt
 
-  StructDecl  = struct id "{" Field* "}"
+  VarDecl     = (let | const) id "=" Exp ";"
+  TypeDecl    = struct id "{" Field* "}"
   Field       = id ":" TypeExp
-
   FunDecl     = function id Params (":" TypeExp)? Block
   Params      = "(" ListOf<Param, ","> ")"
   Param       = id ":" TypeExp

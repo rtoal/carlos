@@ -42,7 +42,8 @@ const expectedAST = new ast.Program([
     ])
   ),
   new ast.Call(Symbol.for("f"), [
-    new ast.UnwrapElse(
+    new ast.BinaryExpression(
+      "??",
       new ast.BinaryExpression("*", 3n, 7n),
       new ast.AndExpression([1n, 2n])
     ),

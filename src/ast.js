@@ -187,13 +187,6 @@ export class Conditional {
   }
 }
 
-export class UnwrapElse {
-  // Example: locationOf("Carmen") ?? "Somewhere in the world"
-  constructor(optional, alternate) {
-    Object.assign(this, { optional, alternate })
-  }
-}
-
 export class OrExpression {
   // Example: openDoor() || tryTheWindow() || breakTheDoorDown()
   constructor(disjuncts) {

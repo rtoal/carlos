@@ -156,7 +156,7 @@ const fixtures = [
     `,
     expected: dedent`
       let x_1 = undefined;
-      let y_2 = ((x_1) ?? (2));
+      let y_2 = (x_1 ?? 2);
     `,
   },
   {

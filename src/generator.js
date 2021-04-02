@@ -137,9 +137,6 @@ export default function generate(program) {
     Conditional(e) {
       return `((${gen(e.test)}) ? (${gen(e.consequent)}) : (${gen(e.alternate)}))`
     },
-    UnwrapElse(e) {
-      return `((${gen(e.optional)}) ?? (${gen(e.alternate)}))`
-    },
     OrExpression(e) {
       return `(${gen(e.disjuncts).join(" || ")})`
     },

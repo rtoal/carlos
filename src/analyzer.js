@@ -359,14 +359,6 @@ class Context {
     e.type = e.consequent.type
     return e
   }
-  UnwrapElse(e) {
-    e.optional = this.analyze(e.optional)
-    e.alternate = this.analyze(e.alternate)
-    check(e.optional).isAnOptional()
-    check(e.alternate).isAssignableTo(e.optional.type.baseType)
-    e.type = e.optional.type
-    return e
-  }
   OrExpression(e) {
     e.disjuncts = this.analyze(e.disjuncts)
     e.disjuncts.forEach(disjunct => check(disjunct).isBoolean())
@@ -401,6 +393,10 @@ class Context {
     } else if (["==", "!="].includes(e.op)) {
       check(e.left).hasSameTypeAs(e.right)
       e.type = Type.BOOLEAN
+    } else if (["??"].includes(e.op)) {
+      check(e.left).isAnOptional()
+      check(e.right).isAssignableTo(e.left.type.baseType)
+      e.type = e.left.type
     }
     return e
   }

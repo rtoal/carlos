@@ -143,14 +143,6 @@ const optimizers = {
     }
     return e
   },
-  UnwrapElse(e) {
-    e.optional = optimize(e.optional)
-    e.alternate = optimize(e.alternate)
-    if (e.optional.constructor === ast.EmptyOptional) {
-      return e.alternate
-    }
-    return e
-  },
   OrExpression(e) {
     // Get rid of all disjuncts after a literal true
     const optimizedDisjuncts = []
@@ -180,7 +172,11 @@ const optimizers = {
   BinaryExpression(e) {
     e.left = optimize(e.left)
     e.right = optimize(e.right)
-    if ([Number, BigInt].includes(e.left.constructor)) {
+    if (e.op === "??") {
+      if (e.left.constructor === ast.EmptyOptional) {
+        return e.right
+      }
+    } else if ([Number, BigInt].includes(e.left.constructor)) {
       if ([Number, BigInt].includes(e.right.constructor)) {
         if (e.op === "+") {
           return e.left + e.right

@@ -9,11 +9,8 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.Program(body.ast())
   },
   VarDecl(kind, id, _eq, initializer, _semicolon) {
-    const [name, readOnly] = [id.sourceString, kind.sourceString == "const"]
-    return new ast.VariableDeclaration(
-      new ast.Variable(name, readOnly),
-      initializer.ast()
-    )
+    const variable = new ast.Variable(id.sourceString, kind.sourceString == "const")
+    return new ast.VariableDeclaration(variable, initializer.ast())
   },
   TypeDecl(_struct, id, _left, fields, _right) {
     return new ast.TypeDeclaration(new ast.Type(id.sourceString, fields.ast()))
@@ -22,13 +19,8 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new ast.Field(id.sourceString, type.ast())
   },
   FunDecl(_fun, id, parameters, _colons, returnType, body) {
-    const returnTypeTree = returnType.ast()
     return new ast.FunctionDeclaration(
-      new ast.Function(
-        id.sourceString,
-        parameters.ast(),
-        returnTypeTree.length === 0 ? null : returnTypeTree[0]
-      ),
+      new ast.Function(id.sourceString, parameters.ast(), returnType.ast()[0] ?? null),
       body.ast()
     )
   },

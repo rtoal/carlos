@@ -20,6 +20,7 @@ export class VariableDeclaration {
 }
 
 export class Variable {
+  // Generated when processing a variable declaration
   constructor(name, readOnly) {
     Object.assign(this, { name, readOnly })
   }
@@ -32,6 +33,13 @@ export class TypeDeclaration {
   }
 }
 
+export class Type {
+  // Generated when processing a type declaration
+  constructor(name, fields = []) {
+    Object.assign(this, { name, fields })
+  }
+}
+
 export class FunctionDeclaration {
   // Example: function f(x: [int?], y: string): Vector {}
   constructor(fun, body) {
@@ -40,6 +48,7 @@ export class FunctionDeclaration {
 }
 
 export class Function {
+  // Generated when processing a function declaration
   constructor(name, parameters, returnType) {
     Object.assign(this, { name, parameters, returnType })
   }
@@ -49,12 +58,6 @@ export class Parameter {
   // Example: x: boolean
   constructor(name, type) {
     Object.assign(this, { name, type })
-  }
-}
-
-export class Type {
-  constructor(name, fields = []) {
-    Object.assign(this, { name, fields })
   }
 }
 

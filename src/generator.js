@@ -3,7 +3,7 @@
 // Invoke generate(program) with the program node to get back the JavaScript
 // translation as a string.
 
-import { IfStatement, Type, StructType } from "./ast.js"
+import { IfStatement, Type } from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 export default function generate(program) {
@@ -44,7 +44,7 @@ export default function generate(program) {
       // has already checked we never wrote to a const, so let is always fine.
       output.push(`let ${gen(d.variable)} = ${gen(d.initializer)};`)
     },
-    StructTypeDeclaration(d) {
+    TypeDeclaration(d) {
       output.push(`class ${gen(d.type)} {`)
       output.push(`constructor(${gen(d.type.fields).join(",")}) {`)
       for (let field of d.type.fields) {
@@ -53,7 +53,7 @@ export default function generate(program) {
       output.push("}")
       output.push("}")
     },
-    StructType(t) {
+    Type(t) {
       return targetName(t)
     },
     Field(f) {
@@ -171,10 +171,10 @@ export default function generate(program) {
     Call(c) {
       const targetCode = standardFunctions.has(c.callee)
         ? standardFunctions.get(c.callee)(gen(c.args))
-        : c.callee.constructor === StructType
+        : c.callee.constructor === Type
         ? `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
         : `${gen(c.callee)}(${gen(c.args).join(", ")})`
-      if (c.callee instanceof StructType || c.callee.type.returnType !== Type.VOID) {
+      if (c.callee instanceof Type || c.callee.type.returnType !== Type.VOID) {
         return targetCode
       }
       output.push(`${targetCode};`)

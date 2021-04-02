@@ -16,9 +16,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     )
   },
   TypeDecl(_struct, id, _left, fields, _right) {
-    return new ast.StructTypeDeclaration(
-      new ast.StructType(id.sourceString, fields.ast())
-    )
+    return new ast.TypeDeclaration(new ast.Type(id.sourceString, fields.ast()))
   },
   Field(id, _colon, type) {
     return new ast.Field(id.sourceString, type.ast())

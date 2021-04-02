@@ -1,12 +1,4 @@
-import {
-  Variable,
-  Type,
-  FunctionType,
-  Function,
-  ArrayType,
-  OptionalType,
-  StructType,
-} from "./ast.js"
+import { Variable, Type, FunctionType, ArrayType, OptionalType } from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 function must(condition, errorMessage) {
@@ -72,17 +64,6 @@ Object.assign(OptionalType.prototype, {
   },
   isAssignableTo(target) {
     // Optionals are INVARIANT in Carlos!
-    return this.isEquivalentTo(target)
-  },
-})
-
-Object.assign(StructType.prototype, {
-  isEquivalentTo(target) {
-    // We're restrictive: requiring the same exact type object for equivalence
-    return this == target
-  },
-  isAssignableTo(target) {
-    // We're restrictive: requiring the same exact type object for assignment
     return this.isEquivalentTo(target)
   },
 })
@@ -153,7 +134,7 @@ const check = self => ({
   },
   isCallable() {
     must(
-      self.constructor === StructType || self.type.constructor == FunctionType,
+      self.constructor === Type || self.type.constructor == FunctionType,
       "Call of non-function or non-constructor"
     )
   },
@@ -177,8 +158,8 @@ const check = self => ({
   matchParametersOf(calleeType) {
     check(self).match(calleeType.parameterTypes)
   },
-  matchFieldsOf(structType) {
-    check(self).match(structType.fields.map(f => f.type))
+  matchFieldsOf(type) {
+    check(self).match(type.fields.map(f => f.type))
   },
 })
 
@@ -235,7 +216,7 @@ class Context {
     this.add(d.variable.name, d.variable)
     return d
   }
-  StructTypeDeclaration(d) {
+  TypeDeclaration(d) {
     // Add early to allow recursion
     this.add(d.type.name, d.type)
     d.type.fields = this.analyze(d.type.fields)
@@ -474,7 +455,7 @@ class Context {
     c.callee = this.analyze(c.callee)
     check(c.callee).isCallable()
     c.args = this.analyze(c.args)
-    if (c.callee.constructor === StructType) {
+    if (c.callee.constructor === Type) {
       check(c.args).matchFieldsOf(c.callee)
       c.type = c.callee
     } else {

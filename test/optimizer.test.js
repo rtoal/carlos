@@ -78,7 +78,7 @@ const tests = [
     ...Array(2).fill([
       new ast.Program([new ast.ShortReturnStatement()]),
       new ast.VariableDeclaration("x", true, "z"),
-      new ast.StructTypeDeclaration([new ast.Field("x", ast.Type.INT)]),
+      new ast.TypeDeclaration([new ast.Field("x", ast.Type.INT)]),
       new ast.Assignment(x, new ast.BinaryExpression("*", x, "z")),
       new ast.Assignment(x, new ast.UnaryExpression("not", x)),
       new ast.Call(identity, new ast.MemberExpression(x, "f")),

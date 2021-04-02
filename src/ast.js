@@ -25,7 +25,7 @@ export class Variable {
   }
 }
 
-export class StructTypeDeclaration {
+export class TypeDeclaration {
   // Example: struct S {x: int?, y: [double]}
   constructor(type) {
     this.type = type
@@ -52,7 +52,11 @@ export class Parameter {
   }
 }
 
-export class Type {}
+export class Type {
+  constructor(name, fields = []) {
+    Object.assign(this, { name, fields })
+  }
+}
 
 export class ArrayType extends Type {
   // Example: [int]
@@ -86,13 +90,6 @@ export class OptionalType extends Type {
   }
   get description() {
     return `${this.baseType.description}?`
-  }
-}
-
-export class StructType extends Type {
-  constructor(name, fields) {
-    super()
-    Object.assign(this, { name, fields })
   }
 }
 

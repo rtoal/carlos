@@ -32,10 +32,10 @@ const optimizers = {
     d.initializer = optimize(d.initializer)
     return d
   },
-  StructTypeDeclaration(d) {
+  TypeDeclaration(d) {
     return d
   },
-  StructType(d) {
+  Type(d) {
     return d
   },
   FunctionDeclaration(d) {

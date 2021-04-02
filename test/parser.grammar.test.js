@@ -6,7 +6,7 @@ const syntaxChecks = [
   ["simplest syntactically correct program", "break;"],
   ["multiple statements", "print(1);\nbreak;\nx=5; return; return;"],
   ["variable declarations", "let e=99*1;\nconst z=false;"],
-  ["struct declarations", "struct S {x:T1 y:T2 z:bool}"],
+  ["type declarations", "struct S {x:T1 y:T2 z:bool}"],
   ["function with no params, no return type", "function f() {}"],
   ["function with one param", "function f(x: int) {}"],
   ["function with two params", "function f(x: int, y: boolean) {}"],

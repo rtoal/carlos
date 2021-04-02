@@ -40,6 +40,12 @@ export class Type {
   }
 }
 
+export class Field {
+  constructor(name, type) {
+    Object.assign(this, { name, type })
+  }
+}
+
 export class FunctionDeclaration {
   // Example: function f(x: [int?], y: string): Vector {}
   constructor(fun, body) {
@@ -93,12 +99,6 @@ export class OptionalType extends Type {
   }
   get description() {
     return `${this.baseType.description}?`
-  }
-}
-
-export class Field {
-  constructor(name, type) {
-    Object.assign(this, { name, type })
   }
 }
 

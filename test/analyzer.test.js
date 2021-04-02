@@ -9,7 +9,7 @@ const semanticChecks = [
   ["complex array types", "function f(x: [[[int?]]?]) {}"],
   ["increment and decrement", "let x = 10; x--; x++;"],
   ["initialize with empty array", "let a = [](of int);"],
-  ["struct declaration", "struct S {f: (int)->boolean? g: string}"],
+  ["type declaration", "struct S {f: (int)->boolean? g: string}"],
   ["assign arrays", "let a = [](of int);let b=[1];a=b;b=a;"],
   ["initialize with empty optional", "let a = no int;"],
   ["short return", "function f() { return; }"],

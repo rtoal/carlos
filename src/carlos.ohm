@@ -4,12 +4,12 @@ Carlos {
   Statement   = VarDecl
               | TypeDecl
               | FunDecl
-              | Var ("++" | "--") ";"                       --bump
-              | Var "=" Exp ";"                             --assign
-              | Var_call ";"                                --call
-              | break ";"                                   --break
-              | return Exp ";"                              --return
-              | return ";"                                  --shortreturn
+              | Exp9 ("++" | "--") ";"                        --bump
+              | Exp9 "=" Exp ";"                              --assign
+              | Exp9_call ";"                                 --call
+              | break ";"                                     --break
+              | return Exp ";"                                --return
+              | return ";"                                    --shortreturn
               | IfStmt
               | LoopStmt
 
@@ -20,56 +20,54 @@ Carlos {
   Params      = "(" ListOf<Param, ","> ")"
   Param       = id ":" TypeExp
 
-  TypeExp     = TypeExp "?"                                 --optional
-              | "[" TypeExp "]"                             --array
-              | "(" ListOf<TypeExp, ","> ")" "->" TypeExp   --function
-              | id                                          --id
+  TypeExp     = TypeExp "?"                                   --optional
+              | "[" TypeExp "]"                               --array
+              | "(" ListOf<TypeExp, ","> ")" "->" TypeExp     --function
+              | id                                            --id
 
-  IfStmt      = if Exp Block else (Block | IfStmt)          --long
-              | if Exp Block                                --short
-  LoopStmt    = while Exp Block                             --while
-              | repeat Exp Block                            --repeat
-              | for id in Exp ("..." | "..<") Exp Block     --range
-              | for id in Exp Block                         --collection
+  IfStmt      = if Exp Block else (Block | IfStmt)            --long
+              | if Exp Block                                  --short
+  LoopStmt    = while Exp Block                               --while
+              | repeat Exp Block                              --repeat
+              | for id in Exp ("..." | "..<") Exp Block       --range
+              | for id in Exp Block                           --collection
   Block       = "{" Statement* "}"
 
-  Exp         = Exp1 "?" Exp1 ":" Exp                       --conditional
+  Exp         = Exp1 "?" Exp1 ":" Exp                         --conditional
               | Exp1
-  Exp1        = Exp1 "??" Exp2                              --unwrapelse
+  Exp1        = Exp1 "??" Exp2                                --unwrapelse
               | Exp2
-  Exp2        = Exp3 ("||" Exp3)+                           --or
-              | Exp3 ("&&" Exp3)+                           --and
+  Exp2        = Exp3 ("||" Exp3)+                             --or
+              | Exp3 ("&&" Exp3)+                             --and
               | Exp3
-  Exp3        = Exp4 ("|" Exp4)+                            --bitor
-              | Exp4 ("^" Exp4)+                            --bitxor
-              | Exp4 ("&" Exp4)+                            --bitand
+  Exp3        = Exp4 ("|" Exp4)+                              --bitor
+              | Exp4 ("^" Exp4)+                              --bitxor
+              | Exp4 ("&" Exp4)+                              --bitand
               | Exp4
-  Exp4        = Exp5 ("<="|"<"|"=="|"!="|">="|">") Exp5     --compare
+  Exp4        = Exp5 ("<="|"<"|"=="|"!="|">="|">") Exp5       --compare
               | Exp5
-  Exp5        = Exp5 ("<<" | ">>") Exp6                     --shift
+  Exp5        = Exp5 ("<<" | ">>") Exp6                       --shift
               | Exp6
-  Exp6        = Exp6 ("+" | "-") Exp7                       --add
+  Exp6        = Exp6 ("+" | "-") Exp7                         --add
               | Exp7
-  Exp7        = Exp7 ("*"| "/" | "%") Exp8                  --multiply
+  Exp7        = Exp7 ("*"| "/" | "%") Exp8                    --multiply
               | Exp8
-  Exp8        = Exp9 "**" Exp8                              --power
+  Exp8        = Exp9 "**" Exp8                                --power
               | Exp9
-              | ("#" | "-" | "!" | some) Exp9               --unary
-  Exp9        = true
-              | false
-              | floatlit
-              | intlit
-              | stringlit
-              | "[]" "(" of TypeExp ")"                     --emptyarray
-              | "[" NonemptyListOf<Exp, ","> "]"            --arrayexp
-              | no TypeExp                                  --emptyopt
-              | "(" Exp ")"                                 --parens
-              | Var
-
-  Var         = Var ("[" | "?[") Exp "]"                    --subscript
-              | Var ("." | "?.") id                         --member
-              | Var ("(" | "?(") ListOf<Exp, ","> ")"       --call
-              | id                                          --id
+              | ("#" | "-" | "!" | some) Exp9                 --unary
+  Exp9        = Exp9 ("[" | "?[") Exp "]"                     --subscript
+              | Exp9 ("." | "?.") id                          --member
+              | Exp9 ("(" | "?(") ListOf<Exp, ","> ")" ~mut   --call
+              | id                                            --id
+              | true ~mut
+              | false ~mut
+              | floatlit ~mut
+              | intlit ~mut
+              | stringlit ~mut
+              | "[]" "(" of TypeExp ")" ~mut                  --emptyarray
+              | "[" NonemptyListOf<Exp, ","> "]" ~mut         --arrayexp
+              | no TypeExp ~mut                               --emptyopt
+              | "(" Exp ")" ~mut                              --parens
 
   intlit      = digit+
   floatlit    = digit+ "." digit+ (("E" | "e") ("+" | "-")? digit+)?
@@ -79,6 +77,7 @@ Carlos {
               | "\\u{" hex hex? hex? hex? hex? hex? "}"     --codepoint
   control     = "\x00".."\x1f" | "\x80".."\x9f"
   hex         = hexDigit
+  mut         = ~"==" "=" | "++" | "--"
 
   let         = "let" ~alnum
   const       = "const" ~alnum

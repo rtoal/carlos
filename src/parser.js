@@ -154,16 +154,16 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Exp9_parens(_open, expression, _close) {
     return expression.ast()
   },
-  Var_subscript(array, _left, subscript, _right) {
+  Exp9_subscript(array, _left, subscript, _right) {
     return new ast.SubscriptExpression(array.ast(), subscript.ast())
   },
-  Var_member(object, _dot, field) {
+  Exp9_member(object, _dot, field) {
     return new ast.MemberExpression(object.ast(), field.sourceString)
   },
-  Var_id(id) {
+  Exp9_id(id) {
     return Symbol.for(id.sourceString)
   },
-  Var_call(callee, _left, args, _right) {
+  Exp9_call(callee, _left, args, _right) {
     return new ast.Call(callee.ast(), args.asIteration().ast())
   },
   true(_) {

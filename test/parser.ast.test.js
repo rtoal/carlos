@@ -45,7 +45,7 @@ const expectedAST = new ast.Program([
     new ast.BinaryExpression(
       "??",
       new ast.BinaryExpression("*", 3n, 7n),
-      new ast.AndExpression([1n, 2n])
+      new ast.BinaryExpression("&&", 1n, 2n)
     ),
   ]),
 ])

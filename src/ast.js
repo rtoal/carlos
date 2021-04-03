@@ -187,20 +187,6 @@ export class Conditional {
   }
 }
 
-export class OrExpression {
-  // Example: openDoor() || tryTheWindow() || breakTheDoorDown()
-  constructor(disjuncts) {
-    this.disjuncts = disjuncts
-  }
-}
-
-export class AndExpression {
-  // Example: swim() && bike() && run()
-  constructor(conjuncts) {
-    this.conjuncts = conjuncts
-  }
-}
-
 export class BinaryExpression {
   // Example: 3 & 22
   constructor(op, left, right) {

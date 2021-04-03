@@ -143,32 +143,6 @@ const optimizers = {
     }
     return e
   },
-  OrExpression(e) {
-    // Get rid of all disjuncts after a literal true
-    const optimizedDisjuncts = []
-    for (const disjunct of e.disjuncts) {
-      const optimized = optimize(disjunct)
-      optimizedDisjuncts.push(optimized)
-      if (optimized === true) {
-        break
-      }
-    }
-    e.disjuncts = optimizedDisjuncts
-    return e
-  },
-  AndExpression(e) {
-    // Get rid of all conjuncts after a literal false
-    const optimizedConjuncts = []
-    for (const conjunct of e.conjuncts) {
-      const optimized = optimize(conjunct)
-      optimizedConjuncts.push(optimized)
-      if (optimized === false) {
-        break
-      }
-    }
-    e.conjuncts = optimizedConjuncts
-    return e
-  },
   BinaryExpression(e) {
     e.left = optimize(e.left)
     e.right = optimize(e.right)
@@ -176,52 +150,35 @@ const optimizers = {
       if (e.left.constructor === ast.EmptyOptional) {
         return e.right
       }
+    } else if (e.op === "&&") {
+      if (e.left === true) return e.right
+      else if (e.right === true) return e.left
+    } else if (e.op === "||") {
+      if (e.left === false) return e.right
+      else if (e.right === false) return e.left
     } else if ([Number, BigInt].includes(e.left.constructor)) {
       if ([Number, BigInt].includes(e.right.constructor)) {
-        if (e.op === "+") {
-          return e.left + e.right
-        } else if (e.op === "-") {
-          return e.left - e.right
-        } else if (e.op === "*") {
-          return e.left * e.right
-        } else if (e.op === "/") {
-          return e.left / e.right
-        } else if (e.op === "**") {
-          return e.left ** e.right
-        } else if (e.op === "<") {
-          return e.left < e.right
-        } else if (e.op === "<=") {
-          return e.left <= e.right
-        } else if (e.op === "==") {
-          return e.left === e.right
-        } else if (e.op === "!=") {
-          return e.left !== e.right
-        } else if (e.op === ">=") {
-          return e.left >= e.right
-        } else if (e.op === ">") {
-          return e.left > e.right
-        }
-      } else if (e.left === 0 && e.op === "+") {
-        return e.right
-      } else if (e.left === 1 && e.op === "*") {
-        return e.right
-      } else if (e.left === 0 && e.op === "-") {
-        return new ast.UnaryExpression("-", e.right)
-      } else if (e.left === 1 && e.op === "**") {
-        return 1
-      } else if (e.left === 0 && ["*", "/"].includes(e.op)) {
-        return 0
-      }
+        if (e.op === "+") return e.left + e.right
+        else if (e.op === "-") return e.left - e.right
+        else if (e.op === "*") return e.left * e.right
+        else if (e.op === "/") return e.left / e.right
+        else if (e.op === "**") return e.left ** e.right
+        else if (e.op === "<") return e.left < e.right
+        else if (e.op === "<=") return e.left <= e.right
+        else if (e.op === "==") return e.left === e.right
+        else if (e.op === "!=") return e.left !== e.right
+        else if (e.op === ">=") return e.left >= e.right
+        else if (e.op === ">") return e.left > e.right
+      } else if (e.left === 0 && e.op === "+") return e.right
+      else if (e.left === 1 && e.op === "*") return e.right
+      else if (e.left === 0 && e.op === "-") return new ast.UnaryExpression("-", e.right)
+      else if (e.left === 1 && e.op === "**") return 1
+      else if (e.left === 0 && ["*", "/"].includes(e.op)) return 0
     } else if (e.right.constructor === Number) {
-      if (["+", "-"].includes(e.op) && e.right === 0) {
-        return e.left
-      } else if (["*", "/"].includes(e.op) && e.right === 1) {
-        return e.left
-      } else if (e.op === "*" && e.right === 0) {
-        return 0
-      } else if (e.op === "**" && e.right === 0) {
-        return 1
-      }
+      if (["+", "-"].includes(e.op) && e.right === 0) return e.left
+      else if (["*", "/"].includes(e.op) && e.right === 1) return e.left
+      else if (e.op === "*" && e.right === 0) return 0
+      else if (e.op === "**" && e.right === 0) return 1
     }
     return e
   },

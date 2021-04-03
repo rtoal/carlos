@@ -93,26 +93,28 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Exp_conditional(test, _questionMark, consequent, _colon, alternate) {
     return new ast.Conditional(test.ast(), consequent.ast(), alternate.ast())
   },
-  Exp1_unwrapelse(unwrap, _op, alternate) {
-    return new ast.BinaryExpression("??", unwrap.ast(), alternate.ast())
+  Exp1_unwrapelse(unwrap, op, alternate) {
+    return new ast.BinaryExpression(op.sourceString, unwrap.ast(), alternate.ast())
   },
-  Exp2_or(first, _ors, rest) {
-    return new ast.OrExpression([first.ast(), ...rest.ast()])
+  Exp2_or(left, _ops, right) {
+    const operands = [left.ast(), ...right.ast()]
+    return operands.reduce((x, y) => new ast.BinaryExpression("||", x, y))
   },
-  Exp2_and(first, _ors, rest) {
-    return new ast.AndExpression([first.ast(), ...rest.ast()])
+  Exp2_and(left, _ops, right) {
+    const operands = [left.ast(), ...right.ast()]
+    return operands.reduce((x, y) => new ast.BinaryExpression("&&", x, y))
   },
-  Exp3_bitor(left, ops, right) {
-    const [op, operands] = [ops.sourceString[0], [left.ast(), ...right.ast()]]
-    return operands.reduce((x, y) => new ast.BinaryExpression(op, x, y))
+  Exp3_bitor(left, _ops, right) {
+    const operands = [left.ast(), ...right.ast()]
+    return operands.reduce((x, y) => new ast.BinaryExpression("|", x, y))
   },
-  Exp3_bitxor(left, ops, right) {
-    const [op, operands] = [ops.sourceString[0], [left.ast(), ...right.ast()]]
-    return operands.reduce((x, y) => new ast.BinaryExpression(op, x, y))
+  Exp3_bitxor(left, _ops, right) {
+    const operands = [left.ast(), ...right.ast()]
+    return operands.reduce((x, y) => new ast.BinaryExpression("^", x, y))
   },
-  Exp3_bitand(left, ops, right) {
-    const [op, operands] = [ops.sourceString[0], [left.ast(), ...right.ast()]]
-    return operands.reduce((x, y) => new ast.BinaryExpression(op, x, y))
+  Exp3_bitand(left, _ops, right) {
+    const operands = [left.ast(), ...right.ast()]
+    return operands.reduce((x, y) => new ast.BinaryExpression("&", x, y))
   },
   Exp4_compare(left, op, right) {
     return new ast.BinaryExpression(op.sourceString, left.ast(), right.ast())

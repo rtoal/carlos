@@ -137,12 +137,6 @@ export default function generate(program) {
     Conditional(e) {
       return `((${gen(e.test)}) ? (${gen(e.consequent)}) : (${gen(e.alternate)}))`
     },
-    OrExpression(e) {
-      return `(${gen(e.disjuncts).join(" || ")})`
-    },
-    AndExpression(e) {
-      return `(${gen(e.conjuncts).join(" && ")})`
-    },
     BinaryExpression(e) {
       const op = { "==": "===", "!=": "!==" }[e.op] ?? e.op
       return `(${gen(e.left)} ${op} ${gen(e.right)})`

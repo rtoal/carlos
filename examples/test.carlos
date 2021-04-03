@@ -1,1 +1,2 @@
-let a = [](of int);let b=[1];a=b;b=a;
+let x = 1;
+print(x < 1 && false && true);

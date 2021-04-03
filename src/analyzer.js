@@ -359,18 +359,6 @@ class Context {
     e.type = e.consequent.type
     return e
   }
-  OrExpression(e) {
-    e.disjuncts = this.analyze(e.disjuncts)
-    e.disjuncts.forEach(disjunct => check(disjunct).isBoolean())
-    e.type = Type.BOOLEAN
-    return e
-  }
-  AndExpression(e) {
-    e.conjuncts = this.analyze(e.conjuncts)
-    e.conjuncts.forEach(conjunct => check(conjunct).isBoolean())
-    e.type = Type.BOOLEAN
-    return e
-  }
   BinaryExpression(e) {
     e.left = this.analyze(e.left)
     e.right = this.analyze(e.right)
@@ -392,6 +380,10 @@ class Context {
       e.type = Type.BOOLEAN
     } else if (["==", "!="].includes(e.op)) {
       check(e.left).hasSameTypeAs(e.right)
+      e.type = Type.BOOLEAN
+    } else if (["&&", "||"].includes(e.op)) {
+      check(e.left).isBoolean()
+      check(e.right).isBoolean()
       e.type = Type.BOOLEAN
     } else if (["??"].includes(e.op)) {
       check(e.left).isAnOptional()

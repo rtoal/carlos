@@ -147,16 +147,19 @@ const optimizers = {
     e.left = optimize(e.left)
     e.right = optimize(e.right)
     if (e.op === "??") {
+      // Coalesce Empty Optional Unwraps
       if (e.left.constructor === ast.EmptyOptional) {
         return e.right
       }
     } else if (e.op === "&&") {
+      // Optimize boolean constants in && and ||
       if (e.left === true) return e.right
       else if (e.right === true) return e.left
     } else if (e.op === "||") {
       if (e.left === false) return e.right
       else if (e.right === false) return e.left
     } else if ([Number, BigInt].includes(e.left.constructor)) {
+      // Numeric constant folding when left operand is constant
       if ([Number, BigInt].includes(e.right.constructor)) {
         if (e.op === "+") return e.left + e.right
         else if (e.op === "-") return e.left - e.right
@@ -175,6 +178,7 @@ const optimizers = {
       else if (e.left === 1 && e.op === "**") return 1
       else if (e.left === 0 && ["*", "/"].includes(e.op)) return 0
     } else if (e.right.constructor === Number) {
+      // Numeric constant folding when right operand is constant
       if (["+", "-"].includes(e.op) && e.right === 0) return e.left
       else if (["*", "/"].includes(e.op) && e.right === 1) return e.left
       else if (e.op === "*" && e.right === 0) return 0

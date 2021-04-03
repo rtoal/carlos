@@ -1,2 +1,5 @@
-let x = 1;
-print(x < 1 && false && true);
+let x = 3.0;
+function triple(y: float): float {
+    return x * y;
+}
+print(π / triple(5.0));

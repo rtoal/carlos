@@ -1,7 +1,7 @@
 {
   "name": "carlos-lang",
   "version": "1.0.0",
-  "description": "",
+  "description": "Compiler for the Carlos language",
   "type": "module",
   "main": "src/carlos.js",
   "directories": {

@@ -3,7 +3,7 @@
 // Invoke generate(program) with the program node to get back the JavaScript
 // translation as a string.
 
-import { IfStatement, Type } from "./ast.js"
+import { IfStatement, Type, StructType } from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 export default function generate(program) {
@@ -54,6 +54,9 @@ export default function generate(program) {
       output.push("}")
     },
     Type(t) {
+      return targetName(t)
+    },
+    StructType(t) {
       return targetName(t)
     },
     Field(f) {
@@ -162,7 +165,7 @@ export default function generate(program) {
     Call(c) {
       const targetCode = standardFunctions.has(c.callee)
         ? standardFunctions.get(c.callee)(gen(c.args))
-        : c.callee.constructor === Type
+        : c.callee.constructor === StructType
         ? `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
         : `${gen(c.callee)}(${gen(c.args).join(", ")})`
       if (c.callee instanceof Type || c.callee.type.returnType !== Type.VOID) {

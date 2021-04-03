@@ -1,4 +1,11 @@
-import { Variable, Type, FunctionType, ArrayType, OptionalType } from "./ast.js"
+import {
+  Variable,
+  Type,
+  FunctionType,
+  ArrayType,
+  StructType,
+  OptionalType,
+} from "./ast.js"
 import * as stdlib from "./stdlib.js"
 
 function must(condition, errorMessage) {
@@ -40,8 +47,8 @@ Object.assign(FunctionType.prototype, {
     return (
       target.constructor === FunctionType &&
       this.returnType.isEquivalentTo(target.returnType) &&
-      this.parameterTypes.length === target.parameterTypes.length &&
-      this.parameterTypes.every((t, i) => target.parameterTypes[i].isEquivalentTo(t))
+      this.paramTypes.length === target.paramTypes.length &&
+      this.paramTypes.every((t, i) => target.paramTypes[i].isEquivalentTo(t))
     )
   },
   isAssignableTo(target) {
@@ -49,8 +56,8 @@ Object.assign(FunctionType.prototype, {
     return (
       target.constructor === FunctionType &&
       this.returnType.isAssignableTo(target.returnType) &&
-      this.parameterTypes.length === target.parameterTypes.length &&
-      this.parameterTypes.every((t, i) => target.parameterTypes[i].isAssignableTo(t))
+      this.paramTypes.length === target.paramTypes.length &&
+      this.paramTypes.every((t, i) => target.paramTypes[i].isAssignableTo(t))
     )
   },
 })
@@ -134,7 +141,7 @@ const check = self => ({
   },
   isCallable() {
     must(
-      self.constructor === Type || self.type.constructor == FunctionType,
+      self.constructor === StructType || self.type.constructor == FunctionType,
       "Call of non-function or non-constructor"
     )
   },
@@ -156,7 +163,7 @@ const check = self => ({
     targetTypes.forEach((type, i) => check(self[i]).isAssignableTo(type))
   },
   matchParametersOf(calleeType) {
-    check(self).match(calleeType.parameterTypes)
+    check(self).match(calleeType.paramTypes)
   },
   matchFieldsOf(type) {
     check(self).match(type.fields.map(f => f.type))
@@ -256,7 +263,7 @@ class Context {
     return t
   }
   FunctionType(t) {
-    t.parameterTypes = this.analyze(t.parameterTypes)
+    t.paramTypes = this.analyze(t.paramTypes)
     t.returnType = this.analyze(t.returnType)
     return t
   }
@@ -443,7 +450,7 @@ class Context {
     c.callee = this.analyze(c.callee)
     check(c.callee).isCallable()
     c.args = this.analyze(c.args)
-    if (c.callee.constructor === Type) {
+    if (c.callee.constructor === StructType) {
       check(c.args).matchFieldsOf(c.callee)
       c.type = c.callee
     } else {

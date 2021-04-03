@@ -188,7 +188,7 @@ const functionF = new ast.FunctionDeclaration(
 )
 
 const structS = Object.assign(new ast.TypeDeclaration("S", [new ast.Field("x", Int)]), {
-  type: new ast.Type("S", [new ast.Field("x", Int)]),
+  type: new ast.StructType("S", [new ast.Field("x", Int)]),
 })
 
 const graphChecks = [

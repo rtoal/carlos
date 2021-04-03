@@ -38,6 +38,9 @@ const optimizers = {
   Type(d) {
     return d
   },
+  StructType(d) {
+    return d
+  },
   FunctionDeclaration(d) {
     console.log(d)
     console.log(d.fun)

@@ -31,7 +31,7 @@ const expectedAST = new ast.Program([
     [new ast.ShortIfStatement(false, [new ast.BreakStatement()])]
   ),
   new ast.TypeDeclaration(
-    new ast.Type("S", [
+    new ast.StructType("S", [
       new ast.Field(
         "m",
         new ast.FunctionType(

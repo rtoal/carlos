@@ -34,9 +34,17 @@ export class TypeDeclaration {
 }
 
 export class Type {
+  // Type of all basic type int, float, string, etc. and superclass of others
+  constructor(description) {
+    Object.assign(this, { description })
+  }
+}
+
+export class StructType extends Type {
   // Generated when processing a type declaration
-  constructor(description, fields) {
-    Object.assign(this, { description, fields })
+  constructor(name, fields) {
+    super(name)
+    Object.assign(this, { fields })
   }
 }
 
@@ -77,11 +85,9 @@ export class ArrayType extends Type {
 
 export class FunctionType extends Type {
   // Example: (boolean,[string]?)->float
-  constructor(parameterTypes, returnType) {
-    super(
-      `(${parameterTypes.map(t => t.description).join(",")})->${returnType.description}`
-    )
-    Object.assign(this, { parameterTypes, returnType })
+  constructor(paramTypes, returnType) {
+    super(`(${paramTypes.map(t => t.description).join(",")})->${returnType.description}`)
+    Object.assign(this, { paramTypes, returnType })
   }
 }
 

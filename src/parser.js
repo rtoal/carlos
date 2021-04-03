@@ -18,28 +18,29 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Field(id, _colon, type) {
     return new ast.Field(id.sourceString, type.ast())
   },
-  FunDecl(_fun, id, parameters, _colons, returnType, body) {
+  FunDecl(_fun, id, _open, params, _close, _colons, returnType, body) {
     return new ast.FunctionDeclaration(
-      new ast.Function(id.sourceString, parameters.ast(), returnType.ast()[0] ?? null),
+      new ast.Function(
+        id.sourceString,
+        params.asIteration().ast(),
+        returnType.ast()[0] ?? null
+      ),
       body.ast()
     )
-  },
-  Params(_left, bindings, _right) {
-    return bindings.asIteration().ast()
   },
   Param(id, _colon, type) {
     return new ast.Parameter(id.sourceString, type.ast())
   },
-  TypeExp_array(_left, baseType, _right) {
+  Type_array(_left, baseType, _right) {
     return new ast.ArrayType(baseType.ast())
   },
-  TypeExp_function(_left, inTypes, _right, _arrow, outType) {
+  Type_function(_left, inTypes, _right, _arrow, outType) {
     return new ast.FunctionType(inTypes.asIteration().ast(), outType.ast())
   },
-  TypeExp_optional(baseType, _questionMark) {
+  Type_optional(baseType, _questionMark) {
     return new ast.OptionalType(baseType.ast())
   },
-  TypeExp_id(id) {
+  Type_id(id) {
     return Symbol.for(id.sourceString)
   },
   Statement_bump(variable, operator, _semicolon) {

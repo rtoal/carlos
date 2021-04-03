@@ -53,9 +53,6 @@ export default function generate(program) {
       output.push("}")
       output.push("}")
     },
-    Type(t) {
-      return targetName(t)
-    },
     StructType(t) {
       return targetName(t)
     },

@@ -15,14 +15,13 @@ Carlos {
 
   VarDecl     = (let | const) id "=" Exp ";"
   TypeDecl    = struct id "{" Field* "}"
-  Field       = id ":" TypeExp
-  FunDecl     = function id Params (":" TypeExp)? Block
-  Params      = "(" ListOf<Param, ","> ")"
-  Param       = id ":" TypeExp
+  Field       = id ":" Type
+  FunDecl     = function id "(" ListOf<Param, ","> ")" (":" Type)? Block
+  Param       = id ":" Type
 
-  TypeExp     = TypeExp "?"                                   --optional
-              | "[" TypeExp "]"                               --array
-              | "(" ListOf<TypeExp, ","> ")" "->" TypeExp     --function
+  Type        = Type "?"                                      --optional
+              | "[" Type "]"                                  --array
+              | "(" ListOf<Type, ","> ")" "->" Type           --function
               | id                                            --id
 
   IfStmt      = if Exp Block else (Block | IfStmt)            --long
@@ -64,17 +63,17 @@ Carlos {
               | floatlit ~mut
               | intlit ~mut
               | stringlit ~mut
-              | "[]" "(" of TypeExp ")" ~mut                  --emptyarray
+              | "[]" "(" of Type ")" ~mut                     --emptyarray
               | "[" NonemptyListOf<Exp, ","> "]" ~mut         --arrayexp
-              | no TypeExp ~mut                               --emptyopt
+              | no Type ~mut                                  --emptyopt
               | "(" Exp ")" ~mut                              --parens
 
   intlit      = digit+
   floatlit    = digit+ "." digit+ (("E" | "e") ("+" | "-")? digit+)?
   stringlit   = "\"" char* "\""
   char        = ~control ~"\\" ~"\"" any
-              | "\\" ("n" | "t" | "\"" | "\\")              --escape
-              | "\\u{" hex hex? hex? hex? hex? hex? "}"     --codepoint
+              | "\\" ("n" | "t" | "\"" | "\\")                --escape
+              | "\\u{" hex hex? hex? hex? hex? hex? "}"       --codepoint
   control     = "\x00".."\x1f" | "\x80".."\x9f"
   hex         = hexDigit
   mut         = ~"==" "=" | "++" | "--"
@@ -100,5 +99,5 @@ Carlos {
               | for | in | of | break | return | some | no | true | false
   id          = ~keyword letter alnum*
 
-  space      += "//" (~"\n" any)* ("\n" | end)              --comment
+  space      += "//" (~"\n" any)* ("\n" | end)                --comment
 }

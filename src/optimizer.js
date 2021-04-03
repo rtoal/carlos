@@ -35,9 +35,6 @@ const optimizers = {
   TypeDeclaration(d) {
     return d
   },
-  Type(d) {
-    return d
-  },
   StructType(d) {
     return d
   },

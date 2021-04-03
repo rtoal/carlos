@@ -218,7 +218,7 @@ class Context {
   }
   TypeDeclaration(d) {
     // Add early to allow recursion
-    this.add(d.type.name, d.type)
+    this.add(d.type.description, d.type)
     d.type.fields = this.analyze(d.type.fields)
     check(d.type.fields).areAllDistinct()
     check(d.type).isNotRecursive()

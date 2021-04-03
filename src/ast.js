@@ -35,8 +35,8 @@ export class TypeDeclaration {
 
 export class Type {
   // Generated when processing a type declaration
-  constructor(name, fields = []) {
-    Object.assign(this, { name, fields })
+  constructor(description, fields) {
+    Object.assign(this, { description, fields })
   }
 }
 
@@ -70,35 +70,26 @@ export class Parameter {
 export class ArrayType extends Type {
   // Example: [int]
   constructor(baseType) {
-    super()
+    super(`[${baseType.description}]`)
     this.baseType = baseType
-  }
-  get description() {
-    return `[${this.baseType.description}]`
   }
 }
 
 export class FunctionType extends Type {
   // Example: (boolean,[string]?)->float
   constructor(parameterTypes, returnType) {
-    super()
+    super(
+      `(${parameterTypes.map(t => t.description).join(",")})->${returnType.description}`
+    )
     Object.assign(this, { parameterTypes, returnType })
-  }
-  get description() {
-    return `(${this.parameterTypes.map(t => t.description).join(",")})->${
-      this.returnType.description
-    }`
   }
 }
 
 export class OptionalType extends Type {
   // Example: string?
   constructor(baseType) {
-    super()
+    super(`${baseType.description}?`)
     this.baseType = baseType
-  }
-  get description() {
-    return `${this.baseType.description}?`
   }
 }
 

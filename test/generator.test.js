@@ -1,4 +1,4 @@
-import assert from "assert"
+import assert from "assert/strict"
 import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
 import optimize from "../src/optimizer.js"
@@ -187,13 +187,27 @@ const fixtures = [
       }
     `,
   },
+  {
+    name: "standard library",
+    source: `
+      let x = 0.5;
+      print(sin(x) - cos(x) + exp(x) * ln(x) / hypot(2.3, x));
+      print(bytes("∞§¶•"));
+      // print(codepoints("💪🏽💪🏽🖖👩🏾💁🏽‍♀️"));
+    `,
+    expected: dedent`
+      let x_1 = 0.5;
+      console.log(((Math.sin(x_1) - Math.cos(x_1)) + ((Math.exp(x_1) * Math.log(x_1)) / Math.hypot(2.3,x_1))));
+      console.log([...Buffer.from("∞§¶•", "utf8")]);
+    `,
+  },
 ]
 
 describe("The code generator", () => {
   for (const fixture of fixtures) {
     it(`produces expected js output for the ${fixture.name} program`, () => {
       const actual = generate(optimize(analyze(parse(fixture.source))))
-      assert.deepStrictEqual(actual, fixture.expected)
+      assert.deepEqual(actual, fixture.expected)
     })
   }
 })

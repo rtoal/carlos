@@ -15,15 +15,15 @@ export default function generate(program) {
     [stdlib.functions.cos, x => `Math.cos(${x})`],
     [stdlib.functions.exp, x => `Math.exp(${x})`],
     [stdlib.functions.ln, x => `Math.log(${x})`],
-    [stdlib.functions.hypot, (x, y) => `Math.hypot(${x},${y})`],
+    [stdlib.functions.hypot, ([x, y]) => `Math.hypot(${x},${y})`],
     [stdlib.functions.bytes, s => `[...Buffer.from(${s}, "utf8")]`],
     // TODO CODEPOINTS
   ])
 
   // Variable and function names in JS will be suffixed with _1, _2, _3,
   // etc. This is because "switch", for example, is a legal name in Carlos,
-  // but not in JS. So we want to generate something like "switch_1".
-  // We handle this by mapping each name to its suffix.
+  // but not in JS. So, the Carlos variable "switch" must become something
+  // like "switch_1". We handle this by mapping each name to its suffix.
   const targetName = (mapping => {
     return entity => {
       if (!mapping.has(entity)) {
@@ -40,8 +40,8 @@ export default function generate(program) {
       gen(p.statements)
     },
     VariableDeclaration(d) {
-      // We don't care about const vs. let in the generated code. The analyzer
-      // has already checked we never wrote to a const, so let is always fine.
+      // We don't care about const vs. let in the generated code! The analyzer has
+      // already checked that we never updated a const, so let is always fine.
       output.push(`let ${gen(d.variable)} = ${gen(d.initializer)};`)
     },
     TypeDeclaration(d) {
@@ -68,6 +68,7 @@ export default function generate(program) {
       return targetName(p)
     },
     Variable(v) {
+      // Standard library constants just get special treatment
       if (v === stdlib.constants.π) {
         return "Math.PI"
       }
@@ -117,6 +118,7 @@ export default function generate(program) {
       output.push("}")
     },
     RepeatStatement(s) {
+      // JS can only repeat n times with a counter variable!
       const i = targetName({ name: "i" })
       output.push(`for (let ${i} = 0; ${i} < ${gen(s.count)}; ${i}++) {`)
       gen(s.body)
@@ -165,6 +167,7 @@ export default function generate(program) {
         : c.callee.constructor === StructType
         ? `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
         : `${gen(c.callee)}(${gen(c.args).join(", ")})`
+      // Calls in statements need semicolons, in expressions they must not
       if (c.callee instanceof Type || c.callee.type.returnType !== Type.VOID) {
         return targetCode
       }
@@ -180,6 +183,7 @@ export default function generate(program) {
       return e
     },
     String(e) {
+      // This ensures in JavaScript they get quotes!
       return JSON.stringify(e)
     },
     Array(a) {

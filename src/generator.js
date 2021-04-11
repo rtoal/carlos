@@ -17,7 +17,7 @@ export default function generate(program) {
     [stdlib.functions.ln, x => `Math.log(${x})`],
     [stdlib.functions.hypot, ([x, y]) => `Math.hypot(${x},${y})`],
     [stdlib.functions.bytes, s => `[...Buffer.from(${s}, "utf8")]`],
-    // TODO CODEPOINTS
+    [stdlib.functions.codepoints, s => `[...(${s})].map(s=>s.codePointAt(0))`],
   ])
 
   // Variable and function names in JS will be suffixed with _1, _2, _3,

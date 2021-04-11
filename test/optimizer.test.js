@@ -1,4 +1,4 @@
-import assert from "assert"
+import assert from "assert/strict"
 import optimize from "../src/optimizer.js"
 import * as ast from "../src/ast.js"
 
@@ -52,8 +52,10 @@ const tests = [
   ["folds negation", new ast.UnaryExpression("-", 8), -8],
   ["optimizes 1**", new ast.BinaryExpression("**", 1, x), 1],
   ["optimizes **0", new ast.BinaryExpression("**", x, 0), 1],
-  ["removes false from ors", or(less(x, 1), true, false), or(less(x, 1), true)],
-  ["removes true from ands", and(less(x, 1), false, true), and(less(x, 1), false)],
+  ["removes left false from ||", or(false, less(x, 1)), less(x, 1)],
+  ["removes right false from ||", or(less(x, 1), false), less(x, 1)],
+  ["removes left true from &&", and(true, less(x, 1)), less(x, 1)],
+  ["removes right true from &&", and(less(x, 1), true), less(x, 1)],
   ["removes x=x at beginning", [new ast.Assignment(x, x), xpp], [xpp]],
   ["removes x=x at end", [xpp, new ast.Assignment(x, x)], [xpp]],
   ["removes x=x in middle", [xpp, new ast.Assignment(x, x), xpp], [xpp, xpp]],
@@ -67,8 +69,8 @@ const tests = [
   ["optimizes for-empty-array", [new ast.ForStatement(x, emptyArray, xpp)], []],
   ["applies if-false after folding", new ast.ShortIfStatement(eq(1, 1), xpp), xpp],
   ["optimizes away nil", unwrapElse(emptyOptional, 3), 3],
-  ["optimizes conditional true", conditional(true, 55, 89), 55],
-  ["optimizes conditional false", conditional(false, 55, 89), 89],
+  ["optimizes left conditional true", conditional(true, 55, 89), 55],
+  ["optimizes left conditional false", conditional(false, 55, 89), 89],
   ["optimizes in functions", intFun(return1p1), intFun(return2)],
   ["optimizes in subscripts", sub(x, onePlusTwo), sub(x, 3)],
   ["optimizes in array literals", array(0, onePlusTwo, 9), array(0, 3, 9)],
@@ -99,7 +101,7 @@ const tests = [
 describe("The optimizer", () => {
   for (const [scenario, before, after] of tests) {
     it(`${scenario}`, () => {
-      assert.deepStrictEqual(optimize(before), after)
+      assert.deepEqual(optimize(before), after)
     })
   }
 })

@@ -36,6 +36,8 @@ export default function generate(program) {
   const gen = node => generators[node.constructor.name](node)
 
   const generators = {
+    // Key idea: when generating an expression, just return the JS string; when
+    // generating a statement, write lines of translated JS to the output array.
     Program(p) {
       gen(p.statements)
     },
@@ -167,7 +169,7 @@ export default function generate(program) {
         : c.callee.constructor === StructType
         ? `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
         : `${gen(c.callee)}(${gen(c.args).join(", ")})`
-      // Calls in statements need semicolons, in expressions they must not
+      // Calls in expressions vs in statements are handled differently
       if (c.callee instanceof Type || c.callee.type.returnType !== Type.VOID) {
         return targetCode
       }

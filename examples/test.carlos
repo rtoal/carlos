@@ -1,5 +1,0 @@
-let x = 3.0;
-function triple(y: float): float {
-    return x * y;
-}
-print(π / triple(5.0));

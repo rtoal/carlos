@@ -1,0 +1,10 @@
+struct Point {
+  x: float
+  y: float
+}
+
+const triangle = [Point(1.0, 2.0), Point(3.0, 5.0), Point(-3.0, 8.0)];
+
+for p in triangle {
+  print(p);
+}

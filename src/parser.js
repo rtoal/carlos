@@ -174,6 +174,9 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   stringlit(_openQuote, chars, _closeQuote) {
     return chars.sourceString
   },
+  _iter(...children) {
+    return children.map(child => child.ast())
+  },
 })
 
 export default function parse(sourceCode) {

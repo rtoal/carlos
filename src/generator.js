@@ -3,7 +3,7 @@
 // Invoke generate(program) with the program node to get back the JavaScript
 // translation as a string.
 
-import { IfStatement, Type, StructType } from "./ast.js"
+import { IfStatement, Type, StructType } from "./core.js"
 import * as stdlib from "./stdlib.js"
 
 export default function generate(program) {

@@ -1,7 +1,7 @@
 import assert from "assert"
 import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
-import * as ast from "../src/ast.js"
+import * as core from "../src/core.js"
 
 // Programs that are semantically correct
 const semanticChecks = [
@@ -171,24 +171,24 @@ const semanticErrors = [
 // nodes that get rewritten as well as those that are just "passed through"
 // by the analyzer. For now, we're just testing the various rewrites only.
 
-const Int = ast.Type.INT
-const Void = ast.Type.VOID
-const intToVoidType = new ast.FunctionType([Int], Void)
+const Int = core.Type.INT
+const Void = core.Type.VOID
+const intToVoidType = new core.FunctionType([Int], Void)
 
-const varX = Object.assign(new ast.Variable("x", false), { type: Int })
+const varX = Object.assign(new core.Variable("x", false), { type: Int })
 
-const letX1 = new ast.VariableDeclaration(varX, 1n)
-const assignX2 = new ast.Assignment(varX, 2n)
+const letX1 = new core.VariableDeclaration(varX, 1n)
+const assignX2 = new core.Assignment(varX, 2n)
 
-const functionF = new ast.FunctionDeclaration(
-  Object.assign(new ast.Function("f", [new ast.Parameter("x", Int)], Void), {
+const functionF = new core.FunctionDeclaration(
+  Object.assign(new core.Function("f", [new core.Parameter("x", Int)], Void), {
     type: intToVoidType,
   }),
   []
 )
 
-const structS = Object.assign(new ast.TypeDeclaration("S", [new ast.Field("x", Int)]), {
-  type: new ast.StructType("S", [new ast.Field("x", Int)]),
+const structS = Object.assign(new core.TypeDeclaration("S", [new core.Field("x", Int)]), {
+  type: new core.StructType("S", [new core.Field("x", Int)]),
 })
 
 const graphChecks = [
@@ -210,7 +210,7 @@ describe("The analyzer", () => {
   }
   for (const [scenario, source, graph] of graphChecks) {
     it(`properly rewrites the AST for ${scenario}`, () => {
-      assert.deepStrictEqual(analyze(parse(source)), new ast.Program(graph))
+      assert.deepStrictEqual(analyze(parse(source)), new core.Program(graph))
     })
   }
 })

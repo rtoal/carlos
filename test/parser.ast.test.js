@@ -1,6 +1,6 @@
 import assert from "assert"
 import parse from "../src/parser.js"
-import * as ast from "../src/ast.js"
+import * as core from "../src/core.js"
 
 // TODO: This test case needs a lot more work
 const source = `
@@ -17,35 +17,35 @@ const source = `
   f(3 * 7 ?? 1 && 2);
 `
 
-const expectedAST = new ast.Program([
-  new ast.VariableDeclaration(new ast.Variable("x", false), 1n),
-  new ast.VariableDeclaration(new ast.Variable("y", true), "hello"),
-  new ast.ReturnStatement(new ast.ArrayExpression([1, 2])),
-  new ast.ReturnStatement(new ast.MemberExpression(Symbol.for("x"), "y")),
-  new ast.FunctionDeclaration(
-    new ast.Function(
+const expectedAST = new core.Program([
+  new core.VariableDeclaration(new core.Variable("x", false), 1n),
+  new core.VariableDeclaration(new core.Variable("y", true), "hello"),
+  new core.ReturnStatement(new core.ArrayExpression([1, 2])),
+  new core.ReturnStatement(new core.MemberExpression(Symbol.for("x"), "y")),
+  new core.FunctionDeclaration(
+    new core.Function(
       "f",
-      [new ast.Parameter("x", Symbol.for("int"))],
-      new ast.ArrayType(Symbol.for("bool"))
+      [new core.Parameter("x", Symbol.for("int"))],
+      new core.ArrayType(Symbol.for("bool"))
     ),
-    [new ast.ShortIfStatement(false, [new ast.BreakStatement()])]
+    [new core.ShortIfStatement(false, [new core.BreakStatement()])]
   ),
-  new ast.TypeDeclaration(
-    new ast.StructType("S", [
-      new ast.Field(
+  new core.TypeDeclaration(
+    new core.StructType("S", [
+      new core.Field(
         "m",
-        new ast.FunctionType(
-          [Symbol.for("string"), new ast.OptionalType(Symbol.for("int"))],
+        new core.FunctionType(
+          [Symbol.for("string"), new core.OptionalType(Symbol.for("int"))],
           Symbol.for("bool")
         )
       ),
     ])
   ),
-  new ast.Call(Symbol.for("f"), [
-    new ast.BinaryExpression(
+  new core.Call(Symbol.for("f"), [
+    new core.BinaryExpression(
       "??",
-      new ast.BinaryExpression("*", 3n, 7n),
-      new ast.BinaryExpression("&&", 1n, 2n)
+      new core.BinaryExpression("*", 3n, 7n),
+      new core.BinaryExpression("&&", 1n, 2n)
     ),
   ]),
 ])

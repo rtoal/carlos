@@ -1,4 +1,4 @@
-// Abstract Syntax Tree Nodes
+// Core classes and objects
 //
 // This module defines classes for the AST nodes. Only the constructors are
 // defined here. Semantic analysis methods, optimization methods, and code

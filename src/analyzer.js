@@ -5,7 +5,7 @@ import {
   ArrayType,
   StructType,
   OptionalType,
-} from "./ast.js"
+} from "./core.js"
 import * as stdlib from "./stdlib.js"
 
 function must(condition, errorMessage) {

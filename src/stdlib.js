@@ -1,4 +1,4 @@
-import { Type, FunctionType, Variable, Function, ArrayType } from "./ast.js"
+import { Type, FunctionType, Variable, Function, ArrayType } from "./core.js"
 
 // Create objects for the five basic types, as well as an object
 // for the ANY "pseudotype."" In the syntax, the basic types are

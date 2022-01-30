@@ -17,7 +17,7 @@
 //   - for-loop with low > high is a no-op
 //   - if-true and if-false reduce to only the taken arm
 
-import * as ast from "./ast.js"
+import * as core from "./core.js"
 
 export default function optimize(node) {
   return optimizers[node.constructor.name](node)
@@ -129,7 +129,7 @@ const optimizers = {
   ForStatement(s) {
     s.collection = optimize(s.collection)
     s.body = optimize(s.body)
-    if (s.collection.constructor === ast.EmptyArray) {
+    if (s.collection.constructor === core.EmptyArray) {
       return []
     }
     return s
@@ -148,7 +148,7 @@ const optimizers = {
     e.right = optimize(e.right)
     if (e.op === "??") {
       // Coalesce Empty Optional Unwraps
-      if (e.left.constructor === ast.EmptyOptional) {
+      if (e.left.constructor === core.EmptyOptional) {
         return e.right
       }
     } else if (e.op === "&&") {
@@ -174,7 +174,7 @@ const optimizers = {
         else if (e.op === ">") return e.left > e.right
       } else if (e.left === 0 && e.op === "+") return e.right
       else if (e.left === 1 && e.op === "*") return e.right
-      else if (e.left === 0 && e.op === "-") return new ast.UnaryExpression("-", e.right)
+      else if (e.left === 0 && e.op === "-") return new core.UnaryExpression("-", e.right)
       else if (e.left === 1 && e.op === "**") return 1
       else if (e.left === 0 && ["*", "/"].includes(e.op)) return 0
     } else if (e.right.constructor === Number) {

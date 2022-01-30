@@ -39,8 +39,6 @@ const optimizers = {
     return d
   },
   FunctionDeclaration(d) {
-    console.log(d)
-    console.log(d.fun)
     d.body = optimize(d.body)
     return d
   },

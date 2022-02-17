@@ -1,5 +1,5 @@
 import assert from "assert"
-import parse from "../src/parser.js"
+import ast from "../src/ast.js"
 import analyze from "../src/analyzer.js"
 import * as core from "../src/core.js"
 
@@ -200,17 +200,17 @@ const graphChecks = [
 describe("The analyzer", () => {
   for (const [scenario, source] of semanticChecks) {
     it(`recognizes ${scenario}`, () => {
-      assert.ok(analyze(parse(source)))
+      assert.ok(analyze(ast(source)))
     })
   }
   for (const [scenario, source, errorMessagePattern] of semanticErrors) {
     it(`throws on ${scenario}`, () => {
-      assert.throws(() => analyze(parse(source)), errorMessagePattern)
+      assert.throws(() => analyze(ast(source)), errorMessagePattern)
     })
   }
   for (const [scenario, source, graph] of graphChecks) {
     it(`properly rewrites the AST for ${scenario}`, () => {
-      assert.deepStrictEqual(analyze(parse(source)), new core.Program(graph))
+      assert.deepStrictEqual(analyze(ast(source)), new core.Program(graph))
     })
   }
 })

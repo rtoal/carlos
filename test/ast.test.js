@@ -1,5 +1,5 @@
 import assert from "assert"
-import parse from "../src/parser.js"
+import ast from "../src/ast.js"
 import * as core from "../src/core.js"
 
 // TODO: This test case needs a lot more work
@@ -52,6 +52,6 @@ const expectedAST = new core.Program([
 
 describe("The parser", () => {
   it("produces a correct AST", () => {
-    assert.deepStrictEqual(parse(source), expectedAST)
+    assert.deepStrictEqual(ast(source), expectedAST)
   })
 })

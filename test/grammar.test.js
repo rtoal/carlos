@@ -1,5 +1,5 @@
 import assert from "assert"
-import parse from "../src/parser.js"
+import ast from "../src/ast.js"
 
 // Programs expected to be syntactically correct
 const syntaxChecks = [
@@ -96,12 +96,12 @@ const syntaxErrors = [
 describe("The parser", () => {
   for (const [scenario, source] of syntaxChecks) {
     it(`recognizes ${scenario}`, () => {
-      assert(parse(source))
+      assert(ast(source))
     })
   }
   for (const [scenario, source, errorMessagePattern] of syntaxErrors) {
     it(`throws on ${scenario}`, () => {
-      assert.throws(() => parse(source), errorMessagePattern)
+      assert.throws(() => ast(source), errorMessagePattern)
     })
   }
 })

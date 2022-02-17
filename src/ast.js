@@ -179,7 +179,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   },
 })
 
-export default function parse(sourceCode) {
+export default function ast(sourceCode) {
   const match = carlosGrammar.match(sourceCode)
   if (!match.succeeded()) {
     throw new Error(match.message)

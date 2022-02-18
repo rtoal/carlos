@@ -213,15 +213,13 @@ class Context {
     return this[node.constructor.name](node)
   }
   Program(p) {
-    p.statements = this.analyze(p.statements)
-    return p
+    this.analyze(p.statements)
   }
   VariableDeclaration(d) {
-    // Only analyze the declaration, not the variable
-    d.initializer = this.analyze(d.initializer)
+    this.analyze(d.initializer)
+    d.variable = new core.Variable(d.variable.lexeme, d.modifier == "const")
     d.variable.type = d.initializer.type
-    this.add(d.variable.name, d.variable)
-    return d
+    this.add(d.variable.name, d.variable.value)
   }
   TypeDeclaration(d) {
     // Add early to allow recursion
@@ -229,14 +227,17 @@ class Context {
     d.type.fields = this.analyze(d.type.fields)
     check(d.type.fields).areAllDistinct()
     check(d.type).isNotRecursive()
-    return d
   }
   Field(f) {
     f.type = this.analyze(f.type)
     check(f.type).isAType()
-    return f
   }
   FunctionDeclaration(d) {
+    d.fun = new core.Function(
+      new core.Token("Id", id.source),
+      params.asIteration().ast(),
+      returnType.ast()[0] ?? null
+    )
     d.fun.returnType = d.fun.returnType ? this.analyze(d.fun.returnType) : Type.VOID
     check(d.fun.returnType).isAType()
     // When entering a function body, we must reset the inLoop setting,
@@ -250,59 +251,48 @@ class Context {
     // Add before analyzing the body to allow recursion
     this.add(d.fun.name, d.fun)
     d.body = childContext.analyze(d.body)
-    return d
   }
   Parameter(p) {
     p.type = this.analyze(p.type)
     check(p.type).isAType()
     this.add(p.name, p)
-    return p
   }
   ArrayType(t) {
     t.baseType = this.analyze(t.baseType)
-    return t
   }
   FunctionType(t) {
     t.paramTypes = this.analyze(t.paramTypes)
     t.returnType = this.analyze(t.returnType)
-    return t
   }
   OptionalType(t) {
     t.baseType = this.analyze(t.baseType)
-    return t
   }
   Increment(s) {
     s.variable = this.analyze(s.variable)
     check(s.variable).isInteger()
-    return s
   }
   Decrement(s) {
     s.variable = this.analyze(s.variable)
     check(s.variable).isInteger()
-    return s
   }
   Assignment(s) {
     s.source = this.analyze(s.source)
     s.target = this.analyze(s.target)
     check(s.source).isAssignableTo(s.target.type)
     check(s.target).isNotReadOnly()
-    return s
   }
   BreakStatement(s) {
     check(this).isInsideALoop()
-    return s
   }
   ReturnStatement(s) {
     check(this).isInsideAFunction()
     check(this.function).returnsSomething()
     s.expression = this.analyze(s.expression)
     check(s.expression).isReturnableFrom(this.function)
-    return s
   }
   ShortReturnStatement(s) {
     check(this).isInsideAFunction()
     check(this.function).returnsNothing()
-    return s
   }
   IfStatement(s) {
     s.test = this.analyze(s.test)
@@ -315,25 +305,21 @@ class Context {
       // It's a trailing if-statement, so same context
       s.alternate = this.analyze(s.alternate)
     }
-    return s
   }
   ShortIfStatement(s) {
     s.test = this.analyze(s.test)
     check(s.test).isBoolean()
     s.consequent = this.newChild().analyze(s.consequent)
-    return s
   }
   WhileStatement(s) {
     s.test = this.analyze(s.test)
     check(s.test).isBoolean()
     s.body = this.newChild({ inLoop: true }).analyze(s.body)
-    return s
   }
   RepeatStatement(s) {
     s.count = this.analyze(s.count)
     check(s.count).isInteger()
     s.body = this.newChild({ inLoop: true }).analyze(s.body)
-    return s
   }
   ForRangeStatement(s) {
     s.low = this.analyze(s.low)
@@ -345,7 +331,6 @@ class Context {
     const bodyContext = this.newChild({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
     s.body = bodyContext.analyze(s.body)
-    return s
   }
   ForStatement(s) {
     s.collection = this.analyze(s.collection)
@@ -355,7 +340,6 @@ class Context {
     const bodyContext = this.newChild({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
     s.body = bodyContext.analyze(s.body)
-    return s
   }
   Conditional(e) {
     e.test = this.analyze(e.test)
@@ -364,7 +348,6 @@ class Context {
     e.alternate = this.analyze(e.alternate)
     check(e.consequent).hasSameTypeAs(e.alternate)
     e.type = e.consequent.type
-    return e
   }
   BinaryExpression(e) {
     e.left = this.analyze(e.left)
@@ -397,7 +380,6 @@ class Context {
       check(e.right).isAssignableTo(e.left.type.baseType)
       e.type = e.left.type
     }
-    return e
   }
   UnaryExpression(e) {
     e.operand = this.analyze(e.operand)
@@ -414,7 +396,6 @@ class Context {
       // Operator is "some"
       e.type = new OptionalType(e.operand.type)
     }
-    return e
   }
   EmptyOptional(e) {
     e.baseType = this.analyze(e.baseType)
@@ -459,24 +440,19 @@ class Context {
     }
     return c
   }
-  Symbol(e) {
-    // Symbols represent identifiers so get resolved to the entities referred to
-    return this.lookup(e.description)
-  }
-  Number(e) {
-    return e
-  }
-  BigInt(e) {
-    return e
-  }
-  Boolean(e) {
-    return e
-  }
-  String(e) {
-    return e
+  Token(t) {
+    // Shortcut: only handle ids that are variables, not functions, here.
+    // We will handle the ids in function calls in the Call() handler. This
+    // strategy only works here, but in more complex languages, we would do
+    // proper type checking.
+    if (t.category === "Id") t.value = this.lookup(t)
+    if (t.category === "Int") t.value = BigInt(t.lexeme)
+    if (t.category === "Float") t.value = Number(t.lexeme)
+    if (t.category === "Str") t.value = t.lexeme
+    if (t.category === "Bool") t.value = t.lexeme === "true"
   }
   Array(a) {
-    return a.map(item => this.analyze(item))
+    a.forEach(item => this.analyze(item))
   }
 }
 
@@ -494,5 +470,6 @@ export default function analyze(node) {
   for (const [name, type] of Object.entries(library)) {
     initialContext.add(name, type)
   }
-  return initialContext.analyze(node)
+  initialContext.analyze(node)
+  return node
 }

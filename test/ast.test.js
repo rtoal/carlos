@@ -1,6 +1,6 @@
 import assert from "assert"
+import util from "util"
 import ast from "../src/ast.js"
-import * as core from "../src/core.js"
 
 // TODO: This test case needs a lot more work
 const source = `
@@ -17,41 +17,30 @@ const source = `
   f(3 * 7 ?? 1 && 2);
 `
 
-const expectedAST = new core.Program([
-  new core.VariableDeclaration(new core.Variable("x", false), 1n),
-  new core.VariableDeclaration(new core.Variable("y", true), "hello"),
-  new core.ReturnStatement(new core.ArrayExpression([1, 2])),
-  new core.ReturnStatement(new core.MemberExpression(Symbol.for("x"), "y")),
-  new core.FunctionDeclaration(
-    new core.Function(
-      "f",
-      [new core.Parameter("x", Symbol.for("int"))],
-      new core.ArrayType(Symbol.for("bool"))
-    ),
-    [new core.ShortIfStatement(false, [new core.BreakStatement()])]
-  ),
-  new core.TypeDeclaration(
-    new core.StructType("S", [
-      new core.Field(
-        "m",
-        new core.FunctionType(
-          [Symbol.for("string"), new core.OptionalType(Symbol.for("int"))],
-          Symbol.for("bool")
-        )
-      ),
-    ])
-  ),
-  new core.Call(Symbol.for("f"), [
-    new core.BinaryExpression(
-      "??",
-      new core.BinaryExpression("*", 3n, 7n),
-      new core.BinaryExpression("&&", 1n, 2n)
-    ),
-  ]),
-])
+const expected = `   1 | Program statements=[#2,#3,#4,#6,#8,#13,#18]
+   2 | VariableDeclaration modifier='let' variable=Id("x") initializer=Int("1")
+   3 | VariableDeclaration modifier='const' variable=Id("y") initializer=Str(""hello"")
+   4 | ReturnStatement expression=#5
+   5 | ArrayExpression elements=[Float("1.0"),Float("2.0")]
+   6 | ReturnStatement expression=#7
+   7 | MemberExpression object=Id("x") field='y'
+   8 | FunctionDeclaration name=Id("f") parameters=[#9] returnType=#10 body=[#11]
+   9 | Parameter name='x' type=Symbol(int)
+  10 | ArrayType description='[bool]' baseType=Symbol(bool)
+  11 | ShortIfStatement test=Bool("false") consequent=[#12]
+  12 | BreakStatement 
+  13 | TypeDeclaration type=#14
+  14 | StructType description=Id("S") fields=[#15]
+  15 | Field name=Id("m") type=#16
+  16 | FunctionType description='(string,int?)->bool' paramTypes=[Symbol(string),#17] returnType=Symbol(bool)
+  17 | OptionalType description='int?' baseType=Symbol(int)
+  18 | Call callee=Id("f") args=[#19]
+  19 | BinaryExpression op='??' left=#20 right=#21
+  20 | BinaryExpression op='*' left=Int("3") right=Int("7")
+  21 | BinaryExpression op='&&' left=Int("1") right=Int("2")`
 
-describe("The parser", () => {
+describe("The AST generator", () => {
   it("produces a correct AST", () => {
-    assert.deepStrictEqual(ast(source), expectedAST)
+    assert.deepStrictEqual(util.format(ast(source)), expected)
   })
 })

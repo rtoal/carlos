@@ -5,6 +5,8 @@ import {
   ArrayType,
   StructType,
   OptionalType,
+  Function,
+  Token,
 } from "./core.js"
 import * as stdlib from "./stdlib.js"
 
@@ -95,7 +97,10 @@ const check = self => ({
     must(self.type === Type.INT, `Expected an integer, found ${self.type.description}`)
   },
   isAType() {
-    must(self instanceof Type, "Type expected")
+    must(
+      self instanceof Type || (self instanceof Token && self.value instanceof Type),
+      "Type expected"
+    )
   },
   isAnOptional() {
     must(self.type.constructor === OptionalType, "Optional expected")
@@ -125,13 +130,17 @@ const check = self => ({
     )
   },
   isNotReadOnly() {
-    must(!self.readOnly, `Cannot assign to constant ${self.name}`)
+    const readOnly = self instanceof Token ? self.value.readOnly : self.readOnly
+    must(!readOnly, `Cannot assign to constant ${self?.lexeme ?? self.name}`)
   },
   areAllDistinct() {
-    must(new Set(self.map(f => f.name)).size === self.length, "Fields must be distinct")
+    must(
+      new Set(self.map(f => f.name.lexeme)).size === self.length,
+      "Fields must be distinct"
+    )
   },
   isInTheObject(object) {
-    must(object.type.fields.map(f => f.name).includes(self), "No such field")
+    must(object.type.fields.map(f => f.name.lexeme).includes(self), "No such field")
   },
   isInsideALoop() {
     must(self.inLoop, "Break can only appear in a loop")
@@ -174,14 +183,11 @@ class Context {
   constructor(parent = null, configuration = {}) {
     // Parent (enclosing scope) for static scope analysis
     this.parent = parent
-    // All local declarations. Names map to variable declarations, types, and
-    // function declarations
+    // Locals! Names map to variables, functions, and types
     this.locals = new Map()
-    // Whether we are in a loop, so that we know whether breaks and continues
-    // are legal here
+    // Here's how we know whether breaks and continues are legal here
     this.inLoop = configuration.inLoop ?? parent?.inLoop ?? false
-    // Whether we are in a function, so that we know whether a return
-    // statement can appear here, and if so, how we typecheck it
+    // This helps us check return statements
     this.function = configuration.forFunction ?? parent?.function ?? null
   }
   sees(name) {
@@ -217,67 +223,73 @@ class Context {
   }
   VariableDeclaration(d) {
     this.analyze(d.initializer)
-    d.variable = new core.Variable(d.variable.lexeme, d.modifier == "const")
-    d.variable.type = d.initializer.type
-    this.add(d.variable.name, d.variable.value)
+    d.variable.value = new Variable(d.variable.lexeme, d.modifier === "const")
+    d.variable.value.type = d.initializer.type
+    this.add(d.variable.lexeme, d.variable.value)
   }
   TypeDeclaration(d) {
     // Add early to allow recursion
     this.add(d.type.description, d.type)
-    d.type.fields = this.analyze(d.type.fields)
+    this.analyze(d.type.fields)
     check(d.type.fields).areAllDistinct()
     check(d.type).isNotRecursive()
   }
   Field(f) {
-    f.type = this.analyze(f.type)
+    this.analyze(f.type)
+    if (f.type instanceof Token) f.type = f.type.value
     check(f.type).isAType()
   }
   FunctionDeclaration(d) {
-    d.fun = new core.Function(
-      new core.Token("Id", id.source),
-      params.asIteration().ast(),
-      returnType.ast()[0] ?? null
+    if (d.returnType) this.analyze(d.returnType)
+    d.fun.value = new Function(
+      d.fun.lexeme,
+      d.parameters,
+      d.returnType?.value ?? d.returnType ?? Type.VOID
     )
-    d.fun.returnType = d.fun.returnType ? this.analyze(d.fun.returnType) : Type.VOID
-    check(d.fun.returnType).isAType()
+    check(d.fun.value.returnType).isAType()
     // When entering a function body, we must reset the inLoop setting,
     // because it is possible to declare a function inside a loop!
-    const childContext = this.newChild({ inLoop: false, forFunction: d.fun })
-    d.fun.parameters = childContext.analyze(d.fun.parameters)
-    d.fun.type = new FunctionType(
-      d.fun.parameters.map(p => p.type),
-      d.fun.returnType
+    const childContext = this.newChild({ inLoop: false, forFunction: d.fun.value })
+    childContext.analyze(d.fun.value.parameters)
+    d.fun.value.type = new FunctionType(
+      d.fun.value.parameters.map(p => p.type),
+      d.fun.value.returnType
     )
     // Add before analyzing the body to allow recursion
-    this.add(d.fun.name, d.fun)
+    this.add(d.fun.lexeme, d.fun.value)
     d.body = childContext.analyze(d.body)
   }
   Parameter(p) {
-    p.type = this.analyze(p.type)
+    this.analyze(p.type)
+    if (p.type instanceof Token) p.type = p.type.value
     check(p.type).isAType()
     this.add(p.name, p)
   }
   ArrayType(t) {
-    t.baseType = this.analyze(t.baseType)
+    this.analyze(t.baseType)
+    if (t.baseType instanceof Token) t.baseType = t.baseType.value
   }
   FunctionType(t) {
-    t.paramTypes = this.analyze(t.paramTypes)
-    t.returnType = this.analyze(t.returnType)
+    this.analyze(t.paramTypes)
+    t.paramTypes = t.paramTypes.map(p => (p instanceof Token ? p.value : p))
+    this.analyze(t.returnType)
+    if (t.returnType instanceof Token) t.returnType = t.returnType.value
   }
   OptionalType(t) {
-    t.baseType = this.analyze(t.baseType)
+    this.analyze(t.baseType)
+    if (t.baseType instanceof Token) t.baseType = t.baseType.value
   }
   Increment(s) {
-    s.variable = this.analyze(s.variable)
+    this.analyze(s.variable)
     check(s.variable).isInteger()
   }
   Decrement(s) {
-    s.variable = this.analyze(s.variable)
+    this.analyze(s.variable)
     check(s.variable).isInteger()
   }
   Assignment(s) {
-    s.source = this.analyze(s.source)
-    s.target = this.analyze(s.target)
+    this.analyze(s.source)
+    this.analyze(s.target)
     check(s.source).isAssignableTo(s.target.type)
     check(s.target).isNotReadOnly()
   }
@@ -287,7 +299,7 @@ class Context {
   ReturnStatement(s) {
     check(this).isInsideAFunction()
     check(this.function).returnsSomething()
-    s.expression = this.analyze(s.expression)
+    this.analyze(s.expression)
     check(s.expression).isReturnableFrom(this.function)
   }
   ShortReturnStatement(s) {
@@ -295,36 +307,36 @@ class Context {
     check(this.function).returnsNothing()
   }
   IfStatement(s) {
-    s.test = this.analyze(s.test)
+    this.analyze(s.test)
     check(s.test).isBoolean()
     s.consequent = this.newChild().analyze(s.consequent)
     if (s.alternate.constructor === Array) {
       // It's a block of statements, make a new context
-      s.alternate = this.newChild().analyze(s.alternate)
+      this.newChild().analyze(s.alternate)
     } else if (s.alternate) {
       // It's a trailing if-statement, so same context
-      s.alternate = this.analyze(s.alternate)
+      this.analyze(s.alternate)
     }
   }
   ShortIfStatement(s) {
-    s.test = this.analyze(s.test)
+    this.analyze(s.test)
     check(s.test).isBoolean()
     s.consequent = this.newChild().analyze(s.consequent)
   }
   WhileStatement(s) {
-    s.test = this.analyze(s.test)
+    this.analyze(s.test)
     check(s.test).isBoolean()
     s.body = this.newChild({ inLoop: true }).analyze(s.body)
   }
   RepeatStatement(s) {
-    s.count = this.analyze(s.count)
+    this.analyze(s.count)
     check(s.count).isInteger()
     s.body = this.newChild({ inLoop: true }).analyze(s.body)
   }
   ForRangeStatement(s) {
-    s.low = this.analyze(s.low)
+    this.analyze(s.low)
     check(s.low).isInteger()
-    s.high = this.analyze(s.high)
+    this.analyze(s.high)
     check(s.high).isInteger()
     s.iterator = new Variable(s.iterator, true)
     s.iterator.type = Type.INT
@@ -333,7 +345,7 @@ class Context {
     s.body = bodyContext.analyze(s.body)
   }
   ForStatement(s) {
-    s.collection = this.analyze(s.collection)
+    this.analyze(s.collection)
     check(s.collection).isAnArray()
     s.iterator = new Variable(s.iterator, true)
     s.iterator.type = s.collection.type.baseType
@@ -342,16 +354,16 @@ class Context {
     s.body = bodyContext.analyze(s.body)
   }
   Conditional(e) {
-    e.test = this.analyze(e.test)
+    this.analyze(e.test)
     check(e.test).isBoolean()
-    e.consequent = this.analyze(e.consequent)
-    e.alternate = this.analyze(e.alternate)
+    this.analyze(e.consequent)
+    this.analyze(e.alternate)
     check(e.consequent).hasSameTypeAs(e.alternate)
     e.type = e.consequent.type
   }
   BinaryExpression(e) {
-    e.left = this.analyze(e.left)
-    e.right = this.analyze(e.right)
+    this.analyze(e.left)
+    this.analyze(e.right)
     if (["&", "|", "^", "<<", ">>"].includes(e.op)) {
       check(e.left).isInteger()
       check(e.right).isInteger()
@@ -382,7 +394,7 @@ class Context {
     }
   }
   UnaryExpression(e) {
-    e.operand = this.analyze(e.operand)
+    this.analyze(e.operand)
     if (e.op === "#") {
       check(e.operand).isAnArray()
       e.type = Type.INT
@@ -394,62 +406,57 @@ class Context {
       e.type = Type.BOOLEAN
     } else {
       // Operator is "some"
-      e.type = new OptionalType(e.operand.type)
+      e.type = new OptionalType(e.operand.type?.value ?? e.operand.type)
     }
   }
   EmptyOptional(e) {
-    e.baseType = this.analyze(e.baseType)
-    e.type = new OptionalType(e.baseType)
-    return e
+    this.analyze(e.baseType)
+    e.type = new OptionalType(e.baseType?.value ?? e.baseType)
   }
   SubscriptExpression(e) {
-    e.array = this.analyze(e.array)
+    this.analyze(e.array)
     e.type = e.array.type.baseType
-    e.index = this.analyze(e.index)
+    this.analyze(e.index)
     check(e.index).isInteger()
-    return e
   }
   ArrayExpression(a) {
-    a.elements = this.analyze(a.elements)
+    this.analyze(a.elements)
     check(a.elements).allHaveSameType()
     a.type = new ArrayType(a.elements[0].type)
-    return a
   }
   EmptyArray(e) {
-    e.baseType = this.analyze(e.baseType)
-    e.type = new ArrayType(e.baseType)
-    return e
+    this.analyze(e.baseType)
+    e.type = new ArrayType(e.baseType?.value ?? e.baseType)
   }
   MemberExpression(e) {
-    e.object = this.analyze(e.object)
+    this.analyze(e.object)
     check(e.field).isInTheObject(e.object)
-    e.field = e.object.type.fields.find(f => f.name === e.field)
+    e.field = e.object.type.fields.find(f => f.name.lexeme === e.field)
     e.type = e.field.type
-    return e
   }
   Call(c) {
-    c.callee = this.analyze(c.callee)
-    check(c.callee).isCallable()
-    c.args = this.analyze(c.args)
-    if (c.callee.constructor === StructType) {
-      check(c.args).matchFieldsOf(c.callee)
-      c.type = c.callee
+    this.analyze(c.callee)
+    const callee = c.callee?.value ?? c.callee
+    check(callee).isCallable()
+    this.analyze(c.args)
+    if (callee.constructor === StructType) {
+      check(c.args).matchFieldsOf(callee)
+      c.type = callee
     } else {
-      check(c.args).matchParametersOf(c.callee.type)
-      c.type = c.callee.type.returnType
+      check(c.args).matchParametersOf(callee.type)
+      c.type = callee.type.returnType
     }
-    return c
   }
   Token(t) {
-    // Shortcut: only handle ids that are variables, not functions, here.
-    // We will handle the ids in function calls in the Call() handler. This
-    // strategy only works here, but in more complex languages, we would do
-    // proper type checking.
-    if (t.category === "Id") t.value = this.lookup(t)
-    if (t.category === "Int") t.value = BigInt(t.lexeme)
-    if (t.category === "Float") t.value = Number(t.lexeme)
-    if (t.category === "Str") t.value = t.lexeme
-    if (t.category === "Bool") t.value = t.lexeme === "true"
+    // For ids being used, not defined
+    if (t.category === "Id") {
+      t.value = this.lookup(t.lexeme)
+      t.type = t.value.type
+    }
+    if (t.category === "Int") [t.value, t.type] = [BigInt(t.lexeme), Type.INT]
+    if (t.category === "Float") [t.value, t.type] = [Number(t.lexeme), Type.FLOAT]
+    if (t.category === "Str") [t.value, t.type] = [t.lexeme, Type.STRING]
+    if (t.category === "Bool") [t.value, t.type] = [t.lexeme === "true", Type.BOOLEAN]
   }
   Array(a) {
     a.forEach(item => this.analyze(item))

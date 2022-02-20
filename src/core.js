@@ -45,7 +45,7 @@ export class Type {
 export class StructType extends Type {
   // Generated when processing a type declaration
   constructor(name, fields) {
-    super(name)
+    super(name.lexeme)
     Object.assign(this, { fields })
   }
 }
@@ -58,8 +58,8 @@ export class Field {
 
 export class FunctionDeclaration {
   // Example: function f(x: [int?], y: string): Vector {}
-  constructor(name, parameters, returnType, body) {
-    Object.assign(this, { name, parameters, returnType, body })
+  constructor(fun, parameters, returnType, body) {
+    Object.assign(this, { fun, parameters, returnType, body })
   }
 }
 
@@ -250,6 +250,10 @@ export class Token {
     Object.assign(this, { category, source })
   }
   get lexeme() {
+    // Ohm holds this for us, nice
+    return this.source.contents
+  }
+  get description() {
     return this.source.contents
   }
 }
@@ -288,7 +292,7 @@ Program.prototype[util.inspect.custom] = function () {
     function view(e) {
       if (tags.has(e)) return `#${tags.get(e)}`
       if (e?.constructor === Token) {
-        return `${e.category}("${e.lexeme}"${e.value ? "," + view(e.value) : ""})`
+        return `(${e.category},"${e.lexeme}"${e.value ? "," + view(e.value) : ""})`
       }
       if (Array.isArray(e)) return `[${e.map(view)}]`
       return util.inspect(e)

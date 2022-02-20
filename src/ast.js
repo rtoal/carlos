@@ -41,9 +41,6 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Type_optional(baseType, _questionMark) {
     return new core.OptionalType(baseType.ast())
   },
-  Type_id(id) {
-    return Symbol.for(id.sourceString)
-  },
   Statement_bump(variable, operator, _semicolon) {
     return operator.sourceString === "++"
       ? new core.Increment(variable.ast())

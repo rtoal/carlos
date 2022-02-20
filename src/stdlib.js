@@ -4,12 +4,12 @@ import { Type, FunctionType, Variable, Function, ArrayType } from "./core.js"
 // for the ANY "pseudotype."" In the syntax, the basic types are
 // represented as JavaScript symbols, but during semantic analysis
 // these new objects are used instead.
-Type.BOOLEAN = Object.assign(new Type(), { description: "boolean" })
-Type.INT = Object.assign(new Type(), { description: "int" })
-Type.FLOAT = Object.assign(new Type(), { description: "float" })
-Type.STRING = Object.assign(new Type(), { description: "string" })
-Type.VOID = Object.assign(new Type(), { description: "void" })
-Type.ANY = Object.assign(new Type(), { description: "any" })
+Type.BOOLEAN = new Type("boolean")
+Type.INT = new Type("int")
+Type.FLOAT = new Type("float")
+Type.STRING = new Type("string")
+Type.VOID = new Type("void")
+Type.ANY = new Type("any")
 
 function makeConstant(name, type, value) {
   return Object.assign(new Variable(name, true), { type, value })

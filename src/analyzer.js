@@ -309,7 +309,7 @@ class Context {
   IfStatement(s) {
     this.analyze(s.test)
     check(s.test).isBoolean()
-    s.consequent = this.newChild().analyze(s.consequent)
+    this.newChild().analyze(s.consequent)
     if (s.alternate.constructor === Array) {
       // It's a block of statements, make a new context
       this.newChild().analyze(s.alternate)
@@ -321,17 +321,17 @@ class Context {
   ShortIfStatement(s) {
     this.analyze(s.test)
     check(s.test).isBoolean()
-    s.consequent = this.newChild().analyze(s.consequent)
+    this.newChild().analyze(s.consequent)
   }
   WhileStatement(s) {
     this.analyze(s.test)
     check(s.test).isBoolean()
-    s.body = this.newChild({ inLoop: true }).analyze(s.body)
+    this.newChild({ inLoop: true }).analyze(s.body)
   }
   RepeatStatement(s) {
     this.analyze(s.count)
     check(s.count).isInteger()
-    s.body = this.newChild({ inLoop: true }).analyze(s.body)
+    this.newChild({ inLoop: true }).analyze(s.body)
   }
   ForRangeStatement(s) {
     this.analyze(s.low)

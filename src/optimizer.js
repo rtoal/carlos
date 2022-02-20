@@ -29,6 +29,7 @@ const optimizers = {
     return p
   },
   VariableDeclaration(d) {
+    d.variable = optimize(d.variable)
     d.initializer = optimize(d.initializer)
     return d
   },
@@ -39,6 +40,7 @@ const optimizers = {
     return d
   },
   FunctionDeclaration(d) {
+    d.fun = optimize(d.fun)
     d.body = optimize(d.body)
     return d
   },
@@ -53,9 +55,11 @@ const optimizers = {
     return p
   },
   Increment(s) {
+    s.variable = optimize(s.variable)
     return s
   },
   Decrement(s) {
+    s.variable = optimize(s.variable)
     return s
   },
   Assignment(s) {

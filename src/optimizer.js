@@ -229,6 +229,12 @@ const optimizers = {
   String(e) {
     return e
   },
+  Token(t) {
+    // All tokens get optimized away and basically replace with either their
+    // value (obtained by the analyzer for literals and ids) or simply with
+    // lexeme (if a plain symbol like an operator)
+    return t.value ?? t.lexeme
+  },
   Array(a) {
     // Flatmap since each element can be an array
     return a.flatMap(optimize)

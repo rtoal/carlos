@@ -34,14 +34,20 @@ const optimizers = {
     return d
   },
   TypeDeclaration(d) {
+    d.type = optimize(d.type)
     return d
   },
+  Field(f) {
+    f.name = f.name.lexeme
+    return f
+  },
   StructType(d) {
+    d.fields = optimize(d.fields)
     return d
   },
   FunctionDeclaration(d) {
     d.fun = optimize(d.fun)
-    d.body = optimize(d.body)
+    if (d.body) d.body = optimize(d.body)
     return d
   },
   Variable(v) {

@@ -253,11 +253,11 @@ class Context {
     childContext.analyze(d.fun.value.parameters)
     d.fun.value.type = new FunctionType(
       d.fun.value.parameters.map(p => p.type),
-      d.fun.value.returnType
+      d.fun.value.returnType ?? Type.VOID
     )
     // Add before analyzing the body to allow recursion
     this.add(d.fun.lexeme, d.fun.value)
-    d.body = childContext.analyze(d.body)
+    childContext.analyze(d.body)
   }
   Parameter(p) {
     this.analyze(p.type)
@@ -342,7 +342,7 @@ class Context {
     s.iterator.type = Type.INT
     const bodyContext = this.newChild({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
-    s.body = bodyContext.analyze(s.body)
+    bodyContext.analyze(s.body)
   }
   ForStatement(s) {
     this.analyze(s.collection)
@@ -351,7 +351,7 @@ class Context {
     s.iterator.type = s.collection.type.baseType
     const bodyContext = this.newChild({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
-    s.body = bodyContext.analyze(s.body)
+    bodyContext.analyze(s.body)
   }
   Conditional(e) {
     this.analyze(e.test)

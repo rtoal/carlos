@@ -186,7 +186,7 @@ export default function generate(program) {
     },
     String(e) {
       // This ensures in JavaScript they get quotes!
-      return JSON.stringify(e)
+      return e
     },
     Array(a) {
       return a.map(gen)

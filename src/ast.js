@@ -8,23 +8,24 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Program(body) {
     return new core.Program(body.ast())
   },
-  VarDecl(kind, id, _eq, initializer, _semicolon) {
-    const variable = new core.Variable(id.sourceString, kind.sourceString == "const")
-    return new core.VariableDeclaration(variable, initializer.ast())
+  VarDecl(modifier, id, _eq, initializer, _semicolon) {
+    return new core.VariableDeclaration(
+      modifier.sourceString,
+      id.ast(),
+      initializer.ast()
+    )
   },
   TypeDecl(_struct, id, _left, fields, _right) {
-    return new core.TypeDeclaration(new core.StructType(id.sourceString, fields.ast()))
+    return new core.TypeDeclaration(new core.StructType(id.ast(), fields.ast()))
   },
   Field(id, _colon, type) {
-    return new core.Field(id.sourceString, type.ast())
+    return new core.Field(id.ast(), type.ast())
   },
   FunDecl(_fun, id, _open, params, _close, _colons, returnType, body) {
     return new core.FunctionDeclaration(
-      new core.Function(
-        id.sourceString,
-        params.asIteration().ast(),
-        returnType.ast()[0] ?? null
-      ),
+      id.ast(),
+      params.asIteration().ast(),
+      returnType.ast()[0] ?? null,
       body.ast()
     )
   },
@@ -39,9 +40,6 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   },
   Type_optional(baseType, _questionMark) {
     return new core.OptionalType(baseType.ast())
-  },
-  Type_id(id) {
-    return Symbol.for(id.sourceString)
   },
   Statement_bump(variable, operator, _semicolon) {
     return operator.sourceString === "++"
@@ -153,26 +151,29 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   Exp9_member(object, _dot, field) {
     return new core.MemberExpression(object.ast(), field.sourceString)
   },
-  Exp9_id(id) {
-    return Symbol.for(id.sourceString)
-  },
   Exp9_call(callee, _left, args, _right) {
     return new core.Call(callee.ast(), args.asIteration().ast())
   },
+  id(_first, _rest) {
+    return new core.Token("Id", this.source)
+  },
   true(_) {
-    return true
+    return new core.Token("Bool", this.source)
   },
   false(_) {
-    return false
+    return new core.Token("Bool", this.source)
   },
   intlit(_digits) {
-    return BigInt(this.sourceString)
+    return new core.Token("Int", this.source)
   },
   floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
-    return Number(this.sourceString)
+    return new core.Token("Float", this.source)
   },
   stringlit(_openQuote, chars, _closeQuote) {
-    return chars.sourceString
+    return new core.Token("Str", this.source)
+  },
+  _terminal() {
+    return new core.Token("Sym", this.source)
   },
   _iter(...children) {
     return children.map(child => child.ast())

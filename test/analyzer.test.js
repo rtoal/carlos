@@ -171,32 +171,6 @@ const semanticErrors = [
 // nodes that get rewritten as well as those that are just "passed through"
 // by the analyzer. For now, we're just testing the various rewrites only.
 
-const Int = core.Type.INT
-const Void = core.Type.VOID
-const intToVoidType = new core.FunctionType([Int], Void)
-
-const varX = Object.assign(new core.Variable("x", false), { type: Int })
-
-const letX1 = new core.VariableDeclaration(varX, 1n)
-const assignX2 = new core.Assignment(varX, 2n)
-
-const functionF = new core.FunctionDeclaration(
-  Object.assign(new core.Function("f", [new core.Parameter("x", Int)], Void), {
-    type: intToVoidType,
-  }),
-  []
-)
-
-const structS = Object.assign(new core.TypeDeclaration("S", [new core.Field("x", Int)]), {
-  type: new core.StructType("S", [new core.Field("x", Int)]),
-})
-
-const graphChecks = [
-  ["Variable created & resolved", "let x=1; x=2;", [letX1, assignX2]],
-  ["functions created & resolved", "function f(x: int) {}", [functionF]],
-  ["field type resolved", "struct S {x: int}", [structS]],
-]
-
 describe("The analyzer", () => {
   for (const [scenario, source] of semanticChecks) {
     it(`recognizes ${scenario}`, () => {
@@ -206,11 +180,6 @@ describe("The analyzer", () => {
   for (const [scenario, source, errorMessagePattern] of semanticErrors) {
     it(`throws on ${scenario}`, () => {
       assert.throws(() => analyze(ast(source)), errorMessagePattern)
-    })
-  }
-  for (const [scenario, source, graph] of graphChecks) {
-    it(`properly rewrites the AST for ${scenario}`, () => {
-      assert.deepStrictEqual(analyze(ast(source)), new core.Program(graph))
     })
   }
 })

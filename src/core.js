@@ -1,9 +1,4 @@
-// Core classes and objects
-//
-// This module defines classes for the AST nodes. Only the constructors are
-// defined here. Semantic analysis methods, optimization methods, and code
-// generation are handled by other modules. This keeps the compiler organized
-// by phase.
+// Core classes
 
 import util from "util"
 
@@ -16,8 +11,8 @@ export class Program {
 
 export class VariableDeclaration {
   // Example: const dozen = 12;
-  constructor(variable, initializer) {
-    Object.assign(this, { variable, initializer })
+  constructor(modifier, variable, initializer) {
+    Object.assign(this, { modifier, variable, initializer })
   }
 }
 
@@ -45,7 +40,7 @@ export class Type {
 export class StructType extends Type {
   // Generated when processing a type declaration
   constructor(name, fields) {
-    super(name)
+    super(name.lexeme)
     Object.assign(this, { fields })
   }
 }
@@ -58,8 +53,8 @@ export class Field {
 
 export class FunctionDeclaration {
   // Example: function f(x: [int?], y: string): Vector {}
-  constructor(fun, body) {
-    Object.assign(this, { fun, body })
+  constructor(fun, parameters, returnType, body) {
+    Object.assign(this, { fun, parameters, returnType, body })
   }
 }
 
@@ -242,32 +237,65 @@ export class Call {
   }
 }
 
+// Token objects are wrappers around the Nodes produced by Ohm. We use
+// them here just for simple things like numbers and identifiers. The
+// Ohm node will go in the "source" property.
+export class Token {
+  constructor(category, source) {
+    Object.assign(this, { category, source })
+  }
+  get lexeme() {
+    // Ohm holds this for us, nice
+    return this.source.contents
+  }
+  get description() {
+    return this.source.contents
+  }
+}
+
+// Throw an error message that takes advantage of Ohm's messaging
+export function error(message, token) {
+  if (token) {
+    throw new Error(`${token.source.getLineAndColumnMessage()}${message}`)
+  }
+  throw new Error(message)
+}
+
+// Return a compact and pretty string representation of the node graph,
+// taking care of cycles. Written here from scratch because the built-in
+// inspect function, while nice, isn't nice enough. Defined properly in
+// the root class prototype so that it automatically runs on console.log.
 Program.prototype[util.inspect.custom] = function () {
-  // Return a compact and pretty string representation of the node graph,
-  // taking care of cycles. Written here from scratch because the built-in
-  // inspect function, while nice, isn't nice enough. Defined properly in
-  // the AST root class prototype so it automatically runs on console.log.
   const tags = new Map()
 
+  // Attach a unique integer tag to every node
   function tag(node) {
     if (tags.has(node) || typeof node !== "object" || node === null) return
-    tags.set(node, tags.size + 1)
-    for (const child of Object.values(node)) {
-      Array.isArray(child) ? child.forEach(tag) : tag(child)
+    if (node.constructor === Token) {
+      // Tokens are not tagged themselves, but their values might be
+      tag(node?.value)
+    } else {
+      // Non-tokens are tagged
+      tags.set(node, tags.size + 1)
+      for (const child of Object.values(node)) {
+        Array.isArray(child) ? child.forEach(tag) : tag(child)
+      }
     }
   }
 
   function* lines() {
     function view(e) {
       if (tags.has(e)) return `#${tags.get(e)}`
-      if (typeof e === "symbol") return e.description
+      if (e?.constructor === Token) {
+        return `(${e.category},"${e.lexeme}"${e.value ? "," + view(e.value) : ""})`
+      }
       if (Array.isArray(e)) return `[${e.map(view)}]`
       return util.inspect(e)
     }
     for (let [node, id] of [...tags.entries()].sort((a, b) => a[1] - b[1])) {
-      let [type, props] = [node.constructor.name, ""]
-      Object.entries(node).forEach(([k, v]) => (props += ` ${k}=${view(v)}`))
-      yield `${String(id).padStart(4, " ")} | ${type}${props}`
+      let type = node.constructor.name
+      let props = Object.entries(node).map(([k, v]) => `${k}=${view(v)}`)
+      yield `${String(id).padStart(4, " ")} | ${type} ${props.join(" ")}`
     }
   }
 

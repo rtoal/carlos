@@ -29,17 +29,25 @@ const optimizers = {
     return p
   },
   VariableDeclaration(d) {
+    d.variable = optimize(d.variable)
     d.initializer = optimize(d.initializer)
     return d
   },
   TypeDeclaration(d) {
+    d.type = optimize(d.type)
     return d
   },
+  Field(f) {
+    f.name = f.name.lexeme
+    return f
+  },
   StructType(d) {
+    d.fields = optimize(d.fields)
     return d
   },
   FunctionDeclaration(d) {
-    d.body = optimize(d.body)
+    d.fun = optimize(d.fun)
+    if (d.body) d.body = optimize(d.body)
     return d
   },
   Variable(v) {
@@ -53,9 +61,11 @@ const optimizers = {
     return p
   },
   Increment(s) {
+    s.variable = optimize(s.variable)
     return s
   },
   Decrement(s) {
+    s.variable = optimize(s.variable)
     return s
   },
   Assignment(s) {
@@ -228,6 +238,12 @@ const optimizers = {
   },
   String(e) {
     return e
+  },
+  Token(t) {
+    // All tokens get optimized away and basically replace with either their
+    // value (obtained by the analyzer for literals and ids) or simply with
+    // lexeme (if a plain symbol like an operator)
+    return t.value ?? t.lexeme
   },
   Array(a) {
     // Flatmap since each element can be an array

@@ -9,11 +9,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new core.Program(body.ast())
   },
   VarDecl(modifier, id, _eq, initializer, _semicolon) {
-    return new core.VariableDeclaration(
-      modifier.sourceString,
-      id.ast(),
-      initializer.ast()
-    )
+    return new core.VariableDeclaration(modifier.ast(), id.ast(), initializer.ast())
   },
   TypeDecl(_struct, id, _left, fields, _right) {
     return new core.TypeDeclaration(new core.StructType(id.ast(), fields.ast()))
@@ -30,7 +26,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     )
   },
   Param(id, _colon, type) {
-    return new core.Parameter(id.sourceString, type.ast())
+    return new core.Parameter(id.ast(), type.ast())
   },
   Type_array(_left, baseType, _right) {
     return new core.ArrayType(baseType.ast())
@@ -42,7 +38,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new core.OptionalType(baseType.ast())
   },
   Statement_bump(variable, operator, _semicolon) {
-    return operator.sourceString === "++"
+    return operator.ast().lexeme === "++"
       ? new core.Increment(variable.ast())
       : new core.Decrement(variable.ast())
   },
@@ -75,15 +71,15 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   },
   LoopStmt_range(_for, id, _in, low, op, high, body) {
     return new core.ForRangeStatement(
-      id.sourceString,
+      id.ast(),
       low.ast(),
-      op.sourceString,
+      op.ast(),
       high.ast(),
       body.ast()
     )
   },
   LoopStmt_collection(_for, id, _in, collection, body) {
-    return new core.ForStatement(id.sourceString, collection.ast(), body.ast())
+    return new core.ForStatement(id.ast(), collection.ast(), body.ast())
   },
   Block(_open, body, _close) {
     // No need for a block node, just return the list of statements
@@ -93,45 +89,40 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new core.Conditional(test.ast(), consequent.ast(), alternate.ast())
   },
   Exp1_unwrapelse(unwrap, op, alternate) {
-    return new core.BinaryExpression(op.sourceString, unwrap.ast(), alternate.ast())
+    return new core.BinaryExpression(op.ast(), unwrap.ast(), alternate.ast())
   },
-  Exp2_or(left, _ops, right) {
-    const operands = [left.ast(), ...right.ast()]
-    return operands.reduce((x, y) => new core.BinaryExpression("||", x, y))
+  Exp2_or(left, ops, right) {
+    return new binaryOperationChain(left, ops, right)
   },
-  Exp2_and(left, _ops, right) {
-    const operands = [left.ast(), ...right.ast()]
-    return operands.reduce((x, y) => new core.BinaryExpression("&&", x, y))
+  Exp2_and(left, ops, right) {
+    return new binaryOperationChain(left, ops, right)
   },
-  Exp3_bitor(left, _ops, right) {
-    const operands = [left.ast(), ...right.ast()]
-    return operands.reduce((x, y) => new core.BinaryExpression("|", x, y))
+  Exp3_bitor(left, ops, right) {
+    return new binaryOperationChain(left, ops, right)
   },
-  Exp3_bitxor(left, _ops, right) {
-    const operands = [left.ast(), ...right.ast()]
-    return operands.reduce((x, y) => new core.BinaryExpression("^", x, y))
+  Exp3_bitxor(left, ops, right) {
+    return new binaryOperationChain(left, ops, right)
   },
-  Exp3_bitand(left, _ops, right) {
-    const operands = [left.ast(), ...right.ast()]
-    return operands.reduce((x, y) => new core.BinaryExpression("&", x, y))
+  Exp3_bitand(left, ops, right) {
+    return new binaryOperationChain(left, ops, right)
   },
   Exp4_compare(left, op, right) {
-    return new core.BinaryExpression(op.sourceString, left.ast(), right.ast())
+    return new core.BinaryExpression(op.ast(), left.ast(), right.ast())
   },
   Exp5_shift(left, op, right) {
-    return new core.BinaryExpression(op.sourceString, left.ast(), right.ast())
+    return new core.BinaryExpression(op.ast(), left.ast(), right.ast())
   },
   Exp6_add(left, op, right) {
-    return new core.BinaryExpression(op.sourceString, left.ast(), right.ast())
+    return new core.BinaryExpression(op.ast(), left.ast(), right.ast())
   },
   Exp7_multiply(left, op, right) {
-    return new core.BinaryExpression(op.sourceString, left.ast(), right.ast())
+    return new core.BinaryExpression(op.ast(), left.ast(), right.ast())
   },
   Exp8_power(left, op, right) {
-    return new core.BinaryExpression(op.sourceString, left.ast(), right.ast())
+    return new core.BinaryExpression(op.ast(), left.ast(), right.ast())
   },
   Exp8_unary(op, operand) {
-    return new core.UnaryExpression(op.sourceString, operand.ast())
+    return new core.UnaryExpression(op.ast(), operand.ast())
   },
   Exp9_emptyarray(_keyword, _left, _of, type, _right) {
     return new core.EmptyArray(type.ast())
@@ -149,7 +140,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return new core.SubscriptExpression(array.ast(), subscript.ast())
   },
   Exp9_member(object, _dot, field) {
-    return new core.MemberExpression(object.ast(), field.sourceString)
+    return new core.MemberExpression(object.ast(), field.ast())
   },
   Exp9_call(callee, _left, args, _right) {
     return new core.Call(callee.ast(), args.asIteration().ast())
@@ -169,7 +160,7 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
     return new core.Token("Float", this.source)
   },
-  stringlit(_openQuote, chars, _closeQuote) {
+  stringlit(_openQuote, _chars, _closeQuote) {
     return new core.Token("Str", this.source)
   },
   _terminal() {
@@ -179,6 +170,14 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
     return children.map(child => child.ast())
   },
 })
+
+function binaryOperationChain(left, operators, right) {
+  let [root, ops, more] = [left.ast(), operators.ast(), right.ast()]
+  for (let i = 0; i < ops.length; i++) {
+    root = new core.BinaryExpression(ops[i], root, more[i])
+  }
+  return root
+}
 
 export default function ast(sourceCode) {
   const match = carlosGrammar.match(sourceCode)

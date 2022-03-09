@@ -223,7 +223,7 @@ class Context {
   }
   VariableDeclaration(d) {
     this.analyze(d.initializer)
-    d.variable.value = new Variable(d.variable.lexeme, d.modifier === "const")
+    d.variable.value = new Variable(d.variable.lexeme, d.modifier.lexeme === "const")
     d.variable.value.type = d.initializer.type
     this.add(d.variable.lexeme, d.variable.value)
   }
@@ -263,7 +263,7 @@ class Context {
     this.analyze(p.type)
     if (p.type instanceof Token) p.type = p.type.value
     check(p.type).isAType()
-    this.add(p.name, p)
+    this.add(p.name.lexeme, p)
   }
   ArrayType(t) {
     this.analyze(t.baseType)
@@ -338,7 +338,7 @@ class Context {
     check(s.low).isInteger()
     this.analyze(s.high)
     check(s.high).isInteger()
-    s.iterator = new Variable(s.iterator, true)
+    s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = Type.INT
     const bodyContext = this.newChild({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
@@ -347,7 +347,7 @@ class Context {
   ForStatement(s) {
     this.analyze(s.collection)
     check(s.collection).isAnArray()
-    s.iterator = new Variable(s.iterator, true)
+    s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = s.collection.type.baseType
     const bodyContext = this.newChild({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
@@ -364,30 +364,30 @@ class Context {
   BinaryExpression(e) {
     this.analyze(e.left)
     this.analyze(e.right)
-    if (["&", "|", "^", "<<", ">>"].includes(e.op)) {
+    if (["&", "|", "^", "<<", ">>"].includes(e.op.lexeme)) {
       check(e.left).isInteger()
       check(e.right).isInteger()
       e.type = Type.INT
-    } else if (["+"].includes(e.op)) {
+    } else if (["+"].includes(e.op.lexeme)) {
       check(e.left).isNumericOrString()
       check(e.left).hasSameTypeAs(e.right)
       e.type = e.left.type
-    } else if (["-", "*", "/", "%", "**"].includes(e.op)) {
+    } else if (["-", "*", "/", "%", "**"].includes(e.op.lexeme)) {
       check(e.left).isNumeric()
       check(e.left).hasSameTypeAs(e.right)
       e.type = e.left.type
-    } else if (["<", "<=", ">", ">="].includes(e.op)) {
+    } else if (["<", "<=", ">", ">="].includes(e.op.lexeme)) {
       check(e.left).isNumericOrString()
       check(e.left).hasSameTypeAs(e.right)
       e.type = Type.BOOLEAN
-    } else if (["==", "!="].includes(e.op)) {
+    } else if (["==", "!="].includes(e.op.lexeme)) {
       check(e.left).hasSameTypeAs(e.right)
       e.type = Type.BOOLEAN
-    } else if (["&&", "||"].includes(e.op)) {
+    } else if (["&&", "||"].includes(e.op.lexeme)) {
       check(e.left).isBoolean()
       check(e.right).isBoolean()
       e.type = Type.BOOLEAN
-    } else if (["??"].includes(e.op)) {
+    } else if (["??"].includes(e.op.lexeme)) {
       check(e.left).isAnOptional()
       check(e.right).isAssignableTo(e.left.type.baseType)
       e.type = e.left.type
@@ -395,13 +395,13 @@ class Context {
   }
   UnaryExpression(e) {
     this.analyze(e.operand)
-    if (e.op === "#") {
+    if (e.op.lexeme === "#") {
       check(e.operand).isAnArray()
       e.type = Type.INT
-    } else if (e.op === "-") {
+    } else if (e.op.lexeme === "-") {
       check(e.operand).isNumeric()
       e.type = e.operand.type
-    } else if (e.op === "!") {
+    } else if (e.op.lexeme === "!") {
       check(e.operand).isBoolean()
       e.type = Type.BOOLEAN
     } else {
@@ -430,8 +430,8 @@ class Context {
   }
   MemberExpression(e) {
     this.analyze(e.object)
-    check(e.field).isInTheObject(e.object)
-    e.field = e.object.type.fields.find(f => f.name.lexeme === e.field)
+    check(e.field.lexeme).isInTheObject(e.object)
+    e.field = e.object.type.fields.find(f => f.name.lexeme === e.field.lexeme)
     e.type = e.field.type
   }
   Call(c) {

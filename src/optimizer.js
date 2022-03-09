@@ -47,6 +47,7 @@ const optimizers = {
   },
   FunctionDeclaration(d) {
     d.fun = optimize(d.fun)
+    d.parameters = optimize(d.parameters)
     if (d.body) d.body = optimize(d.body)
     return d
   },
@@ -54,10 +55,10 @@ const optimizers = {
     return v
   },
   Function(f) {
-    // f.body = optimize(f.body)
     return f
   },
   Parameter(p) {
+    p.name = optimize(p.name)
     return p
   },
   Increment(s) {
@@ -122,7 +123,9 @@ const optimizers = {
     return s
   },
   ForRangeStatement(s) {
+    s.iterator = optimize(s.iterator)
     s.low = optimize(s.low)
+    s.op = optimize(s.op)
     s.high = optimize(s.high)
     s.body = optimize(s.body)
     if (s.low.constructor === Number) {
@@ -135,6 +138,7 @@ const optimizers = {
     return s
   },
   ForStatement(s) {
+    s.iterator = optimize(s.iterator)
     s.collection = optimize(s.collection)
     s.body = optimize(s.body)
     if (s.collection.constructor === core.EmptyArray) {
@@ -152,6 +156,7 @@ const optimizers = {
     return e
   },
   BinaryExpression(e) {
+    e.op = optimize(e.op)
     e.left = optimize(e.left)
     e.right = optimize(e.right)
     if (e.op === "??") {
@@ -195,6 +200,7 @@ const optimizers = {
     return e
   },
   UnaryExpression(e) {
+    e.op = optimize(e.op)
     e.operand = optimize(e.operand)
     if (e.operand.constructor === Number) {
       if (e.op === "-") {

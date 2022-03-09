@@ -33,7 +33,9 @@ export default function generate(program) {
     }
   })(new Map())
 
-  const gen = node => generators[node.constructor.name](node)
+  function gen(node) {
+    return generators[node.constructor.name](node)
+  }
 
   const generators = {
     // Key idea: when generating an expression, just return the JS string; when
@@ -47,6 +49,7 @@ export default function generate(program) {
       output.push(`let ${gen(d.variable)} = ${gen(d.initializer)};`)
     },
     TypeDeclaration(d) {
+      // The only type declaration in Carlos is the struct! Becomes a JS class.
       output.push(`class ${gen(d.type)} {`)
       output.push(`constructor(${gen(d.type.fields).join(",")}) {`)
       for (let field of d.type.fields) {
@@ -120,7 +123,7 @@ export default function generate(program) {
       output.push("}")
     },
     RepeatStatement(s) {
-      // JS can only repeat n times with a counter variable!
+      // JS can only repeat n times if you give it a counter variable!
       const i = targetName({ name: "i" })
       output.push(`for (let ${i} = 0; ${i} < ${gen(s.count)}; ${i}++) {`)
       gen(s.body)
@@ -185,7 +188,6 @@ export default function generate(program) {
       return e
     },
     String(e) {
-      // This ensures in JavaScript they get quotes!
       return e
     },
     Array(a) {

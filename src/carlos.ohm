@@ -59,9 +59,9 @@ Carlos {
               | floatlit ~mut
               | intlit ~mut
               | no Type ~mut                                  --emptyopt
+              | Exp9 ("(" | "?(") ListOf<Exp, ","> ")" ~mut   --call
               | Exp9 ("[" | "?[") Exp "]"                     --subscript
               | Exp9 ("." | "?.") id                          --member
-              | Exp9 ("(" | "?(") ListOf<Exp, ","> ")" ~mut   --call
               | stringlit ~mut
               | id                                            --id
               | "[]" "(" of Type ")" ~mut                     --emptyarray

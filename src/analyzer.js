@@ -11,8 +11,9 @@ import {
 } from "./core.js"
 import * as stdlib from "./stdlib.js"
 
-// The rules for type equivalence and type compatibility are so intricate that
-// they require a special section of this module to handle them.
+/**********************************************
+ *  TYPE EQUIVALENCE AND COMPATIBILITY RULES  *
+ *********************************************/
 
 Object.assign(Type.prototype, {
   // Equivalence: when are two types the same
@@ -232,6 +233,9 @@ class Context {
     }
     error(`Identifier ${name} not declared`)
   }
+  newChildContext(props) {
+    return new Context({ ...this, parent: this, locals: new Map(), ...props })
+  }
   analyze(node) {
     return this[node.constructor.name](node)
   }
@@ -266,7 +270,7 @@ class Context {
     checkIsAType(d.fun.value.returnType)
     // When entering a function body, we must reset the inLoop setting,
     // because it is possible to declare a function inside a loop!
-    const childContext = new Context({ ...this, inLoop: false, function: d.fun.value })
+    const childContext = this.newChildContext({ inLoop: false, function: d.fun.value })
     childContext.analyze(d.fun.value.parameters)
     d.fun.value.type = new FunctionType(
       d.fun.value.parameters.map(p => p.type),
@@ -326,10 +330,10 @@ class Context {
   IfStatement(s) {
     this.analyze(s.test)
     checkBoolean(s.test)
-    new Context({ ...this }).analyze(s.consequent)
+    this.newChildContext().analyze(s.consequent)
     if (s.alternate.constructor === Array) {
       // It's a block of statements, make a new context
-      new Context({ ...this }).analyze(s.alternate)
+      this.newChildContext().analyze(s.alternate)
     } else if (s.alternate) {
       // It's a trailing if-statement, so same context
       this.analyze(s.alternate)
@@ -338,17 +342,17 @@ class Context {
   ShortIfStatement(s) {
     this.analyze(s.test)
     checkBoolean(s.test)
-    new Context({ ...this }).analyze(s.consequent)
+    this.newChildContext().analyze(s.consequent)
   }
   WhileStatement(s) {
     this.analyze(s.test)
     checkBoolean(s.test)
-    new Context({ ...this, inLoop: true }).analyze(s.body)
+    this.newChildContext({ inLoop: true }).analyze(s.body)
   }
   RepeatStatement(s) {
     this.analyze(s.count)
     checkInteger(s.count)
-    new Context({ ...this, inLoop: true }).analyze(s.body)
+    this.newChildContext({ inLoop: true }).analyze(s.body)
   }
   ForRangeStatement(s) {
     this.analyze(s.low)
@@ -357,7 +361,7 @@ class Context {
     checkInteger(s.high)
     s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = Type.INT
-    const bodyContext = new Context({ ...this, inLoop: true })
+    const bodyContext = this.newChildContext({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
     bodyContext.analyze(s.body)
   }
@@ -366,7 +370,7 @@ class Context {
     checkArray(s.collection)
     s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = s.collection.type.baseType
-    const bodyContext = new Context({ ...this, inLoop: true })
+    const bodyContext = this.newChildContext({ inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
     bodyContext.analyze(s.body)
   }

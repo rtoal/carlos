@@ -452,12 +452,6 @@ class Context {
 }
 
 export default function analyze(node) {
-  // Allow primitives to be automatically typed
-  Number.prototype.type = Type.FLOAT
-  BigInt.prototype.type = Type.INT
-  Boolean.prototype.type = Type.BOOLEAN
-  String.prototype.type = Type.STRING
-  Type.prototype.type = Type.TYPE
   const initialContext = new Context({})
 
   // Add in all the predefined identifiers from the stdlib module

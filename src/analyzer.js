@@ -15,6 +15,9 @@ function must(condition, errorMessage) {
   if (!condition) error(errorMessage)
 }
 
+// The rules for type equivalence and type compatibility are so intricate that
+// they require a special section of this module to handle them.
+
 Object.assign(Type.prototype, {
   // Equivalence: when are two types the same
   isEquivalentTo(target) {

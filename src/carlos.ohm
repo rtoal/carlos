@@ -54,18 +54,18 @@ Carlos {
   Exp8        = Exp9 "**" Exp8                                --power
               | Exp9
               | ("#" | "-" | "!" | some) Exp9                 --unary
-  Exp9        = Exp9 ("[" | "?[") Exp "]"                     --subscript
-              | Exp9 ("." | "?.") id                          --member
-              | Exp9 ("(" | "?(") ListOf<Exp, ","> ")" ~mut   --call
-              | id                                            --id
-              | true ~mut
+  Exp9        = true ~mut
               | false ~mut
               | floatlit ~mut
               | intlit ~mut
+              | no Type ~mut                                  --emptyopt
+              | Exp9 ("[" | "?[") Exp "]"                     --subscript
+              | Exp9 ("." | "?.") id                          --member
+              | Exp9 ("(" | "?(") ListOf<Exp, ","> ")" ~mut   --call
               | stringlit ~mut
+              | id                                            --id
               | "[]" "(" of Type ")" ~mut                     --emptyarray
               | "[" NonemptyListOf<Exp, ","> "]" ~mut         --arrayexp
-              | no Type ~mut                                  --emptyopt
               | "(" Exp ")" ~mut                              --parens
 
   intlit      = digit+

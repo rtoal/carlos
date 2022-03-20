@@ -11,10 +11,6 @@ import {
 } from "./core.js"
 import * as stdlib from "./stdlib.js"
 
-function must(condition, errorMessage) {
-  if (!condition) error(errorMessage)
-}
-
 // The rules for type equivalence and type compatibility are so intricate that
 // they require a special section of this module to handle them.
 
@@ -79,107 +75,138 @@ Object.assign(OptionalType.prototype, {
   },
 })
 
-const check = self => ({
-  isNumeric() {
-    must(
-      [Type.INT, Type.FLOAT].includes(self.type),
-      `Expected a number, found ${self.type.description}`
-    )
-  },
-  isNumericOrString() {
-    must(
-      [Type.INT, Type.FLOAT, Type.STRING].includes(self.type),
-      `Expected a number or string, found ${self.type.description}`
-    )
-  },
-  isBoolean() {
-    must(self.type === Type.BOOLEAN, `Expected a boolean, found ${self.type.description}`)
-  },
-  isInteger() {
-    must(self.type === Type.INT, `Expected an integer, found ${self.type.description}`)
-  },
-  isAType() {
-    must(
-      self instanceof Type || (self instanceof Token && self.value instanceof Type),
-      "Type expected"
-    )
-  },
-  isAnOptional() {
-    must(self.type.constructor === OptionalType, "Optional expected")
-  },
-  isAnArray() {
-    must(self.type.constructor === ArrayType, "Array expected")
-  },
-  hasSameTypeAs(other) {
-    must(self.type.isEquivalentTo(other.type), "Operands do not have the same type")
-  },
-  allHaveSameType() {
-    must(
-      self.slice(1).every(e => e.type.isEquivalentTo(self[0].type)),
-      "Not all elements have the same type"
-    )
-  },
-  isNotRecursive() {
-    must(
-      !self.fields.map(f => f.type).includes(self),
-      "Struct type must not be recursive"
-    )
-  },
-  isAssignableTo(type) {
-    must(
-      type === Type.ANY || self.type.isAssignableTo(type),
-      `Cannot assign a ${self.type.description} to a ${type.description}`
-    )
-  },
-  isNotReadOnly() {
-    const readOnly = self instanceof Token ? self.value.readOnly : self.readOnly
-    must(!readOnly, `Cannot assign to constant ${self?.lexeme ?? self.name}`)
-  },
-  areAllDistinct() {
-    must(
-      new Set(self.map(f => f.name.lexeme)).size === self.length,
-      "Fields must be distinct"
-    )
-  },
-  isInTheObject(object) {
-    must(object.type.fields.map(f => f.name.lexeme).includes(self), "No such field")
-  },
-  isInsideALoop() {
-    must(self.inLoop, "Break can only appear in a loop")
-  },
-  isInsideAFunction() {
-    must(self.function, "Return can only appear in a function")
-  },
-  isCallable() {
-    must(
-      self.constructor === StructType || self.type.constructor == FunctionType,
-      "Call of non-function or non-constructor"
-    )
-  },
-  returnsNothing() {
-    must(self.type.returnType === Type.VOID, "Something should be returned here")
-  },
-  returnsSomething() {
-    must(self.type.returnType !== Type.VOID, "Cannot return a value here")
-  },
-  isReturnableFrom(f) {
-    check(self).isAssignableTo(f.type.returnType)
-  },
-  match(targetTypes) {
-    // self is the array of arguments
-    must(
-      targetTypes.length === self.length,
-      `${targetTypes.length} argument(s) required but ${self.length} passed`
-    )
-    targetTypes.forEach((type, i) => check(self[i]).isAssignableTo(type))
-  },
-  matchParametersOf(calleeType) {
-    check(self).match(calleeType.paramTypes)
-  },
-  matchFieldsOf(type) {
-    check(self).match(type.fields.map(f => f.type))
-  },
-})
+/**************************
+ *  VALIDATION FUNCTIONS  *
+ *************************/
+
+function check(condition, message, entity) {
+  if (!condition) error(message, entity)
+}
+
+function checkType(e, types, expectation) {
+  check(types.includes(e.type), `Expected ${expectation}`)
+}
+
+function checkNumeric(e) {
+  checkType(e, [Type.INT, Type.FLOAT], "a number")
+}
+
+function checkNumericOrString(e) {
+  checkType(e, [Type.INT, Type.FLOAT, Type.STRING], "a number or string")
+}
+
+function checkBoolean(e) {
+  checkType(e, [Type.BOOLEAN], "a boolean")
+}
+
+function checkInteger(e) {
+  checkType(e, [Type.INT], "an integer")
+}
+
+function checkIsAType(e) {
+  check(
+    e instanceof Type || (e instanceof Token && e.value instanceof Type),
+    "Type expected",
+    e
+  )
+}
+
+function checkIsAnOptional(e) {
+  check(e.type.constructor === OptionalType, "Optional expected")
+}
+
+function checkArray(e) {
+  check(e.type.constructor === ArrayType, "Array expected")
+}
+
+function checkHaveSameType(e1, e2) {
+  check(e1.type.isEquivalentTo(e2.type), "Operands do not have the same type")
+}
+
+function checkAllHaveSameType(expressions) {
+  check(
+    expressions.slice(1).every(e => e.type.isEquivalentTo(expressions[0].type)),
+    "Not all elements have the same type"
+  )
+}
+
+function checkNotRecursive(struct) {
+  check(
+    !struct.fields.map(f => f.type).includes(struct),
+    "Struct type must not be recursive"
+  )
+}
+
+function checkAssignable(e, { toType: type }) {
+  check(
+    type === Type.ANY || e.type.isAssignableTo(type),
+    `Cannot assign a ${e.type.description} to a ${type.description}`
+  )
+}
+
+function checkNotReadOnly(e) {
+  const readOnly = e instanceof Token ? e.value.readOnly : e.readOnly
+  check(!readOnly, `Cannot assign to constant ${e?.lexeme ?? e.name}`, e)
+}
+
+function checkFieldsAllDistinct(fields) {
+  check(
+    new Set(fields.map(f => f.name.lexeme)).size === fields.length,
+    "Fields must be distinct"
+  )
+}
+
+function checkMemberDeclared(field, { in: struct }) {
+  check(struct.type.fields.map(f => f.name.lexeme).includes(field), "No such field")
+}
+
+function checkInLoop(context) {
+  check(context.inLoop, "Break can only appear in a loop")
+}
+
+function checkInFunction(context) {
+  check(context.function, "Return can only appear in a function")
+}
+
+function checkCallable(e) {
+  check(
+    e.constructor === StructType || e.type.constructor == FunctionType,
+    "Call of non-function or non-constructor"
+  )
+}
+
+function checkReturnsNothing(f) {
+  check(f.type.returnType === Type.VOID, "Something should be returned here")
+}
+
+function checkReturnsSomething(f) {
+  check(f.type.returnType !== Type.VOID, "Cannot return a value here")
+}
+
+function checkReturnable({ expression: e, from: f }) {
+  checkAssignable(e, { toType: f.type.returnType })
+}
+
+function checkArgumentsMatch(args, targetTypes) {
+  check(
+    targetTypes.length === args.length,
+    `${targetTypes.length} argument(s) required but ${args.length} passed`
+  )
+  targetTypes.forEach((type, i) => checkAssignable(args[i], { toType: type }))
+}
+
+function checkFunctionCallArguments(args, calleeType) {
+  checkArgumentsMatch(args, calleeType.paramTypes)
+}
+
+function checkConstructorArguments(args, structType) {
+  const fieldTypes = structType.fields.map(f => f.type)
+  checkArgumentsMatch(args, fieldTypes)
+}
+
+/***************************************
+ *  ANALYSIS TAKES PLACE IN A CONTEXT  *
+ **************************************/
 
 class Context {
   constructor({ parent = null, locals = new Map(), inLoop = false, function: f = null }) {
@@ -221,13 +248,13 @@ class Context {
     // Add early to allow recursion
     this.add(d.type.description, d.type)
     this.analyze(d.type.fields)
-    check(d.type.fields).areAllDistinct()
-    check(d.type).isNotRecursive()
+    checkFieldsAllDistinct(d.type.fields)
+    checkNotRecursive(d.type)
   }
   Field(f) {
     this.analyze(f.type)
     if (f.type instanceof Token) f.type = f.type.value
-    check(f.type).isAType()
+    checkIsAType(f.type)
   }
   FunctionDeclaration(d) {
     if (d.returnType) this.analyze(d.returnType)
@@ -236,7 +263,7 @@ class Context {
       d.parameters,
       d.returnType?.value ?? d.returnType ?? Type.VOID
     )
-    check(d.fun.value.returnType).isAType()
+    checkIsAType(d.fun.value.returnType)
     // When entering a function body, we must reset the inLoop setting,
     // because it is possible to declare a function inside a loop!
     const childContext = new Context({ ...this, inLoop: false, function: d.fun.value })
@@ -252,7 +279,7 @@ class Context {
   Parameter(p) {
     this.analyze(p.type)
     if (p.type instanceof Token) p.type = p.type.value
-    check(p.type).isAType()
+    checkIsAType(p.type)
     this.add(p.name.lexeme, p)
   }
   ArrayType(t) {
@@ -271,34 +298,34 @@ class Context {
   }
   Increment(s) {
     this.analyze(s.variable)
-    check(s.variable).isInteger()
+    checkInteger(s.variable)
   }
   Decrement(s) {
     this.analyze(s.variable)
-    check(s.variable).isInteger()
+    checkInteger(s.variable)
   }
   Assignment(s) {
     this.analyze(s.source)
     this.analyze(s.target)
-    check(s.source).isAssignableTo(s.target.type)
-    check(s.target).isNotReadOnly()
+    checkAssignable(s.source, { toType: s.target.type })
+    checkNotReadOnly(s.target)
   }
   BreakStatement(s) {
-    check(this).isInsideALoop()
+    checkInLoop(this)
   }
   ReturnStatement(s) {
-    check(this).isInsideAFunction()
-    check(this.function).returnsSomething()
+    checkInFunction(this)
+    checkReturnsSomething(this.function)
     this.analyze(s.expression)
-    check(s.expression).isReturnableFrom(this.function)
+    checkReturnable({ expression: s.expression, from: this.function })
   }
   ShortReturnStatement(s) {
-    check(this).isInsideAFunction()
-    check(this.function).returnsNothing()
+    checkInFunction(this)
+    checkReturnsNothing(this.function)
   }
   IfStatement(s) {
     this.analyze(s.test)
-    check(s.test).isBoolean()
+    checkBoolean(s.test)
     new Context({ ...this }).analyze(s.consequent)
     if (s.alternate.constructor === Array) {
       // It's a block of statements, make a new context
@@ -310,24 +337,24 @@ class Context {
   }
   ShortIfStatement(s) {
     this.analyze(s.test)
-    check(s.test).isBoolean()
+    checkBoolean(s.test)
     new Context({ ...this }).analyze(s.consequent)
   }
   WhileStatement(s) {
     this.analyze(s.test)
-    check(s.test).isBoolean()
+    checkBoolean(s.test)
     new Context({ ...this, inLoop: true }).analyze(s.body)
   }
   RepeatStatement(s) {
     this.analyze(s.count)
-    check(s.count).isInteger()
+    checkInteger(s.count)
     new Context({ ...this, inLoop: true }).analyze(s.body)
   }
   ForRangeStatement(s) {
     this.analyze(s.low)
-    check(s.low).isInteger()
+    checkInteger(s.low)
     this.analyze(s.high)
-    check(s.high).isInteger()
+    checkInteger(s.high)
     s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = Type.INT
     const bodyContext = new Context({ ...this, inLoop: true })
@@ -336,7 +363,7 @@ class Context {
   }
   ForStatement(s) {
     this.analyze(s.collection)
-    check(s.collection).isAnArray()
+    checkArray(s.collection)
     s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = s.collection.type.baseType
     const bodyContext = new Context({ ...this, inLoop: true })
@@ -345,54 +372,54 @@ class Context {
   }
   Conditional(e) {
     this.analyze(e.test)
-    check(e.test).isBoolean()
+    checkBoolean(e.test)
     this.analyze(e.consequent)
     this.analyze(e.alternate)
-    check(e.consequent).hasSameTypeAs(e.alternate)
+    checkHaveSameType(e.consequent, e.alternate)
     e.type = e.consequent.type
   }
   BinaryExpression(e) {
     this.analyze(e.left)
     this.analyze(e.right)
     if (["&", "|", "^", "<<", ">>"].includes(e.op.lexeme)) {
-      check(e.left).isInteger()
-      check(e.right).isInteger()
+      checkInteger(e.left)
+      checkInteger(e.right)
       e.type = Type.INT
     } else if (["+"].includes(e.op.lexeme)) {
-      check(e.left).isNumericOrString()
-      check(e.left).hasSameTypeAs(e.right)
+      checkNumericOrString(e.left)
+      checkHaveSameType(e.left, e.right)
       e.type = e.left.type
     } else if (["-", "*", "/", "%", "**"].includes(e.op.lexeme)) {
-      check(e.left).isNumeric()
-      check(e.left).hasSameTypeAs(e.right)
+      checkNumeric(e.left)
+      checkHaveSameType(e.left, e.right)
       e.type = e.left.type
     } else if (["<", "<=", ">", ">="].includes(e.op.lexeme)) {
-      check(e.left).isNumericOrString()
-      check(e.left).hasSameTypeAs(e.right)
+      checkNumericOrString(e.left)
+      checkHaveSameType(e.left, e.right)
       e.type = Type.BOOLEAN
     } else if (["==", "!="].includes(e.op.lexeme)) {
-      check(e.left).hasSameTypeAs(e.right)
+      checkHaveSameType(e.left, e.right)
       e.type = Type.BOOLEAN
     } else if (["&&", "||"].includes(e.op.lexeme)) {
-      check(e.left).isBoolean()
-      check(e.right).isBoolean()
+      checkBoolean(e.left)
+      checkBoolean(e.right)
       e.type = Type.BOOLEAN
     } else if (["??"].includes(e.op.lexeme)) {
-      check(e.left).isAnOptional()
-      check(e.right).isAssignableTo(e.left.type.baseType)
+      checkIsAnOptional(e.left)
+      checkAssignable(e.right, { toType: e.left.type.baseType })
       e.type = e.left.type
     }
   }
   UnaryExpression(e) {
     this.analyze(e.operand)
     if (e.op.lexeme === "#") {
-      check(e.operand).isAnArray()
+      checkArray(e.operand)
       e.type = Type.INT
     } else if (e.op.lexeme === "-") {
-      check(e.operand).isNumeric()
+      checkNumeric(e.operand)
       e.type = e.operand.type
     } else if (e.op.lexeme === "!") {
-      check(e.operand).isBoolean()
+      checkBoolean(e.operand)
       e.type = Type.BOOLEAN
     } else {
       // Operator is "some"
@@ -407,11 +434,11 @@ class Context {
     this.analyze(e.array)
     e.type = e.array.type.baseType
     this.analyze(e.index)
-    check(e.index).isInteger()
+    checkInteger(e.index)
   }
   ArrayExpression(a) {
     this.analyze(a.elements)
-    check(a.elements).allHaveSameType()
+    checkAllHaveSameType(a.elements)
     a.type = new ArrayType(a.elements[0].type)
   }
   EmptyArray(e) {
@@ -420,20 +447,20 @@ class Context {
   }
   MemberExpression(e) {
     this.analyze(e.object)
-    check(e.field.lexeme).isInTheObject(e.object)
+    checkMemberDeclared(e.field.lexeme, { in: e.object })
     e.field = e.object.type.fields.find(f => f.name.lexeme === e.field.lexeme)
     e.type = e.field.type
   }
   Call(c) {
     this.analyze(c.callee)
     const callee = c.callee?.value ?? c.callee
-    check(callee).isCallable()
+    checkCallable(callee)
     this.analyze(c.args)
     if (callee.constructor === StructType) {
-      check(c.args).matchFieldsOf(callee)
+      checkConstructorArguments(c.args, callee)
       c.type = callee
     } else {
-      check(c.args).matchParametersOf(callee.type)
+      checkFunctionCallArguments(c.args, callee.type)
       c.type = callee.type.returnType
     }
   }

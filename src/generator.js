@@ -10,14 +10,14 @@ export default function generate(program) {
   const output = []
 
   const standardFunctions = new Map([
-    [stdlib.functions.print, x => `console.log(${x})`],
-    [stdlib.functions.sin, x => `Math.sin(${x})`],
-    [stdlib.functions.cos, x => `Math.cos(${x})`],
-    [stdlib.functions.exp, x => `Math.exp(${x})`],
-    [stdlib.functions.ln, x => `Math.log(${x})`],
-    [stdlib.functions.hypot, ([x, y]) => `Math.hypot(${x},${y})`],
-    [stdlib.functions.bytes, s => `[...Buffer.from(${s}, "utf8")]`],
-    [stdlib.functions.codepoints, s => `[...(${s})].map(s=>s.codePointAt(0))`],
+    [stdlib.contents.print, x => `console.log(${x})`],
+    [stdlib.contents.sin, x => `Math.sin(${x})`],
+    [stdlib.contents.cos, x => `Math.cos(${x})`],
+    [stdlib.contents.exp, x => `Math.exp(${x})`],
+    [stdlib.contents.ln, x => `Math.log(${x})`],
+    [stdlib.contents.hypot, ([x, y]) => `Math.hypot(${x},${y})`],
+    [stdlib.contents.bytes, s => `[...Buffer.from(${s}, "utf8")]`],
+    [stdlib.contents.codepoints, s => `[...(${s})].map(s=>s.codePointAt(0))`],
   ])
 
   // Variable and function names in JS will be suffixed with _1, _2, _3,
@@ -74,7 +74,7 @@ export default function generate(program) {
     },
     Variable(v) {
       // Standard library constants just get special treatment
-      if (v === stdlib.constants.π) {
+      if (v === stdlib.contents.π) {
         return "Math.PI"
       }
       return targetName(v)

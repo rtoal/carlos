@@ -32,6 +32,12 @@ export class TypeDeclaration {
 
 export class Type {
   // Type of all basic type int, float, string, etc. and superclass of others
+  static BOOLEAN = new Type("boolean")
+  static INT = new Type("int")
+  static FLOAT = new Type("float")
+  static STRING = new Type("string")
+  static VOID = new Type("void")
+  static ANY = new Type("any")
   constructor(description) {
     Object.assign(this, { description })
   }

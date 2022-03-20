@@ -455,8 +455,7 @@ export default function analyze(node) {
   const initialContext = new Context({})
 
   // Add in all the predefined identifiers from the stdlib module
-  const library = { ...stdlib.types, ...stdlib.constants, ...stdlib.functions }
-  for (const [name, type] of Object.entries(library)) {
+  for (const [name, type] of Object.entries(stdlib.contents)) {
     initialContext.add(name, type)
   }
   initialContext.analyze(node)

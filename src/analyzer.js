@@ -7,13 +7,12 @@ import {
   OptionalType,
   Function,
   Token,
+  error,
 } from "./core.js"
 import * as stdlib from "./stdlib.js"
 
 function must(condition, errorMessage) {
-  if (!condition) {
-    throw new Error(errorMessage)
-  }
+  if (!condition) error(errorMessage)
 }
 
 Object.assign(Type.prototype, {
@@ -188,10 +187,10 @@ class Context {
     return this.locals.has(name) || this.parent?.sees(name)
   }
   add(name, entity) {
-    // No shadowing! Prevent addition if id anywhere in scope chain!
-    if (this.sees(name)) {
-      throw new Error(`Identifier ${name} already declared`)
-    }
+    // No shadowing! Prevent addition if id anywhere in scope chain! This is
+    // a Carlos thing. Many other languages allow shadowing, and in these,
+    // we would only have to check that name is not in this.locals
+    if (this.sees(name)) error(`Identifier ${name} already declared`)
     this.locals.set(name, entity)
   }
   lookup(name) {
@@ -201,7 +200,7 @@ class Context {
     } else if (this.parent) {
       return this.parent.lookup(name)
     }
-    throw new Error(`Identifier ${name} not declared`)
+    error(`Identifier ${name} not declared`)
   }
   analyze(node) {
     return this[node.constructor.name](node)
@@ -453,8 +452,6 @@ class Context {
 
 export default function analyze(node) {
   const initialContext = new Context({})
-
-  // Add in all the predefined identifiers from the stdlib module
   for (const [name, type] of Object.entries(stdlib.contents)) {
     initialContext.add(name, type)
   }

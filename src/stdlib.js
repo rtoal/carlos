@@ -19,9 +19,7 @@ export const contents = {
   boolean: Type.BOOLEAN,
   string: Type.STRING,
   void: Type.VOID,
-
   π: makeConstant("π", Type.FLOAT, Math.PI),
-
   print: makeFunction("print", new FunctionType([Type.ANY], Type.VOID)),
   sin: makeFunction("sin", floatFloatType),
   cos: makeFunction("cos", floatFloatType),

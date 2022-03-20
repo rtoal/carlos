@@ -182,7 +182,7 @@ function binaryOperationChain(left, operators, right) {
 export default function ast(sourceCode) {
   const match = carlosGrammar.match(sourceCode)
   if (!match.succeeded()) {
-    throw new Error(match.message)
+    core.error(match.message)
   }
   return astBuilder(match).ast()
 }

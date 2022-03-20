@@ -1,3 +1,4 @@
+import { error } from "./core.js"
 import ast from "./ast.js"
 import analyze from "./analyzer.js"
 import optimize from "./optimizer.js"
@@ -13,5 +14,5 @@ export default function compile(source, outputType) {
   if (outputType === "js") {
     return generate(optimized)
   }
-  throw new Error("Unknown output type")
+  error("Unknown output type")
 }

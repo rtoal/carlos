@@ -105,19 +105,15 @@ function checkInteger(e) {
 }
 
 function checkIsAType(e) {
-  check(
-    e instanceof Type || (e instanceof Token && e.value instanceof Type),
-    "Type expected",
-    e
-  )
+  check(e instanceof Type, "Type expected", e)
 }
 
 function checkIsAnOptional(e) {
-  check(e.type.constructor === OptionalType, "Optional expected")
+  check(e.type.constructor === OptionalType, "Optional expected", e)
 }
 
 function checkArray(e) {
-  check(e.type.constructor === ArrayType, "Array expected")
+  check(e.type.constructor === ArrayType, "Array expected", e)
 }
 
 function checkHaveSameType(e1, e2) {
@@ -274,7 +270,7 @@ class Context {
     childContext.analyze(d.fun.value.parameters)
     d.fun.value.type = new FunctionType(
       d.fun.value.parameters.map(p => p.type),
-      d.fun.value.returnType ?? Type.VOID
+      d.fun.value.returnType
     )
     // Add before analyzing the body to allow recursion
     this.add(d.fun.lexeme, d.fun.value)

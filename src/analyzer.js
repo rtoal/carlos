@@ -145,7 +145,7 @@ const check = self => ({
   isInsideALoop() {
     must(self.inLoop, "Break can only appear in a loop")
   },
-  isInsideAFunction(context) {
+  isInsideAFunction() {
     must(self.function, "Return can only appear in a function")
   },
   isCallable() {
@@ -180,15 +180,8 @@ const check = self => ({
 })
 
 class Context {
-  constructor(parent = null, configuration = {}) {
-    // Parent (enclosing scope) for static scope analysis
-    this.parent = parent
-    // Locals! Names map to variables, functions, and types
-    this.locals = new Map()
-    // Here's how we know whether breaks and continues are legal here
-    this.inLoop = configuration.inLoop ?? parent?.inLoop ?? false
-    // This helps us check return statements
-    this.function = configuration.forFunction ?? parent?.function ?? null
+  constructor({ parent = null, locals = new Map(), inLoop = false, function: f = null }) {
+    Object.assign(this, { parent, locals, inLoop, function: f })
   }
   sees(name) {
     // Search "outward" through enclosing scopes
@@ -209,11 +202,6 @@ class Context {
       return this.parent.lookup(name)
     }
     throw new Error(`Identifier ${name} not declared`)
-  }
-  newChild(configuration = {}) {
-    // Create new (nested) context, which is just like the current context
-    // except that certain fields can be overridden
-    return new Context(this, configuration)
   }
   analyze(node) {
     return this[node.constructor.name](node)
@@ -249,7 +237,7 @@ class Context {
     check(d.fun.value.returnType).isAType()
     // When entering a function body, we must reset the inLoop setting,
     // because it is possible to declare a function inside a loop!
-    const childContext = this.newChild({ inLoop: false, forFunction: d.fun.value })
+    const childContext = new Context({ ...this, inLoop: false, function: d.fun.value })
     childContext.analyze(d.fun.value.parameters)
     d.fun.value.type = new FunctionType(
       d.fun.value.parameters.map(p => p.type),
@@ -309,10 +297,10 @@ class Context {
   IfStatement(s) {
     this.analyze(s.test)
     check(s.test).isBoolean()
-    this.newChild().analyze(s.consequent)
+    new Context({ ...this }).analyze(s.consequent)
     if (s.alternate.constructor === Array) {
       // It's a block of statements, make a new context
-      this.newChild().analyze(s.alternate)
+      new Context({ ...this }).analyze(s.alternate)
     } else if (s.alternate) {
       // It's a trailing if-statement, so same context
       this.analyze(s.alternate)
@@ -321,17 +309,17 @@ class Context {
   ShortIfStatement(s) {
     this.analyze(s.test)
     check(s.test).isBoolean()
-    this.newChild().analyze(s.consequent)
+    new Context({ ...this }).analyze(s.consequent)
   }
   WhileStatement(s) {
     this.analyze(s.test)
     check(s.test).isBoolean()
-    this.newChild({ inLoop: true }).analyze(s.body)
+    new Context({ ...this, inLoop: true }).analyze(s.body)
   }
   RepeatStatement(s) {
     this.analyze(s.count)
     check(s.count).isInteger()
-    this.newChild({ inLoop: true }).analyze(s.body)
+    new Context({ ...this, inLoop: true }).analyze(s.body)
   }
   ForRangeStatement(s) {
     this.analyze(s.low)
@@ -340,7 +328,7 @@ class Context {
     check(s.high).isInteger()
     s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = Type.INT
-    const bodyContext = this.newChild({ inLoop: true })
+    const bodyContext = new Context({ ...this, inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
     bodyContext.analyze(s.body)
   }
@@ -349,7 +337,7 @@ class Context {
     check(s.collection).isAnArray()
     s.iterator = new Variable(s.iterator.lexeme, true)
     s.iterator.type = s.collection.type.baseType
-    const bodyContext = this.newChild({ inLoop: true })
+    const bodyContext = new Context({ ...this, inLoop: true })
     bodyContext.add(s.iterator.name, s.iterator)
     bodyContext.analyze(s.body)
   }
@@ -470,7 +458,7 @@ export default function analyze(node) {
   Boolean.prototype.type = Type.BOOLEAN
   String.prototype.type = Type.STRING
   Type.prototype.type = Type.TYPE
-  const initialContext = new Context()
+  const initialContext = new Context({})
 
   // Add in all the predefined identifiers from the stdlib module
   const library = { ...stdlib.types, ...stdlib.constants, ...stdlib.functions }

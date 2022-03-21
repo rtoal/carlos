@@ -1,3 +1,9 @@
+// STANDARD LIBRARY
+//
+// Carlos comes with a lot of predefined entities. Some are constants, some
+// are types, and some are functions. Each are defined in this module, and
+// exported in a single object
+
 import { Type, FunctionType, Variable, Function, ArrayType } from "./core.js"
 
 function makeConstant(name, type, value) {
@@ -13,7 +19,7 @@ const floatFloatType = new FunctionType([Type.FLOAT], Type.FLOAT)
 const floatFloatFloatType = new FunctionType([Type.FLOAT, Type.FLOAT], Type.FLOAT)
 const stringToIntsType = new FunctionType([Type.STRING], floatsType)
 
-export const contents = {
+export const contents = Object.freeze({
   int: Type.INT,
   float: Type.FLOAT,
   boolean: Type.BOOLEAN,
@@ -28,4 +34,4 @@ export const contents = {
   hypot: makeFunction("hypot", floatFloatFloatType),
   bytes: makeFunction("bytes", stringToIntsType),
   codepoints: makeFunction("codepoints", stringToIntsType),
-}
+})

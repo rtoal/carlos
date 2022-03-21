@@ -1,3 +1,29 @@
+// SEMANTIC ANALYZER
+//
+// Decorates the AST with semantic information and checks the semantic
+// constraints. Decorations include:
+//
+//     * Creating semantic objects for actual variables, functions, and
+//       types (The AST made from parsing only has variable declarations,
+//       function declarations, and type declarations; real objects often
+//       have to be made during analysis)
+//     * Adding a type field to all expressions
+//     * Figuring out what identifiers refer to (Each identifier token from
+//       the AST will get a new property called "value" that will point to
+//       the actual variable, function, or type)
+//
+// Semantic checks are found in this module. They are functions starting
+// with "check". There are a lot of them, to be sure. A lot of them have to
+// do with type checking. The semantics of type equivalence and assignability
+// are complex and defined here as methods in each AST class for types.
+//
+// Invoke
+//
+//     analyze(astRootNode)
+//
+// to decorate the AST and perform semantic analysis. The function returns
+// the root node for convenience in chaining calls.
+
 import {
   Variable,
   Type,

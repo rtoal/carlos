@@ -1,5 +1,3 @@
-// Core classes
-
 import util from "util"
 
 export class Program {

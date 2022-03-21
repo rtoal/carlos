@@ -1,10 +1,22 @@
+// AST GENERATOR
+//
+// Creates an Ohm semantics object to generate an AST. The AST node classes
+// are defined in the core module.
+//
+// Invoke
+//
+//     ast(sourceCode)
+//
+// to return the root of the AST for the given source code string. The AST
+// root is an instance of the class core.Program.
+
 import fs from "fs"
 import ohm from "ohm-js"
 import * as core from "./core.js"
 
-const carlosGrammar = ohm.grammar(fs.readFileSync("src/carlos.ohm"))
+const grammar = ohm.grammar(fs.readFileSync("src/carlos.ohm"))
 
-const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
+const astBuilder = grammar.createSemantics().addOperation("ast", {
   Program(body) {
     return new core.Program(body.ast())
   },
@@ -171,6 +183,9 @@ const astBuilder = carlosGrammar.createSemantics().addOperation("ast", {
   },
 })
 
+// This helper function is useful because of the way the language is designed
+// to have a handful of operators at the same precedence level that do not
+// associate with other.
 function binaryOperationChain(left, operators, right) {
   let [root, ops, more] = [left.ast(), operators.ast(), right.ast()]
   for (let i = 0; i < ops.length; i++) {
@@ -180,7 +195,7 @@ function binaryOperationChain(left, operators, right) {
 }
 
 export default function ast(sourceCode) {
-  const match = carlosGrammar.match(sourceCode)
+  const match = grammar.match(sourceCode)
   if (!match.succeeded()) {
     core.error(match.message)
   }

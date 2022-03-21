@@ -1,4 +1,4 @@
-// Optimizer
+// OPTIMIZER
 //
 // This module exports a single function to perform machine-independent
 // optimizations on the analyzed semantic graph.
@@ -16,6 +16,10 @@
 //   - for-loop over empty array is a no-op
 //   - for-loop with low > high is a no-op
 //   - if-true and if-false reduce to only the taken arm
+//
+// The optimizer also replaces token references with their actual values,
+// since the original token line and column numbers are no longer needed.
+// This simplifies code generation.
 
 import * as core from "./core.js"
 

@@ -1,4 +1,4 @@
-// Code Generator Carlos -> JavaScript
+// CODE GENERATOR: Carlos -> JavaScript
 //
 // Invoke generate(program) with the program node to get back the JavaScript
 // translation as a string.

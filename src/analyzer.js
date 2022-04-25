@@ -138,6 +138,19 @@ function checkIsAnOptional(e) {
   check(e.type.constructor === OptionalType, "Optional expected", e)
 }
 
+function checkIsAStruct(e) {
+  check(e.type.constructor === StructType, "Optional expected", e)
+}
+
+function checkIsAnOptionalStruct(e) {
+  console.log("----->", e.type.constructor)
+  check(
+    e.type.constructor === OptionalType && e.type.baseType.constructor == StructType,
+    "Optional expected",
+    e
+  )
+}
+
 function checkArray(e) {
   check(e.type.constructor === ArrayType, "Array expected", e)
 }
@@ -179,8 +192,8 @@ function checkFieldsAllDistinct(fields) {
   )
 }
 
-function checkMemberDeclared(field, { in: struct }) {
-  check(struct.type.fields.map(f => f.name.lexeme).includes(field), "No such field")
+function checkMemberDeclared(field, { in: structType }) {
+  check(structType.fields.map(f => f.name.lexeme).includes(field), "No such field")
 }
 
 function checkInLoop(context) {
@@ -256,7 +269,7 @@ class Context {
     error(`Identifier ${name} not declared`)
   }
   newChildContext(props) {
-    return new Context({ ...this, parent: this, locals: new Map(), ...props })
+    return new Context({ ...this, ...props, parent: this, locals: new Map() })
   }
   analyze(node) {
     return this[node.constructor.name](node)
@@ -267,7 +280,7 @@ class Context {
   VariableDeclaration(d) {
     this.analyze(d.initializer)
     d.variable.value = new Variable(d.variable.lexeme, d.modifier.lexeme === "const")
-    d.variable.value.type = d.initializer.type
+    d.variable.value.type = d.initializer.type // Type inference
     this.add(d.variable.lexeme, d.variable.value)
   }
   TypeDeclaration(d) {
@@ -458,6 +471,7 @@ class Context {
   }
   SubscriptExpression(e) {
     this.analyze(e.array)
+    checkArray(e.array)
     e.type = e.array.type.baseType
     this.analyze(e.index)
     checkInteger(e.index)
@@ -473,9 +487,17 @@ class Context {
   }
   MemberExpression(e) {
     this.analyze(e.object)
-    checkMemberDeclared(e.field.lexeme, { in: e.object })
-    e.field = e.object.type.fields.find(f => f.name.lexeme === e.field.lexeme)
-    e.type = e.field.type
+    let structType
+    if (e.isOptional) {
+      checkIsAnOptionalStruct(e.object)
+      structType = e.object.type.baseType
+    } else {
+      checkIsAStruct(e.object)
+      structType = e.object.type
+    }
+    checkMemberDeclared(e.field.lexeme, { in: structType })
+    e.field = structType.fields.find(f => f.name.lexeme === e.field.lexeme)
+    e.type = e.isOptional ? new OptionalType(e.field.type) : e.field.type
   }
   Call(c) {
     this.analyze(c.callee)

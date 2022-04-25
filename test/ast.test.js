@@ -23,7 +23,7 @@ const expected = `   1 | Program statements=[#2,#3,#4,#6,#8,#13,#18]
    4 | ReturnStatement expression=#5
    5 | ArrayExpression elements=[(Float,"1.0"),(Float,"2.0")]
    6 | ReturnStatement expression=#7
-   7 | MemberExpression object=(Id,"x") field=(Id,"y")
+   7 | MemberExpression object=(Id,"x") field=(Id,"y") isOptional=false
    8 | FunctionDeclaration fun=(Id,"f") parameters=[#9] returnType=#10 body=[#11]
    9 | Parameter name=(Id,"x") type=(Id,"int")
   10 | ArrayType description='[bool]' baseType=(Id,"bool")

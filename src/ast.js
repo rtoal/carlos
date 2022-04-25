@@ -151,8 +151,8 @@ const astBuilder = grammar.createSemantics().addOperation("ast", {
   Exp9_subscript(array, _left, subscript, _right) {
     return new core.SubscriptExpression(array.ast(), subscript.ast())
   },
-  Exp9_member(object, _dot, field) {
-    return new core.MemberExpression(object.ast(), field.ast())
+  Exp9_member(object, dot, field) {
+    return new core.MemberExpression(object.ast(), field.ast(), dot.sourceString === "?.")
   },
   Exp9_call(callee, _left, args, _right) {
     return new core.Call(callee.ast(), args.asIteration().ast())

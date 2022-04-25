@@ -149,6 +149,9 @@ export default function generate(program) {
       return `(${gen(e.left)} ${op} ${gen(e.right)})`
     },
     UnaryExpression(e) {
+      if (e.op === "some") {
+        e.op = ""
+      }
       return `${e.op}(${gen(e.operand)})`
     },
     EmptyOptional(e) {
@@ -164,7 +167,10 @@ export default function generate(program) {
       return "[]"
     },
     MemberExpression(e) {
-      return `(${gen(e.object)}[${JSON.stringify(gen(e.field))}])`
+      const object = gen(e.object)
+      const field = JSON.stringify(gen(e.field))
+      const chain = e.isOptional ? "?." : ""
+      return `(${object}${chain}[${field}])`
     },
     Call(c) {
       const targetCode = standardFunctions.has(c.callee)

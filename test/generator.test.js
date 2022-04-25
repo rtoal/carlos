@@ -153,10 +153,20 @@ const fixtures = [
     source: `
       let x = no int;
       let y = x ?? 2;
+      struct S {x: int}
+      let z = some S(1);
+      let w = z?.x;
     `,
     expected: dedent`
       let x_1 = undefined;
       let y_2 = (x_1 ?? 2);
+      class S_3 {
+      constructor(x_4) {
+      this["x_4"] = x_4;
+      }
+      }
+      let z_5 = (new S_3(1));
+      let w_6 = (z_5?.["x_4"]);
     `,
   },
   {

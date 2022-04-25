@@ -229,8 +229,8 @@ export class EmptyArray {
 
 export class MemberExpression {
   // Example: state.population
-  constructor(object, field) {
-    Object.assign(this, { object, field })
+  constructor(object, field, isOptional) {
+    Object.assign(this, { object, field, isOptional })
   }
 }
 

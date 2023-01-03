@@ -99,5 +99,5 @@ Carlos {
               | for | in | of | break | return | some | no | true | false
   id          = ~keyword letter alnum*
 
-  space      += "//" (~"\n" any)* ("\n" | end)                --comment
+  space      += "//" (~"\n" any)*                             --comment
 }

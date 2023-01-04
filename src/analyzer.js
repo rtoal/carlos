@@ -1,29 +1,3 @@
-// SEMANTIC ANALYZER
-//
-// Decorates the AST with semantic information and checks the semantic
-// constraints. Decorations include:
-//
-//     * Creating semantic objects for actual variables, functions, and
-//       types (The AST made from parsing only has variable declarations,
-//       function declarations, and type declarations; real objects often
-//       have to be made during analysis)
-//     * Adding a type field to all expressions
-//     * Figuring out what identifiers refer to (Each identifier token from
-//       the AST will get a new property called "value" that will point to
-//       the actual variable, function, or type)
-//
-// Semantic checks are found in this module. They are functions starting
-// with "check". There are a lot of them, to be sure. A lot of them have to
-// do with type checking. The semantics of type equivalence and assignability
-// are complex and defined here as methods in each AST class for types.
-//
-// Invoke
-//
-//     analyze(astRootNode)
-//
-// to decorate the AST and perform semantic analysis. The function returns
-// the root node for convenience in chaining calls.
-
 import fs from "fs"
 import ohm from "ohm-js"
 import * as core from "./core.js"
@@ -31,16 +5,11 @@ import * as stdlib from "./stdlib.js"
 
 const grammar = ohm.grammar(fs.readFileSync("src/carlos.ohm"))
 
+// This used a lot, so save typing
 const Type = core.Type
-const ArrayType = core.ArrayType
-const FunctionType = core.FunctionType
 
-/**************************
- *  VALIDATION FUNCTIONS  *
- *************************/
-
-function check(condition, message, entity) {
-  if (!condition) core.error(message, entity)
+function check(condition, message, node) {
+  if (!condition) core.error(message, node)
 }
 
 function checkType(e, types, expectation) {
@@ -64,19 +33,18 @@ function checkInteger(e) {
 }
 
 function checkIsAType(e) {
-  check(e instanceof Type, "Type expected", e)
+  check(e instanceof Type, "Type expected")
 }
 
 function checkIsAnOptional(e) {
-  check(e.type.constructor === core.OptionalType, "Optional expected", e)
+  check(e.type.constructor === core.OptionalType, "Optional expected")
 }
 
 function checkIsAStruct(e) {
-  check(e.type.constructor === core.StructType, "Optional expected", e)
+  check(e.type.constructor === core.StructType, "Optional expected")
 }
 
 function checkIsAnOptionalStruct(e) {
-  console.log("----->", e.type.constructor)
   check(
     e.type.constructor === OptionalType && e.type.baseType.constructor == core.StructType,
     "Optional expected",
@@ -85,7 +53,7 @@ function checkIsAnOptionalStruct(e) {
 }
 
 function checkArray(e) {
-  check(e.type.constructor === ArrayType, "Array expected", e)
+  check(e.type.constructor === core.ArrayType, "Array expected")
 }
 
 function checkHaveSameType(e1, e2) {
@@ -114,13 +82,12 @@ function checkAssignable(e, { toType: type }) {
 }
 
 function checkNotReadOnly(e) {
-  const readOnly = e instanceof Token ? e.value.readOnly : e.readOnly
-  check(!readOnly, `Cannot assign to constant ${e?.lexeme ?? e.name}`, e)
+  check(!e.readOnly, `Cannot assign to constant ${e.name}`, e)
 }
 
 function checkFieldsAllDistinct(fields) {
   check(
-    new Set(fields.map(f => f.name.lexeme)).size === fields.length,
+    new Set(fields.map(f => f.name)).size === fields.length,
     "Fields must be distinct"
   )
 }
@@ -139,7 +106,7 @@ function checkInFunction(context) {
 
 function checkCallable(e) {
   check(
-    e.constructor === StructType || e.type.constructor == FunctionType,
+    e.constructor === core.StructType || e.type.constructor == core.FunctionType,
     "Call of non-function or non-constructor"
   )
 }
@@ -213,13 +180,13 @@ export default function analyze(sourceCode) {
       const initializerRep = initializer.rep()
       const readOnly = modifier.sourceString === "const"
       const variable = new core.Variable(id.sourceString, readOnly, initializerRep.type)
-      context.add(id, variable)
+      context.add(id.sourceString, variable)
       return new core.VariableDeclaration(variable, initializerRep)
     },
     TypeDecl(_struct, id, _left, fields, _right) {
       // TODO HOW TO ALLOW RECURSION?
       const type = new core.StructType(id.sourceString, fields.rep())
-      context.add(type.description, type)
+      context.add(id.sourceString, type)
       checkFieldsAllDistinct(type.fields)
       checkNotRecursive(type)
       return new core.TypeDeclaration(type)
@@ -229,15 +196,15 @@ export default function analyze(sourceCode) {
     },
     FunDecl(_fun, id, _open, params, _close, _colons, returnType, body) {
       var rt = returnType.rep()[0] ?? core.Type.VOID
-      var f = new core.Function(id.sourceString, [], rt)
+      var f = new core.Function(id.sourceString, new core.FunctionType([], rt))
       // When entering a function body, we must reset the inLoop setting,
       // because it is possible to declare a function inside a loop!
       context = context.newChildContext({ inLoop: false, function: f })
       var paramReps = params.asIteration().rep()
-      f.params = paramReps
+      f.type.params = paramReps
       const b = body.rep()
       context = context.parent
-      return new core.FunctionDeclaration(id.sourceString, paramReps, rt, b)
+      return new core.FunctionDeclaration(id.sourceString, f, b)
     },
     Param(id, _colon, type) {
       const typeRep = type.rep()
@@ -299,12 +266,13 @@ export default function analyze(sourceCode) {
       context = context.newChildContext()
       const consequentRep = consequent.rep()
       context = context.parent
+      let alternateRep
       if (alternate.constructor === Array) {
         // It's a block of statements, make a new context
         context = context.newChildContext()
         alternateRep = alternate.rep()
         context = context.parent
-      } else if (s.alternate) {
+      } else {
         // It's a trailing if-statement, so same context
         alternateRep = alternate.rep()
       }
@@ -336,9 +304,9 @@ export default function analyze(sourceCode) {
     },
     LoopStmt_range(_for, id, _in, low, op, high, body) {
       const [lowRep, highRep] = [low.rep(), high.rep()]
-      checkInteger(s.low)
-      checkInteger(s.high)
-      const iterator = new Variable(id.sourceString, Type.INT, true)
+      checkInteger(lowRep)
+      checkInteger(highRep)
+      const iterator = new core.Variable(id.sourceString, Type.INT, true)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
       const bodyRep = body.rep()
@@ -348,10 +316,10 @@ export default function analyze(sourceCode) {
     LoopStmt_collection(_for, id, _in, collection, body) {
       const c = collection.rep()
       checkArray(c)
-      const i = new Variable(id.rep().lexeme, true, c.type.baseType())
+      const i = new core.Variable(id.rep().lexeme, true, c.type.baseType)
       context = context.newChildContext({ inLoop: true })
       context.add(i.name, i)
-      b = body.rep()
+      const b = body.rep()
       context = context.parent
       return new core.ForStatement(i, c, b)
     },
@@ -373,7 +341,7 @@ export default function analyze(sourceCode) {
       return new core.BinaryExpression(o, x, y, x.type)
     },
     Exp2_or(left, ops, right) {
-      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkBoolean(x)
       for (let y of ys) {
         checkBoolean(y)
@@ -382,7 +350,7 @@ export default function analyze(sourceCode) {
       return x
     },
     Exp2_and(left, ops, right) {
-      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkBoolean(x)
       for (let y of ys) {
         checkBoolean(y)
@@ -391,7 +359,7 @@ export default function analyze(sourceCode) {
       return x
     },
     Exp3_bitor(left, ops, right) {
-      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkInteger(x)
       for (let y of ys) {
         checkInteger(y)
@@ -400,7 +368,7 @@ export default function analyze(sourceCode) {
       return x
     },
     Exp3_bitxor(left, ops, right) {
-      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkInteger(x)
       for (let y of ys) {
         checkInteger(y)
@@ -409,7 +377,7 @@ export default function analyze(sourceCode) {
       return x
     },
     Exp3_bitand(left, ops, right) {
-      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkInteger(x)
       for (let y of ys) {
         checkInteger(y)
@@ -424,7 +392,7 @@ export default function analyze(sourceCode) {
       return new core.BinaryExpression(o, x, y, Type.BOOLEAN)
     },
     Exp5_shift(left, op, right) {
-      const [x, o, y] = [left.rep(), o.rep(), right.rep()]
+      const [x, o, y] = [left.rep(), op.rep(), right.rep()]
       checkInteger(x)
       checkInteger(y)
       return new core.BinaryExpression(o, x, y, Type.INT)
@@ -452,7 +420,7 @@ export default function analyze(sourceCode) {
       return new core.BinaryExpression(o, x, y, x.type)
     },
     Exp8_unary(op, operand) {
-      const [o, x] = [op.sourceString, operand, rep()]
+      const [o, x] = [op.sourceString, operand.rep()]
       let type
       if (o === "#") checkArray(x), (type = Type.INT)
       else if (o === "-") checkNumeric(x), (type = x.type)
@@ -499,12 +467,12 @@ export default function analyze(sourceCode) {
       const [c, a] = [callee.rep(), args.asIteration().rep()]
       checkCallable(c)
       let callType
-      if (callee.constructor === StructType) {
+      if (c.constructor === core.StructType) {
         checkConstructorArguments(a, c)
-        callType = callee
+        callType = c
       } else {
         checkFunctionCallArguments(a, c.type)
-        callType = callee.type.returnType
+        callType = c.type.returnType
       }
       return new core.Call(c, a, callType)
     },
@@ -539,18 +507,8 @@ export default function analyze(sourceCode) {
   for (const [name, type] of Object.entries(stdlib.contents)) {
     context.add(name, type)
   }
+  //console.log(context.locals)
   const match = grammar.match(sourceCode)
   if (!match.succeeded()) core.error(match.message)
   return analyzer(match).rep()
-}
-
-// This helper function is useful because of the way the language is designed
-// to have a handful of operators at the same precedence level that do not
-// associate with other.
-function binaryOperationChain(left, operators, right) {
-  let [root, ops, more] = [left.rep(), operators.rep(), right.rep()]
-  for (let i = 0; i < ops.length; i++) {
-    root = new core.BinaryExpression(ops[i], root, more[i])
-  }
-  return root
 }

@@ -9,15 +9,15 @@ export class Program {
 
 export class VariableDeclaration {
   // Example: const dozen = 12;
-  constructor(modifier, variable, initializer) {
-    Object.assign(this, { modifier, variable, initializer })
+  constructor(variable, initializer) {
+    Object.assign(this, { variable, initializer })
   }
 }
 
 export class Variable {
   // Generated when processing a variable declaration
-  constructor(name, readOnly) {
-    Object.assign(this, { name, readOnly })
+  constructor(name, readOnly, type) {
+    Object.assign(this, { name, readOnly, type })
   }
 }
 
@@ -69,15 +69,15 @@ export class Field {
 
 export class FunctionDeclaration {
   // Example: function f(x: [int?], y: string): Vector {}
-  constructor(fun, parameters, returnType, body) {
-    Object.assign(this, { fun, parameters, returnType, body })
+  constructor(name, fun, body) {
+    Object.assign(this, { name, fun, body })
   }
 }
 
 export class Function {
   // Generated when processing a function declaration
-  constructor(name, parameters, returnType) {
-    Object.assign(this, { name, parameters, returnType })
+  constructor(name, type) {
+    Object.assign(this, { name, type })
   }
 }
 
@@ -237,15 +237,15 @@ export class Conditional {
 
 export class BinaryExpression {
   // Example: 3 & 22
-  constructor(op, left, right) {
-    Object.assign(this, { op, left, right })
+  constructor(op, left, right, type) {
+    Object.assign(this, { op, left, right, type })
   }
 }
 
 export class UnaryExpression {
   // Example: -55
-  constructor(op, operand) {
-    Object.assign(this, { op, operand })
+  constructor(op, operand, type) {
+    Object.assign(this, { op, operand, type })
   }
 }
 
@@ -291,8 +291,8 @@ export class MemberExpression {
 
 export class Call {
   // Example: move(player, 90, "west")
-  constructor(callee, args) {
-    Object.assign(this, { callee, args })
+  constructor(callee, args, type) {
+    Object.assign(this, { callee, args, type })
   }
 }
 
@@ -326,24 +326,15 @@ Program.prototype[util.inspect.custom] = function () {
   // Attach a unique integer tag to every node
   function tag(node) {
     if (tags.has(node) || typeof node !== "object" || node === null) return
-    if (node.constructor === Token) {
-      // Tokens are not tagged themselves, but their values might be
-      tag(node?.value)
-    } else {
-      // Non-tokens are tagged
-      tags.set(node, tags.size + 1)
-      for (const child of Object.values(node)) {
-        Array.isArray(child) ? child.forEach(tag) : tag(child)
-      }
+    tags.set(node, tags.size + 1)
+    for (const child of Object.values(node)) {
+      Array.isArray(child) ? child.forEach(tag) : tag(child)
     }
   }
 
   function* lines() {
     function view(e) {
       if (tags.has(e)) return `#${tags.get(e)}`
-      if (e?.constructor === Token) {
-        return `(${e.category},"${e.lexeme}"${e.value ? "," + view(e.value) : ""})`
-      }
       if (Array.isArray(e)) return `[${e.map(view)}]`
       return util.inspect(e)
     }

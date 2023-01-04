@@ -24,90 +24,23 @@
 // to decorate the AST and perform semantic analysis. The function returns
 // the root node for convenience in chaining calls.
 
-import {
-  Variable,
-  Type,
-  FunctionType,
-  ArrayType,
-  StructType,
-  OptionalType,
-  Function,
-  Token,
-  error,
-} from "./core.js"
+import fs from "fs"
+import ohm from "ohm-js"
+import * as core from "./core.js"
 import * as stdlib from "./stdlib.js"
 
-/**********************************************
- *  TYPE EQUIVALENCE AND COMPATIBILITY RULES  *
- *********************************************/
+const grammar = ohm.grammar(fs.readFileSync("src/carlos.ohm"))
 
-Object.assign(Type.prototype, {
-  // Equivalence: when are two types the same
-  isEquivalentTo(target) {
-    return this == target
-  },
-  // T1 assignable to T2 is when x:T1 can be assigned to y:T2. By default
-  // this is only when two types are equivalent; however, for other kinds
-  // of types there may be special rules. For example, in a language with
-  // supertypes and subtypes, an object of a subtype would be assignable
-  // to a variable constrained to a supertype.
-  isAssignableTo(target) {
-    return this.isEquivalentTo(target)
-  },
-})
-
-Object.assign(ArrayType.prototype, {
-  isEquivalentTo(target) {
-    // [T] equivalent to [U] only when T is equivalent to U.
-    return (
-      target.constructor === ArrayType && this.baseType.isEquivalentTo(target.baseType)
-    )
-  },
-  isAssignableTo(target) {
-    // Arrays are INVARIANT in Carlos!
-    return this.isEquivalentTo(target)
-  },
-})
-
-Object.assign(FunctionType.prototype, {
-  isEquivalentTo(target) {
-    return (
-      target.constructor === FunctionType &&
-      this.returnType.isEquivalentTo(target.returnType) &&
-      this.paramTypes.length === target.paramTypes.length &&
-      this.paramTypes.every((t, i) => target.paramTypes[i].isEquivalentTo(t))
-    )
-  },
-  isAssignableTo(target) {
-    // Functions are covariant on return types, contravariant on parameters.
-    return (
-      target.constructor === FunctionType &&
-      this.returnType.isAssignableTo(target.returnType) &&
-      this.paramTypes.length === target.paramTypes.length &&
-      this.paramTypes.every((t, i) => target.paramTypes[i].isAssignableTo(t))
-    )
-  },
-})
-
-Object.assign(OptionalType.prototype, {
-  isEquivalentTo(target) {
-    // T? equivalent to U? only when T is equivalent to U.
-    return (
-      target.constructor === OptionalType && this.baseType.isEquivalentTo(target.baseType)
-    )
-  },
-  isAssignableTo(target) {
-    // Optionals are INVARIANT in Carlos!
-    return this.isEquivalentTo(target)
-  },
-})
+const Type = core.Type
+const ArrayType = core.ArrayType
+const FunctionType = core.FunctionType
 
 /**************************
  *  VALIDATION FUNCTIONS  *
  *************************/
 
 function check(condition, message, entity) {
-  if (!condition) error(message, entity)
+  if (!condition) core.error(message, entity)
 }
 
 function checkType(e, types, expectation) {
@@ -135,17 +68,17 @@ function checkIsAType(e) {
 }
 
 function checkIsAnOptional(e) {
-  check(e.type.constructor === OptionalType, "Optional expected", e)
+  check(e.type.constructor === core.OptionalType, "Optional expected", e)
 }
 
 function checkIsAStruct(e) {
-  check(e.type.constructor === StructType, "Optional expected", e)
+  check(e.type.constructor === core.StructType, "Optional expected", e)
 }
 
 function checkIsAnOptionalStruct(e) {
   console.log("----->", e.type.constructor)
   check(
-    e.type.constructor === OptionalType && e.type.baseType.constructor == StructType,
+    e.type.constructor === OptionalType && e.type.baseType.constructor == core.StructType,
     "Optional expected",
     e
   )
@@ -240,10 +173,6 @@ function checkConstructorArguments(args, structType) {
   checkArgumentsMatch(args, fieldTypes)
 }
 
-/***************************************
- *  ANALYSIS TAKES PLACE IN A CONTEXT  *
- **************************************/
-
 class Context {
   constructor({ parent = null, locals = new Map(), inLoop = false, function: f = null }) {
     Object.assign(this, { parent, locals, inLoop, function: f })
@@ -256,7 +185,7 @@ class Context {
     // No shadowing! Prevent addition if id anywhere in scope chain! This is
     // a Carlos thing. Many other languages allow shadowing, and in these,
     // we would only have to check that name is not in this.locals
-    if (this.sees(name)) error(`Identifier ${name} already declared`)
+    if (this.sees(name)) core.error(`Identifier ${name} already declared`)
     this.locals.set(name, entity)
   }
   lookup(name) {
@@ -266,273 +195,362 @@ class Context {
     } else if (this.parent) {
       return this.parent.lookup(name)
     }
-    error(`Identifier ${name} not declared`)
+    core.error(`Identifier ${name} not declared`)
   }
   newChildContext(props) {
     return new Context({ ...this, ...props, parent: this, locals: new Map() })
   }
-  analyze(node) {
-    return this[node.constructor.name](node)
-  }
-  Program(p) {
-    this.analyze(p.statements)
-  }
-  VariableDeclaration(d) {
-    this.analyze(d.initializer)
-    d.variable.value = new Variable(d.variable.lexeme, d.modifier.lexeme === "const")
-    d.variable.value.type = d.initializer.type // Type inference
-    this.add(d.variable.lexeme, d.variable.value)
-  }
-  TypeDeclaration(d) {
-    // Add early to allow recursion
-    this.add(d.type.description, d.type)
-    this.analyze(d.type.fields)
-    checkFieldsAllDistinct(d.type.fields)
-    checkNotRecursive(d.type)
-  }
-  Field(f) {
-    this.analyze(f.type)
-    if (f.type instanceof Token) f.type = f.type.value
-    checkIsAType(f.type)
-  }
-  FunctionDeclaration(d) {
-    if (d.returnType) this.analyze(d.returnType)
-    d.fun.value = new Function(
-      d.fun.lexeme,
-      d.parameters,
-      d.returnType?.value ?? d.returnType ?? Type.VOID
-    )
-    checkIsAType(d.fun.value.returnType)
-    // When entering a function body, we must reset the inLoop setting,
-    // because it is possible to declare a function inside a loop!
-    const childContext = this.newChildContext({ inLoop: false, function: d.fun.value })
-    childContext.analyze(d.fun.value.parameters)
-    d.fun.value.type = new FunctionType(
-      d.fun.value.parameters.map(p => p.type),
-      d.fun.value.returnType
-    )
-    // Add before analyzing the body to allow recursion
-    this.add(d.fun.lexeme, d.fun.value)
-    childContext.analyze(d.body)
-  }
-  Parameter(p) {
-    this.analyze(p.type)
-    if (p.type instanceof Token) p.type = p.type.value
-    checkIsAType(p.type)
-    this.add(p.name.lexeme, p)
-  }
-  ArrayType(t) {
-    this.analyze(t.baseType)
-    if (t.baseType instanceof Token) t.baseType = t.baseType.value
-  }
-  FunctionType(t) {
-    this.analyze(t.paramTypes)
-    t.paramTypes = t.paramTypes.map(p => (p instanceof Token ? p.value : p))
-    this.analyze(t.returnType)
-    if (t.returnType instanceof Token) t.returnType = t.returnType.value
-  }
-  OptionalType(t) {
-    this.analyze(t.baseType)
-    if (t.baseType instanceof Token) t.baseType = t.baseType.value
-  }
-  Increment(s) {
-    this.analyze(s.variable)
-    checkInteger(s.variable)
-  }
-  Decrement(s) {
-    this.analyze(s.variable)
-    checkInteger(s.variable)
-  }
-  Assignment(s) {
-    this.analyze(s.source)
-    this.analyze(s.target)
-    checkAssignable(s.source, { toType: s.target.type })
-    checkNotReadOnly(s.target)
-  }
-  BreakStatement(s) {
-    checkInLoop(this)
-  }
-  ReturnStatement(s) {
-    checkInFunction(this)
-    checkReturnsSomething(this.function)
-    this.analyze(s.expression)
-    checkReturnable({ expression: s.expression, from: this.function })
-  }
-  ShortReturnStatement(s) {
-    checkInFunction(this)
-    checkReturnsNothing(this.function)
-  }
-  IfStatement(s) {
-    this.analyze(s.test)
-    checkBoolean(s.test)
-    this.newChildContext().analyze(s.consequent)
-    if (s.alternate.constructor === Array) {
-      // It's a block of statements, make a new context
-      this.newChildContext().analyze(s.alternate)
-    } else if (s.alternate) {
-      // It's a trailing if-statement, so same context
-      this.analyze(s.alternate)
-    }
-  }
-  ShortIfStatement(s) {
-    this.analyze(s.test)
-    checkBoolean(s.test)
-    this.newChildContext().analyze(s.consequent)
-  }
-  WhileStatement(s) {
-    this.analyze(s.test)
-    checkBoolean(s.test)
-    this.newChildContext({ inLoop: true }).analyze(s.body)
-  }
-  RepeatStatement(s) {
-    this.analyze(s.count)
-    checkInteger(s.count)
-    this.newChildContext({ inLoop: true }).analyze(s.body)
-  }
-  ForRangeStatement(s) {
-    this.analyze(s.low)
-    checkInteger(s.low)
-    this.analyze(s.high)
-    checkInteger(s.high)
-    s.iterator = new Variable(s.iterator.lexeme, true)
-    s.iterator.type = Type.INT
-    const bodyContext = this.newChildContext({ inLoop: true })
-    bodyContext.add(s.iterator.name, s.iterator)
-    bodyContext.analyze(s.body)
-  }
-  ForStatement(s) {
-    this.analyze(s.collection)
-    checkArray(s.collection)
-    s.iterator = new Variable(s.iterator.lexeme, true)
-    s.iterator.type = s.collection.type.baseType
-    const bodyContext = this.newChildContext({ inLoop: true })
-    bodyContext.add(s.iterator.name, s.iterator)
-    bodyContext.analyze(s.body)
-  }
-  Conditional(e) {
-    this.analyze(e.test)
-    checkBoolean(e.test)
-    this.analyze(e.consequent)
-    this.analyze(e.alternate)
-    checkHaveSameType(e.consequent, e.alternate)
-    e.type = e.consequent.type
-  }
-  BinaryExpression(e) {
-    this.analyze(e.left)
-    this.analyze(e.right)
-    if (["&", "|", "^", "<<", ">>"].includes(e.op.lexeme)) {
-      checkInteger(e.left)
-      checkInteger(e.right)
-      e.type = Type.INT
-    } else if (["+"].includes(e.op.lexeme)) {
-      checkNumericOrString(e.left)
-      checkHaveSameType(e.left, e.right)
-      e.type = e.left.type
-    } else if (["-", "*", "/", "%", "**"].includes(e.op.lexeme)) {
-      checkNumeric(e.left)
-      checkHaveSameType(e.left, e.right)
-      e.type = e.left.type
-    } else if (["<", "<=", ">", ">="].includes(e.op.lexeme)) {
-      checkNumericOrString(e.left)
-      checkHaveSameType(e.left, e.right)
-      e.type = Type.BOOLEAN
-    } else if (["==", "!="].includes(e.op.lexeme)) {
-      checkHaveSameType(e.left, e.right)
-      e.type = Type.BOOLEAN
-    } else if (["&&", "||"].includes(e.op.lexeme)) {
-      checkBoolean(e.left)
-      checkBoolean(e.right)
-      e.type = Type.BOOLEAN
-    } else if (["??"].includes(e.op.lexeme)) {
-      checkIsAnOptional(e.left)
-      checkAssignable(e.right, { toType: e.left.type.baseType })
-      e.type = e.left.type
-    }
-  }
-  UnaryExpression(e) {
-    this.analyze(e.operand)
-    if (e.op.lexeme === "#") {
-      checkArray(e.operand)
-      e.type = Type.INT
-    } else if (e.op.lexeme === "-") {
-      checkNumeric(e.operand)
-      e.type = e.operand.type
-    } else if (e.op.lexeme === "!") {
-      checkBoolean(e.operand)
-      e.type = Type.BOOLEAN
-    } else {
-      // Operator is "some"
-      e.type = new OptionalType(e.operand.type?.value ?? e.operand.type)
-    }
-  }
-  EmptyOptional(e) {
-    this.analyze(e.baseType)
-    e.type = new OptionalType(e.baseType?.value ?? e.baseType)
-  }
-  SubscriptExpression(e) {
-    this.analyze(e.array)
-    checkArray(e.array)
-    e.type = e.array.type.baseType
-    this.analyze(e.index)
-    checkInteger(e.index)
-  }
-  ArrayExpression(a) {
-    this.analyze(a.elements)
-    checkAllHaveSameType(a.elements)
-    a.type = new ArrayType(a.elements[0].type)
-  }
-  EmptyArray(e) {
-    this.analyze(e.baseType)
-    e.type = new ArrayType(e.baseType?.value ?? e.baseType)
-  }
-  MemberExpression(e) {
-    this.analyze(e.object)
-    let structType
-    if (e.isOptional) {
-      checkIsAnOptionalStruct(e.object)
-      structType = e.object.type.baseType
-    } else {
-      checkIsAStruct(e.object)
-      structType = e.object.type
-    }
-    checkMemberDeclared(e.field.lexeme, { in: structType })
-    e.field = structType.fields.find(f => f.name.lexeme === e.field.lexeme)
-    e.type = e.isOptional ? new OptionalType(e.field.type) : e.field.type
-  }
-  Call(c) {
-    this.analyze(c.callee)
-    const callee = c.callee?.value ?? c.callee
-    checkCallable(callee)
-    this.analyze(c.args)
-    if (callee.constructor === StructType) {
-      checkConstructorArguments(c.args, callee)
-      c.type = callee
-    } else {
-      checkFunctionCallArguments(c.args, callee.type)
-      c.type = callee.type.returnType
-    }
-  }
-  Token(t) {
-    // For ids being used, not defined
-    if (t.category === "Id") {
-      t.value = this.lookup(t.lexeme)
-      t.type = t.value.type
-    }
-    if (t.category === "Int") [t.value, t.type] = [BigInt(t.lexeme), Type.INT]
-    if (t.category === "Float") [t.value, t.type] = [Number(t.lexeme), Type.FLOAT]
-    if (t.category === "Str") [t.value, t.type] = [t.lexeme, Type.STRING]
-    if (t.category === "Bool") [t.value, t.type] = [t.lexeme === "true", Type.BOOLEAN]
-  }
-  Array(a) {
-    a.forEach(item => this.analyze(item))
-  }
 }
 
-export default function analyze(node) {
-  const initialContext = new Context({})
+export default function analyze(sourceCode) {
+  let context = new Context({})
+
+  const analyzer = grammar.createSemantics().addOperation("rep", {
+    Program(body) {
+      return new core.Program(body.rep())
+    },
+    VarDecl(modifier, id, _eq, initializer, _semicolon) {
+      const initializerRep = initializer.rep()
+      const readOnly = modifier.sourceString === "const"
+      const variable = new core.Variable(id.sourceString, readOnly, initializerRep.type)
+      context.add(id, variable)
+      return new core.VariableDeclaration(variable, initializerRep)
+    },
+    TypeDecl(_struct, id, _left, fields, _right) {
+      // TODO HOW TO ALLOW RECURSION?
+      const type = new core.StructType(id.sourceString, fields.rep())
+      context.add(type.description, type)
+      checkFieldsAllDistinct(type.fields)
+      checkNotRecursive(type)
+      return new core.TypeDeclaration(type)
+    },
+    Field(id, _colon, type) {
+      return new core.Field(id.rep(), type.rep())
+    },
+    FunDecl(_fun, id, _open, params, _close, _colons, returnType, body) {
+      var rt = returnType.rep()[0] ?? core.Type.VOID
+      var f = new core.Function(id.sourceString, [], rt)
+      // When entering a function body, we must reset the inLoop setting,
+      // because it is possible to declare a function inside a loop!
+      context = context.newChildContext({ inLoop: false, function: f })
+      var paramReps = params.asIteration().rep()
+      f.params = paramReps
+      const b = body.rep()
+      context = context.parent
+      return new core.FunctionDeclaration(id.sourceString, paramReps, rt, b)
+    },
+    Param(id, _colon, type) {
+      const typeRep = type.rep()
+      checkIsAType(typeRep)
+      const parameter = new core.Parameter(id.sourceString, typeRep)
+      context.add(id.sourceString, parameter)
+      return parameter
+    },
+    Type_optional(baseType, _questionMark) {
+      return new core.OptionalType(baseType.rep())
+    },
+    Type_array(_left, baseType, _right) {
+      return new core.ArrayType(baseType.rep())
+    },
+    Type_function(_left, inTypes, _right, _arrow, outType) {
+      return new core.FunctionType(inTypes.asIteration().rep(), outType.rep())
+    },
+    Type_id(id) {
+      const entity = context.lookup(id.sourceString)
+      checkIsAType(entity)
+      return entity
+    },
+    Statement_bump(variable, operator, _semicolon) {
+      const variableRep = variable.rep()
+      checkInteger(variableRep)
+      return operator.rep().lexeme === "++"
+        ? new core.Increment(variableRep)
+        : new core.Decrement(variableRep)
+    },
+    Statement_assign(variable, _eq, expression, _semicolon) {
+      const expressionRep = expression.rep()
+      const variableRep = variable.rep()
+      checkAssignable(expressionRep, { toType: variableRep.type })
+      checkNotReadOnly(variableRep)
+      return new core.Assignment(variableRep, expressionRep)
+    },
+    Statement_call(call, _semicolon) {
+      return call.rep()
+    },
+    Statement_break(_break, _semicolon) {
+      checkInLoop(context)
+      return new core.BreakStatement()
+    },
+    Statement_return(_return, expression, _semicolon) {
+      checkInFunction(context)
+      checkReturnsSomething(context.function)
+      const expressionRep = expression.rep()
+      checkReturnable({ expression: expressionRep, from: context.function })
+      return new core.ReturnStatement(expressionRep)
+    },
+    Statement_shortreturn(_return, _semicolon) {
+      checkInFunction(context)
+      checkReturnsNothing(context.function)
+      return new core.ShortReturnStatement()
+    },
+    IfStmt_long(_if, test, consequent, _else, alternate) {
+      const testRep = test.rep()
+      checkBoolean(testRep)
+      context = context.newChildContext()
+      const consequentRep = consequent.rep()
+      context = context.parent
+      if (alternate.constructor === Array) {
+        // It's a block of statements, make a new context
+        context = context.newChildContext()
+        alternateRep = alternate.rep()
+        context = context.parent
+      } else if (s.alternate) {
+        // It's a trailing if-statement, so same context
+        alternateRep = alternate.rep()
+      }
+      return new core.IfStatement(testRep, consequentRep, alternateRep)
+    },
+    IfStmt_short(_if, test, consequent) {
+      const testRep = test.rep()
+      checkBoolean(testRep)
+      context = context.newChildContext()
+      const consequentRep = consequent.rep()
+      context = context.parent
+      return new core.ShortIfStatement(testRep, consequentRep)
+    },
+    LoopStmt_while(_while, test, body) {
+      const testRep = test.rep()
+      checkBoolean(testRep)
+      context = context.newChildContext({ inLoop: true })
+      const bodyRep = body.rep()
+      context = context.parent
+      return new core.WhileStatement(testRep, bodyRep)
+    },
+    LoopStmt_repeat(_repeat, count, body) {
+      const countRep = count.rep()
+      checkInteger(countRep)
+      context = context.newChildContext({ inLoop: true })
+      const bodyRep = body.rep()
+      context = context.parent
+      return new core.RepeatStatement(countRep, bodyRep)
+    },
+    LoopStmt_range(_for, id, _in, low, op, high, body) {
+      const [lowRep, highRep] = [low.rep(), high.rep()]
+      checkInteger(s.low)
+      checkInteger(s.high)
+      const iterator = new Variable(id.sourceString, Type.INT, true)
+      context = context.newChildContext({ inLoop: true })
+      context.add(id.sourceString, iterator)
+      const bodyRep = body.rep()
+      context = context.parent
+      return new core.ForRangeStatement(iterator, lowRep, op.rep(), highRep, bodyRep)
+    },
+    LoopStmt_collection(_for, id, _in, collection, body) {
+      const c = collection.rep()
+      checkArray(c)
+      const i = new Variable(id.rep().lexeme, true, c.type.baseType())
+      context = context.newChildContext({ inLoop: true })
+      context.add(i.name, i)
+      b = body.rep()
+      context = context.parent
+      return new core.ForStatement(i, c, b)
+    },
+    Block(_open, body, _close) {
+      // No need for a block node, just return the list of statements
+      return body.rep()
+    },
+    Exp_conditional(test, _questionMark, consequent, _colon, alternate) {
+      const x = test.rep()
+      checkBoolean(x)
+      const [y, z] = [consequent.rep(), alternate.rep()]
+      checkHaveSameType(y, z)
+      return new core.Conditional(x, y, z)
+    },
+    Exp1_unwrapelse(unwrap, op, alternate) {
+      const [x, o, y] = [unwrap.rep(), op.sourceString, alternate.rep()]
+      checkIsAnOptional(x)
+      checkAssignable(y, { toType: x.type.baseType })
+      return new core.BinaryExpression(o, x, y, x.type)
+    },
+    Exp2_or(left, ops, right) {
+      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      checkBoolean(x)
+      for (let y of ys) {
+        checkBoolean(y)
+        x = new core.BinaryExpression(o, x, y, Type.BOOLEAN)
+      }
+      return x
+    },
+    Exp2_and(left, ops, right) {
+      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      checkBoolean(x)
+      for (let y of ys) {
+        checkBoolean(y)
+        x = new core.BinaryExpression(o, x, y, Type.BOOLEAN)
+      }
+      return x
+    },
+    Exp3_bitor(left, ops, right) {
+      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      checkInteger(x)
+      for (let y of ys) {
+        checkInteger(y)
+        x = new core.BinaryExpression(o, x, y, Type.INT)
+      }
+      return x
+    },
+    Exp3_bitxor(left, ops, right) {
+      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      checkInteger(x)
+      for (let y of ys) {
+        checkInteger(y)
+        x = new core.BinaryExpression(o, x, y, Type.INT)
+      }
+      return x
+    },
+    Exp3_bitand(left, ops, right) {
+      const [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
+      checkInteger(x)
+      for (let y of ys) {
+        checkInteger(y)
+        x = new core.BinaryExpression(o, x, y, Type.INT)
+      }
+      return x
+    },
+    Exp4_compare(left, op, right) {
+      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
+      if (["<", "<=", ">", ">="].includes(op.sourceString)) checkNumericOrString(x)
+      checkHaveSameType(x, y)
+      return new core.BinaryExpression(o, x, y, Type.BOOLEAN)
+    },
+    Exp5_shift(left, op, right) {
+      const [x, o, y] = [left.rep(), o.rep(), right.rep()]
+      checkInteger(x)
+      checkInteger(y)
+      return new core.BinaryExpression(o, x, y, Type.INT)
+    },
+    Exp6_add(left, op, right) {
+      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
+      if (o === "+") {
+        checkNumericOrString(x)
+      } else {
+        checkNumeric(x)
+      }
+      checkHaveSameType(x, y)
+      return new core.BinaryExpression(o, x, y, x.type)
+    },
+    Exp7_multiply(left, op, right) {
+      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
+      checkNumeric(x)
+      checkHaveSameType(x, y)
+      return new core.BinaryExpression(o, x, y, x.type)
+    },
+    Exp8_power(left, op, right) {
+      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
+      checkNumeric(x)
+      checkHaveSameType(x, y)
+      return new core.BinaryExpression(o, x, y, x.type)
+    },
+    Exp8_unary(op, operand) {
+      const [o, x] = [op.sourceString, operand, rep()]
+      let type
+      if (o === "#") checkArray(x), (type = Type.INT)
+      else if (o === "-") checkNumeric(x), (type = x.type)
+      else if (o === "!") checkBoolean(x), (type = Type.BOOLEAN)
+      else if (o === "some") type = new core.OptionalType(x.type)
+      return new core.UnaryExpression(o, x, type)
+    },
+    Exp9_emptyarray(_keyword, _left, _of, type, _right) {
+      return new core.EmptyArray(type.rep())
+    },
+    Exp9_arrayexp(_left, args, _right) {
+      const elementsRep = args.asIteration().rep()
+      checkAllHaveSameType(elementsRep)
+      return new core.ArrayExpression(elementsRep)
+    },
+    Exp9_emptyopt(_no, type) {
+      return new core.EmptyOptional(type.rep())
+    },
+    Exp9_parens(_open, expression, _close) {
+      return expression.rep()
+    },
+    Exp9_subscript(array, _left, subscript, _right) {
+      const [a, i] = [array.rep(), subscript.rep()]
+      checkArray(a)
+      checkInteger(i)
+      return new core.SubscriptExpression(a, i)
+    },
+    Exp9_member(object, dot, field) {
+      const x = object.rep()
+      const isOptional = dot.sourceString === "?."
+      let structType
+      if (isOptional) {
+        checkIsAnOptionalStruct(x)
+        structType = x.type.baseType
+      } else {
+        checkIsAStruct(x)
+        structType = x.type
+      }
+      checkMemberDeclared(field.sourceString, { in: structType })
+      const f = structType.fields.find(f => f.name === field.sourceString)
+      return new core.MemberExpression(x, f, isOptional)
+    },
+    Exp9_call(callee, _left, args, _right) {
+      const [c, a] = [callee.rep(), args.asIteration().rep()]
+      checkCallable(c)
+      let callType
+      if (callee.constructor === StructType) {
+        checkConstructorArguments(a, c)
+        callType = callee
+      } else {
+        checkFunctionCallArguments(a, c.type)
+        callType = callee.type.returnType
+      }
+      return new core.Call(c, a, callType)
+    },
+    Exp9_id(_id) {
+      return context.lookup(this.sourceString)
+    },
+    id(_first, _rest) {
+      return this.sourceString
+    },
+    true(_) {
+      return new core.Literal(this.sourceString, true, Type.BOOLEAN)
+    },
+    false(_) {
+      return new core.Literal(this.sourceString, false, Type.BOOLEAN)
+    },
+    intlit(_digits) {
+      return new core.Literal(this.sourceString, BigInt(this.sourceString), Type.INT)
+    },
+    floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
+      return new core.Literal(this.sourceString, Number(this.sourceString), Type.FLOAT)
+    },
+    stringlit(_openQuote, _chars, _closeQuote) {
+      return new core.Literal(this.sourceString, this.sourceString, Type.STRING)
+    },
+    _terminal() {
+      return this.sourceString
+    },
+    _iter(...children) {
+      return children.map(child => child.rep())
+    },
+  })
   for (const [name, type] of Object.entries(stdlib.contents)) {
-    initialContext.add(name, type)
+    context.add(name, type)
   }
-  initialContext.analyze(node)
-  return node
+  const match = grammar.match(sourceCode)
+  if (!match.succeeded()) core.error(match.message)
+  return analyzer(match).rep()
+}
+
+// This helper function is useful because of the way the language is designed
+// to have a handful of operators at the same precedence level that do not
+// associate with other.
+function binaryOperationChain(left, operators, right) {
+  let [root, ops, more] = [left.rep(), operators.rep(), right.rep()]
+  for (let i = 0; i < ops.length; i++) {
+    root = new core.BinaryExpression(ops[i], root, more[i])
+  }
+  return root
 }

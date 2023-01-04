@@ -1,7 +1,5 @@
-import assert from "assert"
-import ast from "../src/ast.js"
+import assert from "assert/strict"
 import analyze from "../src/analyzer.js"
-import * as core from "../src/core.js"
 
 // Programs that are semantically correct
 const semanticChecks = [
@@ -180,12 +178,13 @@ const semanticErrors = [
 describe("The analyzer", () => {
   for (const [scenario, source] of semanticChecks) {
     it(`recognizes ${scenario}`, () => {
-      assert.ok(analyze(ast(source)))
+      assert.ok(analyze(source))
     })
   }
   for (const [scenario, source, errorMessagePattern] of semanticErrors) {
     it(`throws on ${scenario}`, () => {
-      assert.throws(() => analyze(ast(source)), errorMessagePattern)
+      assert.throws(() => analyze(source), errorMessagePattern)
     })
   }
+  // TODO ASSERT GRAPH
 })

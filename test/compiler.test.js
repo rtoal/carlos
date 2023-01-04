@@ -9,11 +9,6 @@ describe("The compiler", () => {
     assert.throws(() => compile(sampleProgram, "blah"), /Unknown output type/)
     done()
   })
-  it("accepts the ast option", done => {
-    const compiled = compile(sampleProgram, "ast")
-    assert(util.format(compiled).startsWith("   1 | Program"))
-    done()
-  })
   it("accepts the analyzed option", done => {
     const compiled = compile(sampleProgram, "analyzed")
     assert(util.format(compiled).startsWith("   1 | Program"))

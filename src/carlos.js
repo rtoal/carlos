@@ -10,7 +10,6 @@ Syntax: carlos <filename> <outputType>
 
 Prints to stdout according to <outputType>, which must be one of:
 
-  ast        the abstract syntax tree
   analyzed   the semantically analyzed representation
   optimized  the optimized semantically analyzed representation
   js         the translation to JavaScript

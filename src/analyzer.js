@@ -186,8 +186,9 @@ export default function analyze(sourceCode) {
     },
     TypeDecl(_struct, id, _left, fields, _right) {
       // TODO HOW TO ALLOW RECURSION?
-      const type = new core.StructType(id.sourceString, fields.rep())
+      const type = new core.StructType(id.sourceString, [])
       context.add(id.sourceString, type)
+      type.fields = fields.rep()
       checkFieldsAllDistinct(type.fields)
       checkNotRecursive(type)
       return new core.TypeDeclaration(type)

@@ -46,7 +46,8 @@ function checkIsAStruct(e) {
 
 function checkIsAnOptionalStruct(e) {
   check(
-    e.type.constructor === OptionalType && e.type.baseType.constructor == core.StructType,
+    e.type.constructor === core.OptionalType &&
+      e.type.baseType.constructor == core.StructType,
     "Optional expected",
     e
   )
@@ -82,7 +83,7 @@ function checkAssignable(e, { toType: type }) {
 }
 
 function checkNotReadOnly(e) {
-  check(!e.readOnly, `Cannot assign to constant ${e.name}`, e)
+  check(!e.readOnly, `Cannot assign to constant ${e.name}`)
 }
 
 function checkFieldsAllDistinct(fields) {
@@ -93,7 +94,7 @@ function checkFieldsAllDistinct(fields) {
 }
 
 function checkMemberDeclared(field, { in: structType }) {
-  check(structType.fields.map(f => f.name.lexeme).includes(field), "No such field")
+  check(structType.fields.map(f => f.name).includes(field), "No such field")
 }
 
 function checkInLoop(context) {
@@ -195,23 +196,19 @@ export default function analyze(sourceCode) {
       return new core.Field(id.rep(), type.rep())
     },
     FunDecl(_fun, id, _open, params, _close, _colons, returnType, body) {
-      var rt = returnType.rep()[0] ?? core.Type.VOID
-      var f = new core.Function(id.sourceString, new core.FunctionType([], rt))
-      // When entering a function body, we must reset the inLoop setting,
-      // because it is possible to declare a function inside a loop!
+      const rt = returnType.rep()[0] ?? core.Type.VOID
+      const paramReps = params.asIteration().rep()
+      const paramTypes = paramReps.map(p => p.type)
+      const f = new core.Function(id.sourceString, new core.FunctionType(paramTypes, rt))
+      context.add(id.sourceString, f)
       context = context.newChildContext({ inLoop: false, function: f })
-      var paramReps = params.asIteration().rep()
-      f.type.params = paramReps
+      for (const p of paramReps) context.add(p.name, p)
       const b = body.rep()
       context = context.parent
       return new core.FunctionDeclaration(id.sourceString, f, b)
     },
     Param(id, _colon, type) {
-      const typeRep = type.rep()
-      checkIsAType(typeRep)
-      const parameter = new core.Parameter(id.sourceString, typeRep)
-      context.add(id.sourceString, parameter)
-      return parameter
+      return new core.Parameter(id.sourceString, type.rep())
     },
     Type_optional(baseType, _questionMark) {
       return new core.OptionalType(baseType.rep())
@@ -230,7 +227,7 @@ export default function analyze(sourceCode) {
     Statement_bump(variable, operator, _semicolon) {
       const variableRep = variable.rep()
       checkInteger(variableRep)
-      return operator.rep().lexeme === "++"
+      return operator.sourceString === "++"
         ? new core.Increment(variableRep)
         : new core.Decrement(variableRep)
     },
@@ -316,7 +313,7 @@ export default function analyze(sourceCode) {
     LoopStmt_collection(_for, id, _in, collection, body) {
       const c = collection.rep()
       checkArray(c)
-      const i = new core.Variable(id.rep().lexeme, true, c.type.baseType)
+      const i = new core.Variable(id.sourceString, true, c.type.baseType)
       context = context.newChildContext({ inLoop: true })
       context.add(i.name, i)
       const b = body.rep()

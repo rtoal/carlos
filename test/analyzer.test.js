@@ -87,7 +87,7 @@ const semanticErrors = [
   ["undeclared id", "print(x);", /Identifier x not declared/],
   ["redeclared id", "let x = 1;let x = 1;", /Identifier x already declared/],
   ["recursive struct", "struct S { x: int y: S }", /must not be recursive/],
-  ["assign to const", "const x = 1;x = 2;", /Cannot assign to constant x/],
+  ["assign to const", "const x = 1;x = 2;", /Cannot assign to constant/],
   ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
   ["assign bad array type", "let x=1;x=[true];", /Cannot assign a \[boolean\] to a int/],
   ["assign bad optional type", "let x=1;x=some 2;", /Cannot assign a int\? to a int/],

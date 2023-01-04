@@ -296,18 +296,6 @@ export class Call {
   }
 }
 
-export class Identifier {
-  constructor(lexeme, type) {
-    Object.assign(this, { lexeme, type })
-  }
-}
-
-export class Literal {
-  constructor(lexeme, value, type) {
-    Object.assign(this, { lexeme, value, type })
-  }
-}
-
 // Throw an error message that takes advantage of Ohm's messaging
 export function error(message, node) {
   if (node) {
@@ -315,6 +303,11 @@ export function error(message, node) {
   }
   throw new Error(message)
 }
+
+String.prototype.type = Type.STRING
+Number.prototype.type = Type.FLOAT
+BigInt.prototype.type = Type.INT
+Boolean.prototype.type = Type.BOOLEAN
 
 // Return a compact and pretty string representation of the node graph,
 // taking care of cycles. Written here from scratch because the built-in

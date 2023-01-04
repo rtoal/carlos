@@ -481,19 +481,19 @@ export default function analyze(sourceCode) {
       return this.sourceString
     },
     true(_) {
-      return new core.Literal(this.sourceString, true, Type.BOOLEAN)
+      return true
     },
     false(_) {
-      return new core.Literal(this.sourceString, false, Type.BOOLEAN)
+      return false
     },
     intlit(_digits) {
-      return new core.Literal(this.sourceString, BigInt(this.sourceString), Type.INT)
+      return BigInt(this.sourceString)
     },
     floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
-      return new core.Literal(this.sourceString, Number(this.sourceString), Type.FLOAT)
+      return Number(this.sourceString)
     },
     stringlit(_openQuote, _chars, _closeQuote) {
-      return new core.Literal(this.sourceString, this.sourceString, Type.STRING)
+      return this.sourceString
     },
     _terminal() {
       return this.sourceString

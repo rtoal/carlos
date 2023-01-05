@@ -1,2 +1,10 @@
-print(5);
-
+      let z = 0.5;
+      function f(x: float, y: boolean) {
+        print(sin(x) > π);
+        return;
+      }
+      function g(): boolean {
+        return false;
+      }
+      f(z, g());
+    

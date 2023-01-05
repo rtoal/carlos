@@ -41,6 +41,9 @@ const optimizers = {
     d.type = optimize(d.type)
     return d
   },
+  StructType(t) {
+    return t
+  },
   Field(f) {
     f.name = f.name.lexeme
     return f
@@ -55,6 +58,9 @@ const optimizers = {
   },
   Function(f) {
     return f
+  },
+  Parameter(p) {
+    return p
   },
   Increment(s) {
     s.variable = optimize(s.variable)

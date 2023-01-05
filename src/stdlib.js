@@ -6,14 +6,9 @@
 
 import { Type, FunctionType, Variable, Function, ArrayType } from "./core.js"
 
-function makeConstant(name, type, value) {
-  return Object.assign(new Variable(name, true, type), { value })
-}
-
-const floatsType = new ArrayType(Type.FLOAT)
 const floatFloatType = new FunctionType([Type.FLOAT], Type.FLOAT)
 const floatFloatFloatType = new FunctionType([Type.FLOAT, Type.FLOAT], Type.FLOAT)
-const stringToIntsType = new FunctionType([Type.STRING], floatsType)
+const stringToIntsType = new FunctionType([Type.STRING], new ArrayType(Type.INT))
 
 export const contents = Object.freeze({
   int: Type.INT,
@@ -21,7 +16,7 @@ export const contents = Object.freeze({
   boolean: Type.BOOLEAN,
   string: Type.STRING,
   void: Type.VOID,
-  π: makeConstant("π", Type.FLOAT, Math.PI),
+  π: new Variable("π", true, Type.FLOAT),
   print: new Function("print", new FunctionType([Type.ANY], Type.VOID)),
   sin: new Function("sin", floatFloatType),
   cos: new Function("cos", floatFloatType),

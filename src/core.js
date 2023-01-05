@@ -56,7 +56,7 @@ export class Type {
 export class StructType extends Type {
   // Generated when processing a type declaration
   constructor(name, fields) {
-    super(name.lexeme)
+    super(name)
     Object.assign(this, { fields })
   }
 }
@@ -69,8 +69,8 @@ export class Field {
 
 export class FunctionDeclaration {
   // Example: function f(x: [int?], y: string): Vector {}
-  constructor(name, fun, body) {
-    Object.assign(this, { name, fun, body })
+  constructor(name, fun, params, body) {
+    Object.assign(this, { name, fun, params, body })
   }
 }
 

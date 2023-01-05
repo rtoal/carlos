@@ -16,7 +16,7 @@ const onePlusTwo = new core.BinaryExpression("+", 1, 2, core.Type.INT)
 const identity = Object.assign(new core.Function("id"), { body: returnX })
 const voidInt = new core.FunctionType([], core.Type.INT)
 const intFun = body =>
-  new core.FunctionDeclaration("f", new core.Function("f", voidInt), [body])
+  new core.FunctionDeclaration("f", new core.Function("f", voidInt), [], [body])
 const callIdentity = args => new core.Call(identity, args)
 const or = (...d) => d.reduce((x, y) => new core.BinaryExpression("||", x, y))
 const and = (...c) => c.reduce((x, y) => new core.BinaryExpression("&&", x, y))

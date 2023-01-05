@@ -206,7 +206,7 @@ export default function analyze(sourceCode) {
       for (const p of paramReps) context.add(p.name, p)
       const b = body.rep()
       context = context.parent
-      return new core.FunctionDeclaration(id.sourceString, f, b)
+      return new core.FunctionDeclaration(id.sourceString, f, paramReps, b)
     },
     Param(id, _colon, type) {
       return new core.Parameter(id.sourceString, type.rep())

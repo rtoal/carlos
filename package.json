@@ -1,16 +1,16 @@
 {
-  "name": "carlos-lang",
+  "name": "carlos",
   "version": "1.0.0",
-  "description": "Compiler for the Carlos language",
+  "description": "<img src=\"https://raw.githubusercontent.com/rtoal/carlos-lang/main/docs/carlos-logo.png\" height=100>",
+  "main": "index.js",
   "type": "module",
-  "main": "src/carlos.js",
   "directories": {
     "doc": "docs",
-    "example": "examples"
+    "example": "examples",
+    "test": "test"
   },
   "scripts": {
-    "lint": "node_modules/.bin/eslint src",
-    "test": "c8 node_modules/.bin/mocha"
+    "test": "c8 mocha"
   },
   "repository": {
     "type": "git",
@@ -23,15 +23,11 @@
     "url": "https://github.com/rtoal/carlos-lang/issues"
   },
   "homepage": "https://github.com/rtoal/carlos-lang#readme",
-  "dependencies": {
-    "ohm-js": "^16.3.0"
-  },
   "devDependencies": {
-    "c8": "^7.11.0",
-    "eslint": "^8.8.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.0.0",
-    "mocha": "^9.2.0",
-    "prettier": "^2.5.1"
+    "c8": "^7.12.0",
+    "mocha": "^10.2.0"
+  },
+  "dependencies": {
+    "ohm-js": "^16.6.0"
   }
 }

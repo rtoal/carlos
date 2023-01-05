@@ -3,15 +3,20 @@ import optimize from "../src/optimizer.js"
 import * as core from "../src/core.js"
 
 // Make some test cases easier to read
-const x = new core.Variable("x", false)
+const x = new core.Variable("x", false, core.Type.INT)
+const a = new core.Variable("a", false, new core.ArrayType(core.Type.INT))
 const xpp = new core.Increment(x)
 const xmm = new core.Decrement(x)
-const return1p1 = new core.ReturnStatement(new core.BinaryExpression("+", 1, 1))
+const return1p1 = new core.ReturnStatement(
+  new core.BinaryExpression("+", 1, 1, core.Type.INT)
+)
 const return2 = new core.ReturnStatement(2)
 const returnX = new core.ReturnStatement(x)
-const onePlusTwo = new core.BinaryExpression("+", 1, 2)
+const onePlusTwo = new core.BinaryExpression("+", 1, 2, core.Type.INT)
 const identity = Object.assign(new core.Function("id"), { body: returnX })
-const intFun = body => new core.FunctionDeclaration("f", [], "int", body)
+const voidInt = new core.FunctionType([], core.Type.INT)
+const intFun = body =>
+  new core.FunctionDeclaration("f", new core.Function("f", voidInt), [], [body])
 const callIdentity = args => new core.Call(identity, args)
 const or = (...d) => d.reduce((x, y) => new core.BinaryExpression("||", x, y))
 const and = (...c) => c.reduce((x, y) => new core.BinaryExpression("&&", x, y))
@@ -72,7 +77,7 @@ const tests = [
   ["optimizes left conditional true", conditional(true, 55, 89), 55],
   ["optimizes left conditional false", conditional(false, 55, 89), 89],
   ["optimizes in functions", intFun(return1p1), intFun(return2)],
-  ["optimizes in subscripts", sub(x, onePlusTwo), sub(x, 3)],
+  ["optimizes in subscripts", sub(a, onePlusTwo), sub(a, 3)],
   ["optimizes in array literals", array(0, onePlusTwo, 9), array(0, 3, 9)],
   ["optimizes in arguments", callIdentity([times(3, 5)]), callIdentity([15])],
   [

@@ -34,6 +34,7 @@ export default function generate(program) {
   })(new Map())
 
   function gen(node) {
+    //console.log(node.constructor)
     return generators[node.constructor.name](node)
   }
 
@@ -65,7 +66,7 @@ export default function generate(program) {
       return targetName(f)
     },
     FunctionDeclaration(d) {
-      output.push(`function ${gen(d.fun)}(${gen(d.fun.parameters).join(", ")}) {`)
+      output.push(`function ${gen(d.fun)}(${gen(d.params).join(", ")}) {`)
       gen(d.body)
       output.push("}")
     },

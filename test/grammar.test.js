@@ -1,5 +1,6 @@
-import assert from "assert"
-import ast from "../src/ast.js"
+import assert from "assert/strict"
+import fs from "fs"
+import ohm from "ohm-js"
 
 // Programs expected to be syntactically correct
 const syntaxChecks = [
@@ -96,15 +97,18 @@ const syntaxErrors = [
   ["string lit with code point too long", 'print("\\u{1111111}");', /col 17/],
 ]
 
-describe("The parser", () => {
+describe("The grammar", () => {
+  const grammar = ohm.grammar(fs.readFileSync("src/carlos.ohm"))
   for (const [scenario, source] of syntaxChecks) {
-    it(`recognizes ${scenario}`, () => {
-      assert(ast(source))
+    it(`properly specifies ${scenario}`, () => {
+      assert(grammar.match(source).succeeded())
     })
   }
   for (const [scenario, source, errorMessagePattern] of syntaxErrors) {
-    it(`throws on ${scenario}`, () => {
-      assert.throws(() => ast(source), errorMessagePattern)
+    it(`does not permit ${scenario}`, () => {
+      const match = grammar.match(source)
+      assert(!match.succeeded())
+      assert(new RegExp(errorMessagePattern).test(match.message))
     })
   }
 })

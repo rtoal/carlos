@@ -177,25 +177,30 @@ export default function analyze(sourceCode) {
     Program(body) {
       return new core.Program(body.rep())
     },
+
     VarDecl(modifier, id, _eq, initializer, _semicolon) {
-      const initializerRep = initializer.rep()
+      const e = initializer.rep()
       const readOnly = modifier.sourceString === "const"
-      const variable = new core.Variable(id.sourceString, readOnly, initializerRep.type)
-      context.add(id.sourceString, variable)
-      return new core.VariableDeclaration(variable, initializerRep)
+      const v = new core.Variable(id.sourceString, readOnly, e.type)
+      context.add(id.sourceString, v)
+      return new core.VariableDeclaration(v, e)
     },
+
     TypeDecl(_struct, id, _left, fields, _right) {
-      // TODO HOW TO ALLOW RECURSION?
+      // To allow recursion, enter into context without any fields yet
       const type = new core.StructType(id.sourceString, [])
       context.add(id.sourceString, type)
+      // Now add the types as you parse and analyze
       type.fields = fields.rep()
       checkFieldsAllDistinct(type.fields)
       checkNotRecursive(type)
       return new core.TypeDeclaration(type)
     },
+
     Field(id, _colon, type) {
       return new core.Field(id.rep(), type.rep())
     },
+
     FunDecl(_fun, id, _open, params, _close, _colons, returnType, body) {
       const rt = returnType.rep()[0] ?? core.Type.VOID
       const paramReps = params.asIteration().rep()
@@ -208,56 +213,68 @@ export default function analyze(sourceCode) {
       context = context.parent
       return new core.FunctionDeclaration(id.sourceString, f, paramReps, b)
     },
+
     Param(id, _colon, type) {
       return new core.Parameter(id.sourceString, type.rep())
     },
+
     Type_optional(baseType, _questionMark) {
       return new core.OptionalType(baseType.rep())
     },
+
     Type_array(_left, baseType, _right) {
       return new core.ArrayType(baseType.rep())
     },
+
     Type_function(_left, inTypes, _right, _arrow, outType) {
       return new core.FunctionType(inTypes.asIteration().rep(), outType.rep())
     },
+
     Type_id(id) {
       const entity = context.lookup(id.sourceString)
       checkIsAType(entity)
       return entity
     },
+
     Statement_bump(variable, operator, _semicolon) {
-      const variableRep = variable.rep()
-      checkInteger(variableRep)
+      const v = variable.rep()
+      checkInteger(v)
       return operator.sourceString === "++"
-        ? new core.Increment(variableRep)
-        : new core.Decrement(variableRep)
+        ? new core.Increment(v)
+        : new core.Decrement(v)
     },
+
     Statement_assign(variable, _eq, expression, _semicolon) {
-      const expressionRep = expression.rep()
-      const variableRep = variable.rep()
-      checkAssignable(expressionRep, { toType: variableRep.type })
-      checkNotReadOnly(variableRep)
-      return new core.Assignment(variableRep, expressionRep)
+      const e = expression.rep()
+      const v = variable.rep()
+      checkAssignable(e, { toType: v.type })
+      checkNotReadOnly(v)
+      return new core.Assignment(v, e)
     },
+
     Statement_call(call, _semicolon) {
       return call.rep()
     },
+
     Statement_break(_break, _semicolon) {
       checkInLoop(context)
       return new core.BreakStatement()
     },
+
     Statement_return(_return, expression, _semicolon) {
       checkInFunction(context)
       checkReturnsSomething(context.function)
-      const expressionRep = expression.rep()
-      checkReturnable({ expression: expressionRep, from: context.function })
-      return new core.ReturnStatement(expressionRep)
+      const e = expression.rep()
+      checkReturnable({ expression: e, from: context.function })
+      return new core.ReturnStatement(e)
     },
+
     Statement_shortreturn(_return, _semicolon) {
       checkInFunction(context)
       checkReturnsNothing(context.function)
       return new core.ShortReturnStatement()
     },
+
     IfStmt_long(_if, test, consequent, _else, alternate) {
       const testRep = test.rep()
       checkBoolean(testRep)
@@ -276,6 +293,7 @@ export default function analyze(sourceCode) {
       }
       return new core.IfStatement(testRep, consequentRep, alternateRep)
     },
+
     IfStmt_short(_if, test, consequent) {
       const testRep = test.rep()
       checkBoolean(testRep)
@@ -284,33 +302,37 @@ export default function analyze(sourceCode) {
       context = context.parent
       return new core.ShortIfStatement(testRep, consequentRep)
     },
+
     LoopStmt_while(_while, test, body) {
-      const testRep = test.rep()
-      checkBoolean(testRep)
+      const t = test.rep()
+      checkBoolean(t)
       context = context.newChildContext({ inLoop: true })
-      const bodyRep = body.rep()
+      const b = body.rep()
       context = context.parent
-      return new core.WhileStatement(testRep, bodyRep)
+      return new core.WhileStatement(t, b)
     },
+
     LoopStmt_repeat(_repeat, count, body) {
-      const countRep = count.rep()
-      checkInteger(countRep)
+      const c = count.rep()
+      checkInteger(c)
       context = context.newChildContext({ inLoop: true })
-      const bodyRep = body.rep()
+      const b = body.rep()
       context = context.parent
-      return new core.RepeatStatement(countRep, bodyRep)
+      return new core.RepeatStatement(c, b)
     },
+
     LoopStmt_range(_for, id, _in, low, op, high, body) {
-      const [lowRep, highRep] = [low.rep(), high.rep()]
-      checkInteger(lowRep)
-      checkInteger(highRep)
+      const [x, y] = [low.rep(), high.rep()]
+      checkInteger(x)
+      checkInteger(y)
       const iterator = new core.Variable(id.sourceString, Type.INT, true)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
-      const bodyRep = body.rep()
+      const b = body.rep()
       context = context.parent
-      return new core.ForRangeStatement(iterator, lowRep, op.rep(), highRep, bodyRep)
+      return new core.ForRangeStatement(iterator, x, op.rep(), y, b)
     },
+
     LoopStmt_collection(_for, id, _in, collection, body) {
       const c = collection.rep()
       checkArray(c)
@@ -321,10 +343,12 @@ export default function analyze(sourceCode) {
       context = context.parent
       return new core.ForStatement(i, c, b)
     },
+
     Block(_open, body, _close) {
       // No need for a block node, just return the list of statements
       return body.rep()
     },
+
     Exp_conditional(test, _questionMark, consequent, _colon, alternate) {
       const x = test.rep()
       checkBoolean(x)
@@ -332,12 +356,14 @@ export default function analyze(sourceCode) {
       checkHaveSameType(y, z)
       return new core.Conditional(x, y, z)
     },
+
     Exp1_unwrapelse(unwrap, op, alternate) {
       const [x, o, y] = [unwrap.rep(), op.sourceString, alternate.rep()]
       checkIsAnOptional(x)
       checkAssignable(y, { toType: x.type.baseType })
       return new core.BinaryExpression(o, x, y, x.type)
     },
+
     Exp2_or(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkBoolean(x)
@@ -347,6 +373,7 @@ export default function analyze(sourceCode) {
       }
       return x
     },
+
     Exp2_and(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkBoolean(x)
@@ -356,6 +383,7 @@ export default function analyze(sourceCode) {
       }
       return x
     },
+
     Exp3_bitor(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkInteger(x)
@@ -365,6 +393,7 @@ export default function analyze(sourceCode) {
       }
       return x
     },
+
     Exp3_bitxor(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkInteger(x)
@@ -374,6 +403,7 @@ export default function analyze(sourceCode) {
       }
       return x
     },
+
     Exp3_bitand(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
       checkInteger(x)
@@ -383,18 +413,21 @@ export default function analyze(sourceCode) {
       }
       return x
     },
+
     Exp4_compare(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
       if (["<", "<=", ">", ">="].includes(op.sourceString)) checkNumericOrString(x)
       checkHaveSameType(x, y)
       return new core.BinaryExpression(o, x, y, Type.BOOLEAN)
     },
+
     Exp5_shift(left, op, right) {
       const [x, o, y] = [left.rep(), op.rep(), right.rep()]
       checkInteger(x)
       checkInteger(y)
       return new core.BinaryExpression(o, x, y, Type.INT)
     },
+
     Exp6_add(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
       if (o === "+") {
@@ -405,18 +438,21 @@ export default function analyze(sourceCode) {
       checkHaveSameType(x, y)
       return new core.BinaryExpression(o, x, y, x.type)
     },
+
     Exp7_multiply(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
       checkNumeric(x)
       checkHaveSameType(x, y)
       return new core.BinaryExpression(o, x, y, x.type)
     },
+
     Exp8_power(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
       checkNumeric(x)
       checkHaveSameType(x, y)
       return new core.BinaryExpression(o, x, y, x.type)
     },
+
     Exp8_unary(op, operand) {
       const [o, x] = [op.sourceString, operand.rep()]
       let type
@@ -426,26 +462,32 @@ export default function analyze(sourceCode) {
       else if (o === "some") type = new core.OptionalType(x.type)
       return new core.UnaryExpression(o, x, type)
     },
+
     Exp9_emptyarray(_keyword, _left, _of, type, _right) {
       return new core.EmptyArray(type.rep())
     },
+
     Exp9_arrayexp(_left, args, _right) {
-      const elementsRep = args.asIteration().rep()
-      checkAllHaveSameType(elementsRep)
-      return new core.ArrayExpression(elementsRep)
+      const elements = args.asIteration().rep()
+      checkAllHaveSameType(elements)
+      return new core.ArrayExpression(elements)
     },
+
     Exp9_emptyopt(_no, type) {
       return new core.EmptyOptional(type.rep())
     },
+
     Exp9_parens(_open, expression, _close) {
       return expression.rep()
     },
+
     Exp9_subscript(array, _left, subscript, _right) {
       const [a, i] = [array.rep(), subscript.rep()]
       checkArray(a)
       checkInteger(i)
       return new core.SubscriptExpression(a, i)
     },
+
     Exp9_member(object, dot, field) {
       const x = object.rep()
       const isOptional = dot.sourceString === "?."
@@ -461,6 +503,7 @@ export default function analyze(sourceCode) {
       const f = structType.fields.find(f => f.name === field.sourceString)
       return new core.MemberExpression(x, f, isOptional)
     },
+
     Exp9_call(callee, _left, args, _right) {
       const [c, a] = [callee.rep(), args.asIteration().rep()]
       checkCallable(c)
@@ -474,38 +517,48 @@ export default function analyze(sourceCode) {
       }
       return new core.Call(c, a, callType)
     },
+
     Exp9_id(_id) {
       return context.lookup(this.sourceString)
     },
+
     id(_first, _rest) {
       return this.sourceString
     },
+
     true(_) {
       return true
     },
+
     false(_) {
       return false
     },
+
     intlit(_digits) {
       return BigInt(this.sourceString)
     },
+
     floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
       return Number(this.sourceString)
     },
+
     stringlit(_openQuote, _chars, _closeQuote) {
       return this.sourceString
     },
+
     _terminal() {
       return this.sourceString
     },
+
     _iter(...children) {
       return children.map(child => child.rep())
     },
   })
+
+  // Analysis starts here
   for (const [name, type] of Object.entries(stdlib.contents)) {
     context.add(name, type)
   }
-  //console.log(context.locals)
   const match = grammar.match(sourceCode)
   if (!match.succeeded()) core.error(match.message)
   return analyzer(match).rep()

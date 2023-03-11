@@ -1,6 +1,6 @@
 import assert from "assert/strict"
 import fs from "fs"
-import ohm from "ohm-js"
+import * as ohm from "ohm-js"
 
 // Programs expected to be syntactically correct
 const syntaxChecks = [

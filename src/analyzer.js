@@ -1,5 +1,5 @@
 import fs from "fs"
-import ohm from "ohm-js"
+import * as ohm from "ohm-js"
 import * as core from "./core.js"
 import * as stdlib from "./stdlib.js"
 

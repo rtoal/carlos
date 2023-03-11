@@ -1,7 +1,7 @@
 {
   "name": "carlos",
   "version": "1.0.0",
-  "description": "<img src=\"https://raw.githubusercontent.com/rtoal/carlos-lang/main/docs/carlos-logo.png\" height=100>",
+  "description": "A compiler for the Carlos programming language",
   "main": "index.js",
   "type": "module",
   "directories": {
@@ -23,11 +23,12 @@
     "url": "https://github.com/rtoal/carlos-lang/issues"
   },
   "homepage": "https://github.com/rtoal/carlos-lang#readme",
-  "devDependencies": {
-    "c8": "^7.12.0",
-    "mocha": "^10.2.0"
-  },
   "dependencies": {
-    "ohm-js": "^16.6.0"
+    "graph-stringify": "^1.0.1",
+    "ohm-js": "^17.0.4"
+  },
+  "devDependencies": {
+    "c8": "^7.13.0",
+    "mocha": "^10.2.0"
   }
 }

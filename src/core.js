@@ -85,13 +85,6 @@ export class Function {
   }
 }
 
-export class Parameter {
-  // Example: x: boolean
-  constructor(name, type) {
-    Object.assign(this, { name, type })
-  }
-}
-
 export class ArrayType extends Type {
   // Example: [int]
   constructor(baseType) {

@@ -215,7 +215,7 @@ export default function analyze(sourceCode) {
     },
 
     Param(id, _colon, type) {
-      return new core.Parameter(id.sourceString, type.rep())
+      return new core.Variable(id.sourceString, false, type.rep())
     },
 
     Type_optional(baseType, _questionMark) {

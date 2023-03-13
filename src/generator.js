@@ -70,9 +70,6 @@ export default function generate(program) {
       gen(d.body)
       output.push("}")
     },
-    Parameter(p) {
-      return targetName(p)
-    },
     Variable(v) {
       // Standard library constants just get special treatment
       if (v === stdlib.contents.π) {

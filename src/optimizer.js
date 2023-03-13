@@ -59,9 +59,6 @@ const optimizers = {
   Function(f) {
     return f
   },
-  Parameter(p) {
-    return p
-  },
   Increment(s) {
     s.variable = optimize(s.variable)
     return s

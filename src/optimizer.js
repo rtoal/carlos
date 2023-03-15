@@ -226,7 +226,12 @@ const optimizers = {
     e.object = optimize(e.object)
     return e
   },
-  Call(c) {
+  FunctionCall(c) {
+    c.callee = optimize(c.callee)
+    c.args = optimize(c.args)
+    return c
+  },
+  ConstructorCall(c) {
     c.callee = optimize(c.callee)
     c.args = optimize(c.args)
     return c

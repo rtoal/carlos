@@ -17,7 +17,7 @@ const identity = Object.assign(new core.Function("id"), { body: returnX })
 const voidInt = new core.FunctionType([], core.Type.INT)
 const intFun = body =>
   new core.FunctionDeclaration("f", new core.Function("f", voidInt), [], [body])
-const callIdentity = args => new core.Call(identity, args)
+const callIdentity = args => new core.FunctionCall(identity, args)
 const or = (...d) => d.reduce((x, y) => new core.BinaryExpression("||", x, y))
 const and = (...c) => c.reduce((x, y) => new core.BinaryExpression("&&", x, y))
 const less = (x, y) => new core.BinaryExpression("<", x, y)
@@ -88,7 +88,7 @@ const tests = [
       new core.TypeDeclaration([new core.Field("x", core.Type.INT)]),
       new core.Assignment(x, new core.BinaryExpression("*", x, "z")),
       new core.Assignment(x, new core.UnaryExpression("not", x)),
-      new core.Call(identity, new core.MemberExpression(x, "f")),
+      new core.ConstructorCall(identity, new core.MemberExpression(x, "f")),
       new core.VariableDeclaration("q", false, new core.EmptyArray(core.Type.FLOAT)),
       new core.VariableDeclaration("r", false, new core.EmptyOptional(core.Type.INT)),
       new core.WhileStatement(true, [new core.BreakStatement()]),

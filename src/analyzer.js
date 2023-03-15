@@ -546,15 +546,13 @@ export default function analyze(sourceCode) {
     Exp9_call(callee, _left, args, _right) {
       const [c, a] = [callee.rep(), args.asIteration().rep()]
       mustBeCallable(c)
-      let callType
       if (c instanceof core.StructType) {
         constructorArgumentsMustMatch(a, c)
-        callType = c
+        return new core.ConstructorCall(c, a, c)
       } else {
         callArgumentsMustMatch(a, c.type)
-        callType = c.type.returnType
+        return new core.FunctionCall(c, a, c.type.returnType)
       }
-      return new core.Call(c, a, callType)
     },
 
     Exp9_id(_id) {

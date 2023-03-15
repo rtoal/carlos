@@ -240,11 +240,14 @@ export class MemberExpression {
   }
 }
 
-export class Call {
-  // Example: move(player, 90, "west"). Calls can be constructor
-  // invocations or function calls. Since calls are expressions,
-  // They will need a type. This should be the return type of the
-  // function or the type of the constructor.
+export class FunctionCall {
+  // Example: move(player, 90, "west")
+  constructor(callee, args, type) {
+    Object.assign(this, { callee, args, type })
+  }
+}
+
+export class ConstructorCall {
   constructor(callee, args, type) {
     Object.assign(this, { callee, args, type })
   }

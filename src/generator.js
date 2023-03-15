@@ -169,17 +169,18 @@ export default function generate(program) {
       const chain = e.isOptional ? "?." : ""
       return `(${object}${chain}[${field}])`
     },
-    Call(c) {
+    FunctionCall(c) {
       const targetCode = standardFunctions.has(c.callee)
         ? standardFunctions.get(c.callee)(gen(c.args))
-        : c.callee.constructor === StructType
-        ? `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
         : `${gen(c.callee)}(${gen(c.args).join(", ")})`
       // Calls in expressions vs in statements are handled differently
-      if (c.callee instanceof Type || c.callee.type.returnType !== Type.VOID) {
+      if (c.callee.type.returnType !== Type.VOID) {
         return targetCode
       }
       output.push(`${targetCode};`)
+    },
+    ConstructorCall(c) {
+      return `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
     },
     Number(e) {
       return e

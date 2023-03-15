@@ -40,18 +40,6 @@ export class Type {
     // see "[T]". For optionals, "T?". For functions "(T1,...Tn)->T0".
     Object.assign(this, { description })
   }
-  // Equivalence: when are two types the same
-  isEquivalentTo(target) {
-    return this == target
-  }
-  // T1 assignable to T2 is when x:T1 can be assigned to y:T2. By default
-  // this is only when two types are equivalent; however, for other kinds
-  // of types there may be special rules. For example, in a language with
-  // supertypes and subtypes, an object of a subtype would be assignable
-  // to a variable constrained to a supertype.
-  isAssignableTo(target) {
-    return this.isEquivalentTo(target)
-  }
 }
 
 export class StructType extends Type {
@@ -88,16 +76,6 @@ export class ArrayType extends Type {
     super(`[${baseType.description}]`)
     this.baseType = baseType
   }
-  isEquivalentTo(target) {
-    // [T] equivalent to [U] only when T is equivalent to U.
-    return (
-      target.constructor === ArrayType && this.baseType.isEquivalentTo(target.baseType)
-    )
-  }
-  isAssignableTo(target) {
-    // Arrays are INVARIANT in Carlos!
-    return this.isEquivalentTo(target)
-  }
 }
 
 export class FunctionType extends Type {
@@ -106,23 +84,6 @@ export class FunctionType extends Type {
     super(`(${paramTypes.map(t => t.description).join(",")})->${returnType.description}`)
     Object.assign(this, { paramTypes, returnType })
   }
-  isEquivalentTo(target) {
-    return (
-      target.constructor === FunctionType &&
-      this.returnType.isEquivalentTo(target.returnType) &&
-      this.paramTypes.length === target.paramTypes.length &&
-      this.paramTypes.every((t, i) => target.paramTypes[i].isEquivalentTo(t))
-    )
-  }
-  isAssignableTo(target) {
-    // Functions are covariant on return types, contravariant on parameters.
-    return (
-      target.constructor === FunctionType &&
-      this.returnType.isAssignableTo(target.returnType) &&
-      this.paramTypes.length === target.paramTypes.length &&
-      this.paramTypes.every((t, i) => target.paramTypes[i].isAssignableTo(t))
-    )
-  }
 }
 
 export class OptionalType extends Type {
@@ -130,16 +91,6 @@ export class OptionalType extends Type {
   constructor(baseType) {
     super(`${baseType.description}?`)
     this.baseType = baseType
-  }
-  isEquivalentTo(target) {
-    // T? equivalent to U? only when T is equivalent to U.
-    return (
-      target.constructor === OptionalType && this.baseType.isEquivalentTo(target.baseType)
-    )
-  }
-  isAssignableTo(target) {
-    // Optionals are INVARIANT in Carlos!
-    return this.isEquivalentTo(target)
   }
 }
 

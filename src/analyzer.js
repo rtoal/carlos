@@ -66,12 +66,13 @@ function entityMustBeAType(e, at) {
 }
 
 function mustBeTheSameType(e1, e2, at) {
-  must(e1.type.isEquivalentTo(e2.type), "Operands do not have the same type", at)
+  must(equivalent(e1.type, e2.type), "Operands do not have the same type", at)
 }
 
 function mustAllHaveSameType(expressions, at) {
+  // Used to check array elements, for example
   must(
-    expressions.slice(1).every(e => e.type.isEquivalentTo(expressions[0].type)),
+    expressions.slice(1).every(e => equivalent(e.type, expressions[0].type)),
     "Not all elements have the same type",
     at
   )
@@ -85,9 +86,40 @@ function mustNotBeRecursive(struct, at) {
   )
 }
 
+function equivalent(t1, t2) {
+  return (
+    t1 === t2 ||
+    (t1 instanceof core.OptionalType &&
+      t2 instanceof core.OptionalType &&
+      equivalent(t1.baseType, t2.baseType)) ||
+    (t1 instanceof core.ArrayType &&
+      t2 instanceof core.ArrayType &&
+      equivalent(t1.baseType, t2.baseType)) ||
+    (t1.constructor === core.FunctionType &&
+      t2.constructor === core.FunctionType &&
+      equivalent(t1.returnType, t2.returnType) &&
+      t1.paramTypes.length === t2.paramTypes.length &&
+      t1.paramTypes.every((t, i) => equivalent(t, t2.paramTypes[i])))
+  )
+}
+
+function assignable(fromType, toType) {
+  return (
+    toType == ANY ||
+    equivalent(fromType, toType) ||
+    (fromType.constructor === core.FunctionType &&
+      toType.constructor === core.FunctionType &&
+      // covariant in return types
+      assignable(fromType.returnType, toType.returnType) &&
+      fromType.paramTypes.length === toType.paramTypes.length &&
+      // contravariant in parameter types
+      fromType.paramTypes.every((t, i) => assignable(toType, t.paramTypes[i])))
+  )
+}
+
 function mustBeAssignable(e, { toType: type }, at) {
   must(
-    type === ANY || e.type.isAssignableTo(type),
+    assignable(e.type, type),
     `Cannot assign a ${e.type.description} to a ${type.description}`,
     at
   )

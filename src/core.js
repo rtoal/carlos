@@ -1,7 +1,13 @@
+import util from "util"
+import stringify from "graph-stringify"
+
 export class Program {
   // Example: let x = 1; print(x * 5); print("done");
   constructor(statements) {
     this.statements = statements
+  }
+  [util.inspect.custom]() {
+    return stringify(this)
   }
 }
 

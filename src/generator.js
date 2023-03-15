@@ -34,7 +34,6 @@ export default function generate(program) {
   })(new Map())
 
   function gen(node) {
-    //console.log(node.constructor)
     return generators[node.constructor.name](node)
   }
 

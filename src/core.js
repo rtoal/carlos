@@ -302,7 +302,7 @@ export class Call {
 // Throw an error message that takes advantage of Ohm's messaging
 export function error(message, node) {
   if (node) {
-    throw new Error(`${node.getLineAndColumnMessage()}${message}`)
+    throw new Error(`${node.source.getLineAndColumnMessage()}${message}`)
   }
   throw new Error(message)
 }

@@ -24,7 +24,8 @@ Carlos {
               | "(" ListOf<Type, ","> ")" "->" Type           --function
               | id                                            --id
 
-  IfStmt      = if Exp Block else (Block | IfStmt)            --long
+  IfStmt      = if Exp Block else Block                       --long
+              | if Exp Block else IfStmt                      --elsif
               | if Exp Block                                  --short
   LoopStmt    = while Exp Block                               --while
               | repeat Exp Block                              --repeat

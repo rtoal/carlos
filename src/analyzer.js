@@ -17,125 +17,131 @@ function must(condition, message, errorLocation) {
   if (!condition) core.error(message, errorLocation)
 }
 
-function mustBeANumber(e) {
-  must([INT, FLOAT].includes(e.type), "Expected a number")
+function mustBeANumber(e, at) {
+  must([INT, FLOAT].includes(e.type), "Expected a number", at)
 }
 
-function mustBeANumberOrString(e) {
-  must([INT, FLOAT, STRING].includes(e.type), "Expected a number or string")
+function mustBeANumberOrString(e, at) {
+  must([INT, FLOAT, STRING].includes(e.type), "Expected a number or string", at)
 }
 
-function mustBeABoolean(e) {
-  must(e.type === BOOLEAN, "Expected a boolean")
+function mustBeABoolean(e, at) {
+  must(e.type === BOOLEAN, "Expected a boolean", at)
 }
 
-function mustBeAnInteger(e) {
-  must(e.type === INT, "Expected an integer")
+function mustBeAnInteger(e, at) {
+  must(e.type === INT, "Expected an integer", at)
 }
 
-function mustBeAnArray(e) {
-  must(e.type instanceof core.ArrayType, "Expected an array")
+function mustBeAnArray(e, at) {
+  must(e.type instanceof core.ArrayType, "Expected an array", at)
 }
 
-function mustBeAnOptional(e) {
-  must(e.type instanceof core.OptionalType, "Expected an optional")
+function mustBeAnOptional(e, at) {
+  must(e.type instanceof core.OptionalType, "Expected an optional", at)
 }
 
-function mustBeAStruct(e) {
-  must(e.type instanceof core.StructType, "Expected a struct")
+function mustBeAStruct(e, at) {
+  must(e.type instanceof core.StructType, "Expected a struct", at)
 }
 
-function mustBeAnOptionalStruct(e) {
+function mustBeAnOptionalStruct(e, at) {
   must(
     e.type instanceof core.OptionalType && e.type.baseType.constructor == core.StructType,
     "Expected an optional struct",
-    e
+    at
   )
 }
 
-function mustBeAType(e) {
-  must(e instanceof core.Type, "Type expected")
+function mustBeAType(e, at) {
+  must(e instanceof core.Type, "Type expected", at)
 }
 
-function mustBeTheSameType(e1, e2) {
-  must(e1.type.isEquivalentTo(e2.type), "Operands do not have the same type")
+function mustBeTheSameType(e1, e2, at) {
+  must(e1.type.isEquivalentTo(e2.type), "Operands do not have the same type", at)
 }
 
-function mustAllHaveSameType(expressions) {
+function mustAllHaveSameType(expressions, at) {
   must(
     expressions.slice(1).every(e => e.type.isEquivalentTo(expressions[0].type)),
-    "Not all elements have the same type"
+    "Not all elements have the same type",
+    at
   )
 }
 
-function mustNotBeRecursive(struct) {
+function mustNotBeRecursive(struct, at) {
   must(
     !struct.fields.map(f => f.type).includes(struct),
-    "Struct type must not be recursive"
+    "Struct type must not be recursive",
+    at
   )
 }
 
-function mustBeAssignable(e, { toType: type }) {
+function mustBeAssignable(e, { toType: type }, at) {
   must(
     type === ANY || e.type.isAssignableTo(type),
-    `Cannot assign a ${e.type.description} to a ${type.description}`
+    `Cannot assign a ${e.type.description} to a ${type.description}`,
+    at
   )
 }
 
-function mustNotBeReadOnly(e) {
-  must(!e.readOnly, `Cannot assign to constant ${e.name}`)
+function mustNotBeReadOnly(e, at) {
+  must(!e.readOnly, `Cannot assign to constant ${e.name}`, at)
 }
 
-function fieldsMustBeDistinct(fields) {
-  must(new Set(fields.map(f => f.name)).size === fields.length, "Fields must be distinct")
+function fieldsMustBeDistinct(fields, at) {
+  const fieldNames = new Set(fields.map(f => f.name))
+  must(fieldNames.size === fields.length, "Fields must be distinct", at)
 }
 
-function memberMustBeDeclared(field, { in: structType }) {
-  must(structType.fields.map(f => f.name).includes(field), "No such field")
+function memberMustBeDeclared(field, { in: structType }, at) {
+  must(structType.fields.map(f => f.name).includes(field), "No such field", at)
 }
 
-function mustBeInLoop(context) {
-  must(context.inLoop, "Break can only appear in a loop")
+function mustBeInLoop(context, at) {
+  must(context.inLoop, "Break can only appear in a loop", at)
 }
 
-function mustBeInAFunction(context) {
-  must(context.function, "Return can only appear in a function")
+function mustBeInAFunction(context, at) {
+  must(context.function, "Return can only appear in a function", at)
 }
 
-function mustBeCallable(e) {
+function mustBeCallable(e, at) {
   must(
     e instanceof core.StructType || e.type.constructor == core.FunctionType,
-    "Call of non-function or non-constructor"
+    "Call of non-function or non-constructor",
+    at
   )
 }
 
-function mustNotReturnAnything(f) {
-  must(f.type.returnType === VOID, "Something should be returned here")
+function mustNotReturnAnything(f, at) {
+  must(f.type.returnType === VOID, "Something should be returned", at)
 }
 
-function mustReturnSomething(f) {
-  must(f.type.returnType !== VOID, "Cannot return a value here")
+function mustReturnSomething(f, at) {
+  must(f.type.returnType !== VOID, "Cannot return a value from this function", at)
 }
 
-function mustBeReturnable({ expression: e, from: f }) {
-  mustBeAssignable(e, { toType: f.type.returnType })
+function mustBeReturnable({ expression: e, from: f }, at) {
+  mustBeAssignable(e, { toType: f.type.returnType }, at)
 }
 
-function argumentsMustMatch(args, targetTypes) {
+function argumentsMustMatch(args, targetTypes, at) {
   must(
     targetTypes.length === args.length,
-    `${targetTypes.length} argument(s) required but ${args.length} passed`
+    `${targetTypes.length} argument(s) required but ${args.length} passed`,
+    at
   )
   targetTypes.forEach((type, i) => mustBeAssignable(args[i], { toType: type }))
 }
 
-function callArgumentsMustMatch(args, calleeType) {
-  argumentsMustMatch(args, calleeType.paramTypes)
+function callArgumentsMustMatch(args, calleeType, at) {
+  argumentsMustMatch(args, calleeType.paramTypes, at)
 }
 
-function constructorArgumentsMustMatch(args, structType) {
+function constructorArgumentsMustMatch(args, structType, at) {
   const fieldTypes = structType.fields.map(f => f.type)
-  argumentsMustMatch(args, fieldTypes)
+  argumentsMustMatch(args, fieldTypes, at)
 }
 
 class Context {
@@ -258,8 +264,8 @@ export default function analyze(sourceCode) {
       return new core.BreakStatement()
     },
 
-    Statement_return(_return, expression, _semicolon) {
-      mustBeInAFunction(context)
+    Statement_return(returnKeyword, expression, _semicolon) {
+      mustBeInAFunction(context, returnKeyword)
       mustReturnSomething(context.function)
       const e = expression.rep()
       mustBeReturnable({ expression: e, from: context.function })
@@ -278,22 +284,25 @@ export default function analyze(sourceCode) {
       context = context.newChildContext()
       const consequentRep = consequent.rep()
       context = context.parent
-      let alternateRep
-      if (alternate instanceof Array) {
-        // It's a block of statements, make a new context
-        context = context.newChildContext()
-        alternateRep = alternate.rep()
-        context = context.parent
-      } else {
-        // It's a trailing if-statement, so same context
-        alternateRep = alternate.rep()
-      }
+      context = context.newChildContext()
+      const alternateRep = alternate.rep()
+      context = context.parent
+      return new core.IfStatement(testRep, consequentRep, alternateRep)
+    },
+
+    IfStmt_elsif(_if, test, consequent, _else, alternate) {
+      const testRep = test.rep()
+      mustBeABoolean(testRep)
+      context = context.newChildContext()
+      const consequentRep = consequent.rep()
+      // Do NOT make a new context for the alternate!
+      const alternateRep = alternate.rep()
       return new core.IfStatement(testRep, consequentRep, alternateRep)
     },
 
     IfStmt_short(_if, test, consequent) {
       const testRep = test.rep()
-      mustBeABoolean(testRep)
+      mustBeABoolean(testRep, test)
       context = context.newChildContext()
       const consequentRep = consequent.rep()
       context = context.parent
@@ -548,6 +557,7 @@ export default function analyze(sourceCode) {
     },
 
     _iter(...children) {
+      // Ohm shortcut to allow applying rep() directly to iter nodes
       return children.map(child => child.rep())
     },
   })
@@ -557,6 +567,8 @@ export default function analyze(sourceCode) {
     context.add(name, type)
   }
   const match = grammar.match(sourceCode)
-  if (!match.succeeded()) core.error(match.message)
+  if (!match.succeeded()) {
+    core.error(match.message)
+  }
   return analyzer(match).rep()
 }

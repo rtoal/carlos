@@ -17,7 +17,7 @@ const semanticChecks = [
   ["return in nested if", "function f() {if true {return;}}"],
   ["break in nested if", "while false {if true {break;}}"],
   ["long if", "if true {print(1);} else {print(3);}"],
-  ["else if", "if true {print(1);} else if true {print(0);} else {print(3);}"],
+  ["elsif", "if true {print(1);} else if true {print(0);} else {print(3);}"],
   ["for over collection", "for i in [2,3,5] {print(1);}"],
   ["for in range", "for i in 1..<10 {print(0);}"],
   ["repeat", "repeat 3 {let a = 1; print(a);}"],
@@ -101,13 +101,9 @@ const semanticErrors = [
   [
     "return value from void function",
     "function f() {return 1;}",
-    /Cannot return a value here/,
+    /Cannot return a value/,
   ],
-  [
-    "return nothing from non-void",
-    "function f(): int {return;}",
-    /should be returned here/,
-  ],
+  ["return nothing from non-void", "function f(): int {return;}", /should be returned/],
   ["return type mismatch", "function f(): int {return false;}", /boolean to a int/],
   ["non-boolean short if test", "if 1 {}", /Expected a boolean/],
   ["non-boolean if test", "if 1 {} else {}", /Expected a boolean/],
@@ -170,12 +166,10 @@ const semanticErrors = [
   ["Non-type in field type", "let x=1;struct S {y:x}", /Type expected/],
 ]
 
-// Test cases for expected semantic graphs after processing the AST. In general
-// this suite of cases should have a test for each kind of node, including
-// nodes that get rewritten as well as those that are just "passed through"
-// by the analyzer. For now, we're just testing the various rewrites only.
-
 describe("The analyzer", () => {
+  it("throws on syntax errors", () => {
+    assert.throws(() => analyze("*(^%$"))
+  })
   for (const [scenario, source] of semanticChecks) {
     it(`recognizes ${scenario}`, () => {
       assert.ok(analyze(source))
@@ -186,5 +180,9 @@ describe("The analyzer", () => {
       assert.throws(() => analyze(source), errorMessagePattern)
     })
   }
-  // TODO ASSERT GRAPH
+  it("builds an unoptimized AST for a trivial program", () => {
+    const ast = analyze("print(1+2);")
+    assert.equal(ast.statements[0].callee.name, "print")
+    assert.equal(ast.statements[0].args[0].left, 1n)
+  })
 })

@@ -17,35 +17,43 @@ function must(condition, message, errorLocation) {
   if (!condition) core.error(message, errorLocation)
 }
 
-function mustBeANumber(e, at) {
+function mustNotAlreadyBeDeclared(context, name) {
+  must(!context.sees(name), `Identifier ${name} already declared`)
+}
+
+function mustHaveBeenFound(entity, name) {
+  must(entity, `Identifier ${name} not declared`)
+}
+
+function mustHaveNumericType(e, at) {
   must([INT, FLOAT].includes(e.type), "Expected a number", at)
 }
 
-function mustBeANumberOrString(e, at) {
+function mustHaveNumericOrStringType(e, at) {
   must([INT, FLOAT, STRING].includes(e.type), "Expected a number or string", at)
 }
 
-function mustBeABoolean(e, at) {
+function mustHaveBooleanType(e, at) {
   must(e.type === BOOLEAN, "Expected a boolean", at)
 }
 
-function mustBeAnInteger(e, at) {
+function mustHaveIntegerType(e, at) {
   must(e.type === INT, "Expected an integer", at)
 }
 
-function mustBeAnArray(e, at) {
+function mustHaveAnArrayType(e, at) {
   must(e.type instanceof core.ArrayType, "Expected an array", at)
 }
 
-function mustBeAnOptional(e, at) {
+function mustHaveAnOptionalType(e, at) {
   must(e.type instanceof core.OptionalType, "Expected an optional", at)
 }
 
-function mustBeAStruct(e, at) {
+function mustHaveAStructType(e, at) {
   must(e.type instanceof core.StructType, "Expected a struct", at)
 }
 
-function mustBeAnOptionalStruct(e, at) {
+function mustHaveOptionalStructType(e, at) {
   must(
     e.type instanceof core.OptionalType && e.type.baseType.constructor == core.StructType,
     "Expected an optional struct",
@@ -53,7 +61,7 @@ function mustBeAnOptionalStruct(e, at) {
   )
 }
 
-function mustBeAType(e, at) {
+function entityMustBeAType(e, at) {
   must(e instanceof core.Type, "Type expected", at)
 }
 
@@ -153,20 +161,13 @@ class Context {
     return this.locals.has(name) || this.parent?.sees(name)
   }
   add(name, entity) {
-    // No shadowing! Prevent addition if id anywhere in scope chain! This is
-    // a Carlos thing. Many other languages allow shadowing, and in these,
-    // we would only have to check that name is not in this.locals
-    if (this.sees(name)) core.error(`Identifier ${name} already declared`)
+    mustNotAlreadyBeDeclared(this, name)
     this.locals.set(name, entity)
   }
   lookup(name) {
-    const entity = this.locals.get(name)
-    if (entity) {
-      return entity
-    } else if (this.parent) {
-      return this.parent.lookup(name)
-    }
-    core.error(`Identifier ${name} not declared`)
+    const entity = this.locals.get(name) || this.parent?.lookup(name)
+    mustHaveBeenFound(entity, name)
+    return entity
   }
   newChildContext(props) {
     return new Context({ ...this, ...props, parent: this, locals: new Map() })
@@ -235,13 +236,13 @@ export default function analyze(sourceCode) {
 
     Type_id(id) {
       const entity = context.lookup(id.sourceString)
-      mustBeAType(entity)
+      entityMustBeAType(entity)
       return entity
     },
 
     Statement_bump(variable, operator, _semicolon) {
       const v = variable.rep()
-      mustBeAnInteger(v)
+      mustHaveIntegerType(v)
       return operator.sourceString === "++"
         ? new core.Increment(v)
         : new core.Decrement(v)
@@ -280,7 +281,7 @@ export default function analyze(sourceCode) {
 
     IfStmt_long(_if, test, consequent, _else, alternate) {
       const testRep = test.rep()
-      mustBeABoolean(testRep)
+      mustHaveBooleanType(testRep)
       context = context.newChildContext()
       const consequentRep = consequent.rep()
       context = context.parent
@@ -292,7 +293,7 @@ export default function analyze(sourceCode) {
 
     IfStmt_elsif(_if, test, consequent, _else, alternate) {
       const testRep = test.rep()
-      mustBeABoolean(testRep)
+      mustHaveBooleanType(testRep)
       context = context.newChildContext()
       const consequentRep = consequent.rep()
       // Do NOT make a new context for the alternate!
@@ -302,7 +303,7 @@ export default function analyze(sourceCode) {
 
     IfStmt_short(_if, test, consequent) {
       const testRep = test.rep()
-      mustBeABoolean(testRep, test)
+      mustHaveBooleanType(testRep, test)
       context = context.newChildContext()
       const consequentRep = consequent.rep()
       context = context.parent
@@ -311,7 +312,7 @@ export default function analyze(sourceCode) {
 
     LoopStmt_while(_while, test, body) {
       const t = test.rep()
-      mustBeABoolean(t)
+      mustHaveBooleanType(t)
       context = context.newChildContext({ inLoop: true })
       const b = body.rep()
       context = context.parent
@@ -320,7 +321,7 @@ export default function analyze(sourceCode) {
 
     LoopStmt_repeat(_repeat, count, body) {
       const c = count.rep()
-      mustBeAnInteger(c)
+      mustHaveIntegerType(c)
       context = context.newChildContext({ inLoop: true })
       const b = body.rep()
       context = context.parent
@@ -329,8 +330,8 @@ export default function analyze(sourceCode) {
 
     LoopStmt_range(_for, id, _in, low, op, high, body) {
       const [x, y] = [low.rep(), high.rep()]
-      mustBeAnInteger(x)
-      mustBeAnInteger(y)
+      mustHaveIntegerType(x)
+      mustHaveIntegerType(y)
       const iterator = new core.Variable(id.sourceString, INT, true)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
@@ -341,7 +342,7 @@ export default function analyze(sourceCode) {
 
     LoopStmt_collection(_for, id, _in, collection, body) {
       const c = collection.rep()
-      mustBeAnArray(c)
+      mustHaveAnArrayType(c)
       const i = new core.Variable(id.sourceString, true, c.type.baseType)
       context = context.newChildContext({ inLoop: true })
       context.add(i.name, i)
@@ -357,7 +358,7 @@ export default function analyze(sourceCode) {
 
     Exp_conditional(test, _questionMark, consequent, _colon, alternate) {
       const x = test.rep()
-      mustBeABoolean(x)
+      mustHaveBooleanType(x)
       const [y, z] = [consequent.rep(), alternate.rep()]
       mustBeTheSameType(y, z)
       return new core.Conditional(x, y, z)
@@ -365,16 +366,16 @@ export default function analyze(sourceCode) {
 
     Exp1_unwrapelse(unwrap, op, alternate) {
       const [x, o, y] = [unwrap.rep(), op.sourceString, alternate.rep()]
-      mustBeAnOptional(x)
+      mustHaveAnOptionalType(x)
       mustBeAssignable(y, { toType: x.type.baseType })
       return new core.BinaryExpression(o, x, y, x.type)
     },
 
     Exp2_or(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustBeABoolean(x)
+      mustHaveBooleanType(x)
       for (let y of ys) {
-        mustBeABoolean(y)
+        mustHaveBooleanType(y)
         x = new core.BinaryExpression(o, x, y, BOOLEAN)
       }
       return x
@@ -382,9 +383,9 @@ export default function analyze(sourceCode) {
 
     Exp2_and(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustBeABoolean(x)
+      mustHaveBooleanType(x)
       for (let y of ys) {
-        mustBeABoolean(y)
+        mustHaveBooleanType(y)
         x = new core.BinaryExpression(o, x, y, BOOLEAN)
       }
       return x
@@ -392,9 +393,9 @@ export default function analyze(sourceCode) {
 
     Exp3_bitor(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustBeAnInteger(x)
+      mustHaveIntegerType(x)
       for (let y of ys) {
-        mustBeAnInteger(y)
+        mustHaveIntegerType(y)
         x = new core.BinaryExpression(o, x, y, INT)
       }
       return x
@@ -402,9 +403,9 @@ export default function analyze(sourceCode) {
 
     Exp3_bitxor(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustBeAnInteger(x)
+      mustHaveIntegerType(x)
       for (let y of ys) {
-        mustBeAnInteger(y)
+        mustHaveIntegerType(y)
         x = new core.BinaryExpression(o, x, y, INT)
       }
       return x
@@ -412,9 +413,9 @@ export default function analyze(sourceCode) {
 
     Exp3_bitand(left, ops, right) {
       let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustBeAnInteger(x)
+      mustHaveIntegerType(x)
       for (let y of ys) {
-        mustBeAnInteger(y)
+        mustHaveIntegerType(y)
         x = new core.BinaryExpression(o, x, y, INT)
       }
       return x
@@ -422,24 +423,24 @@ export default function analyze(sourceCode) {
 
     Exp4_compare(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
-      if (["<", "<=", ">", ">="].includes(op.sourceString)) mustBeANumberOrString(x)
+      if (["<", "<=", ">", ">="].includes(op.sourceString)) mustHaveNumericOrStringType(x)
       mustBeTheSameType(x, y)
       return new core.BinaryExpression(o, x, y, BOOLEAN)
     },
 
     Exp5_shift(left, op, right) {
       const [x, o, y] = [left.rep(), op.rep(), right.rep()]
-      mustBeAnInteger(x)
-      mustBeAnInteger(y)
+      mustHaveIntegerType(x)
+      mustHaveIntegerType(y)
       return new core.BinaryExpression(o, x, y, INT)
     },
 
     Exp6_add(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
       if (o === "+") {
-        mustBeANumberOrString(x)
+        mustHaveNumericOrStringType(x)
       } else {
-        mustBeANumber(x)
+        mustHaveNumericType(x)
       }
       mustBeTheSameType(x, y)
       return new core.BinaryExpression(o, x, y, x.type)
@@ -447,14 +448,14 @@ export default function analyze(sourceCode) {
 
     Exp7_multiply(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
-      mustBeANumber(x)
+      mustHaveNumericType(x)
       mustBeTheSameType(x, y)
       return new core.BinaryExpression(o, x, y, x.type)
     },
 
     Exp8_power(left, op, right) {
       const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
-      mustBeANumber(x)
+      mustHaveNumericType(x)
       mustBeTheSameType(x, y)
       return new core.BinaryExpression(o, x, y, x.type)
     },
@@ -462,9 +463,9 @@ export default function analyze(sourceCode) {
     Exp8_unary(op, operand) {
       const [o, x] = [op.sourceString, operand.rep()]
       let type
-      if (o === "#") mustBeAnArray(x), (type = INT)
-      else if (o === "-") mustBeANumber(x), (type = x.type)
-      else if (o === "!") mustBeABoolean(x), (type = BOOLEAN)
+      if (o === "#") mustHaveAnArrayType(x), (type = INT)
+      else if (o === "-") mustHaveNumericType(x), (type = x.type)
+      else if (o === "!") mustHaveBooleanType(x), (type = BOOLEAN)
       else if (o === "some") type = new core.OptionalType(x.type)
       return new core.UnaryExpression(o, x, type)
     },
@@ -489,8 +490,8 @@ export default function analyze(sourceCode) {
 
     Exp9_subscript(array, _left, subscript, _right) {
       const [a, i] = [array.rep(), subscript.rep()]
-      mustBeAnArray(a)
-      mustBeAnInteger(i)
+      mustHaveAnArrayType(a)
+      mustHaveIntegerType(i)
       return new core.SubscriptExpression(a, i)
     },
 
@@ -499,10 +500,10 @@ export default function analyze(sourceCode) {
       const isOptional = dot.sourceString === "?."
       let structType
       if (isOptional) {
-        mustBeAnOptionalStruct(x)
+        mustHaveOptionalStructType(x)
         structType = x.type.baseType
       } else {
-        mustBeAStruct(x)
+        mustHaveAStructType(x)
         structType = x.type
       }
       memberMustBeDeclared(field.sourceString, { in: structType })
@@ -525,6 +526,7 @@ export default function analyze(sourceCode) {
     },
 
     Exp9_id(_id) {
+      // When an id appears in an expr, it had better have been declared
       return context.lookup(this.sourceString)
     },
 
@@ -541,14 +543,17 @@ export default function analyze(sourceCode) {
     },
 
     intlit(_digits) {
+      // Carlos ints will be represented as plain JS bigints
       return BigInt(this.sourceString)
     },
 
     floatlit(_whole, _point, _fraction, _e, _sign, _exponent) {
+      // Carlos floats will be represented as plain JS numbers
       return Number(this.sourceString)
     },
 
     stringlit(_openQuote, _chars, _closeQuote) {
+      // Carlos strings will be represented as plain JS strings
       return this.sourceString
     },
 
@@ -567,8 +572,6 @@ export default function analyze(sourceCode) {
     context.add(name, type)
   }
   const match = grammar.match(sourceCode)
-  if (!match.succeeded()) {
-    core.error(match.message)
-  }
+  if (!match.succeeded()) core.error(match.message)
   return analyzer(match).rep()
 }

@@ -41,6 +41,9 @@ export class Type {
   static VOID = new Type("void")
   static ANY = new Type("any")
   constructor(description) {
+    // The description is a convenient way to view the type. For basic
+    // types or structs, it will just be the names. For arrays, you will
+    // see "[T]". For optionals, "T?". For functions "(T1,...Tn)->T0".
     Object.assign(this, { description })
   }
   // Equivalence: when are two types the same
@@ -287,7 +290,10 @@ export class MemberExpression {
 }
 
 export class Call {
-  // Example: move(player, 90, "west")
+  // Example: move(player, 90, "west"). Calls can be constructor
+  // invocations or function calls. Since calls are expressions,
+  // They will need a type. This should be the return type of the
+  // function or the type of the constructor.
   constructor(callee, args, type) {
     Object.assign(this, { callee, args, type })
   }

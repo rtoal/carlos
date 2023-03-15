@@ -113,7 +113,7 @@ function assignable(fromType, toType) {
       assignable(fromType.returnType, toType.returnType) &&
       fromType.paramTypes.length === toType.paramTypes.length &&
       // contravariant in parameter types
-      fromType.paramTypes.every((t, i) => assignable(toType, t.paramTypes[i])))
+      toType.paramTypes.every((t, i) => assignable(t, fromType.paramTypes[i])))
   )
 }
 

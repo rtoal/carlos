@@ -210,16 +210,16 @@ export default function analyze(sourceCode) {
   let context = new Context({})
 
   const analyzer = grammar.createSemantics().addOperation("rep", {
-    Program(body) {
-      return new core.Program(body.rep())
+    Program(statements) {
+      return new core.Program(statements.rep())
     },
 
-    VarDecl(modifier, id, _eq, initializer, _semicolon) {
-      const e = initializer.rep()
+    VarDecl(modifier, id, _eq, exp, _semicolon) {
+      const initializer = exp.rep()
       const readOnly = modifier.sourceString === "const"
-      const v = new core.Variable(id.sourceString, readOnly, e.type)
-      context.add(id.sourceString, v)
-      return new core.VariableDeclaration(v, e)
+      const variable = new core.Variable(id.sourceString, readOnly, initializer.type)
+      context.add(id.sourceString, variable)
+      return new core.VariableDeclaration(variable, initializer)
     },
 
     TypeDecl(_struct, id, _left, fields, _right) {
@@ -237,17 +237,20 @@ export default function analyze(sourceCode) {
       return new core.Field(id.rep(), type.rep())
     },
 
-    FunDecl(_fun, id, _open, params, _close, _colons, returnType, body) {
-      const rt = returnType.rep()[0] ?? VOID
-      const paramReps = params.asIteration().rep()
-      const paramTypes = paramReps.map(p => p.type)
-      const f = new core.Function(id.sourceString, new core.FunctionType(paramTypes, rt))
-      context.add(id.sourceString, f)
-      context = context.newChildContext({ inLoop: false, function: f })
-      for (const p of paramReps) context.add(p.name, p)
-      const b = body.rep()
+    FunDecl(_fun, id, _open, paramList, _close, _colons, type, block) {
+      const returnType = type.rep()[0] ?? VOID
+      const params = paramList.asIteration().rep()
+      const paramTypes = params.map(param => param.type)
+      const fun = new core.Function(
+        id.sourceString,
+        new core.FunctionType(paramTypes, returnType)
+      )
+      context.add(id.sourceString, fun)
+      context = context.newChildContext({ inLoop: false, function: fun })
+      for (const param of params) context.add(param.name, param)
+      const body = block.rep()
       context = context.parent
-      return new core.FunctionDeclaration(id.sourceString, f, paramReps, b)
+      return new core.FunctionDeclaration(id.sourceString, fun, params, body)
     },
 
     Param(id, _colon, type) {
@@ -272,20 +275,20 @@ export default function analyze(sourceCode) {
       return entity
     },
 
-    Statement_bump(variable, operator, _semicolon) {
-      const v = variable.rep()
-      mustHaveIntegerType(v)
+    Statement_bump(exp, operator, _semicolon) {
+      const variable = exp.rep()
+      mustHaveIntegerType(variable)
       return operator.sourceString === "++"
-        ? new core.Increment(v)
-        : new core.Decrement(v)
+        ? new core.Increment(variable)
+        : new core.Decrement(variable)
     },
 
     Statement_assign(variable, _eq, expression, _semicolon) {
-      const e = expression.rep()
-      const v = variable.rep()
-      mustBeAssignable(e, { toType: v.type })
-      mustNotBeReadOnly(v)
-      return new core.Assignment(v, e)
+      const source = expression.rep()
+      const target = variable.rep()
+      mustBeAssignable(source, { toType: target.type })
+      mustNotBeReadOnly(target)
+      return new core.Assignment(target, source)
     },
 
     Statement_call(call, _semicolon) {
@@ -297,12 +300,12 @@ export default function analyze(sourceCode) {
       return new core.BreakStatement()
     },
 
-    Statement_return(returnKeyword, expression, _semicolon) {
+    Statement_return(returnKeyword, exp, _semicolon) {
       mustBeInAFunction(context, returnKeyword)
       mustReturnSomething(context.function)
-      const e = expression.rep()
-      mustBeReturnable({ expression: e, from: context.function })
-      return new core.ReturnStatement(e)
+      const returnExpression = exp.rep()
+      mustBeReturnable({ expression: returnExpression, from: context.function })
+      return new core.ReturnStatement(returnExpression)
     },
 
     Statement_shortreturn(_return, _semicolon) {
@@ -311,76 +314,76 @@ export default function analyze(sourceCode) {
       return new core.ShortReturnStatement()
     },
 
-    IfStmt_long(_if, test, consequent, _else, alternate) {
-      const testRep = test.rep()
-      mustHaveBooleanType(testRep)
+    IfStmt_long(_if, exp, thenBlock, _else, elseBlock) {
+      const test = exp.rep()
+      mustHaveBooleanType(test)
       context = context.newChildContext()
-      const consequentRep = consequent.rep()
+      const consequent = thenBlock.rep()
       context = context.parent
       context = context.newChildContext()
-      const alternateRep = alternate.rep()
+      const alternate = elseBlock.rep()
       context = context.parent
-      return new core.IfStatement(testRep, consequentRep, alternateRep)
+      return new core.IfStatement(test, consequent, alternate)
     },
 
-    IfStmt_elsif(_if, test, consequent, _else, alternate) {
-      const testRep = test.rep()
-      mustHaveBooleanType(testRep)
+    IfStmt_elsif(_if, exp, thenBlock, _else, elseIfStatement) {
+      const test = exp.rep()
+      mustHaveBooleanType(test)
       context = context.newChildContext()
-      const consequentRep = consequent.rep()
+      const consequent = thenBlock.rep()
       // Do NOT make a new context for the alternate!
-      const alternateRep = alternate.rep()
-      return new core.IfStatement(testRep, consequentRep, alternateRep)
+      const alternate = elseIfStatement.rep()
+      return new core.IfStatement(test, consequent, alternate)
     },
 
-    IfStmt_short(_if, test, consequent) {
-      const testRep = test.rep()
-      mustHaveBooleanType(testRep, test)
+    IfStmt_short(_if, exp, thenBlock) {
+      const test = exp.rep()
+      mustHaveBooleanType(test, exp)
       context = context.newChildContext()
-      const consequentRep = consequent.rep()
+      const consequent = thenBlock.rep()
       context = context.parent
-      return new core.ShortIfStatement(testRep, consequentRep)
+      return new core.ShortIfStatement(test, consequent)
     },
 
-    LoopStmt_while(_while, test, body) {
-      const t = test.rep()
-      mustHaveBooleanType(t)
+    LoopStmt_while(_while, exp, block) {
+      const test = exp.rep()
+      mustHaveBooleanType(test)
       context = context.newChildContext({ inLoop: true })
-      const b = body.rep()
+      const body = block.rep()
       context = context.parent
-      return new core.WhileStatement(t, b)
+      return new core.WhileStatement(test, body)
     },
 
-    LoopStmt_repeat(_repeat, count, body) {
-      const c = count.rep()
-      mustHaveIntegerType(c)
+    LoopStmt_repeat(_repeat, exp, block) {
+      const count = exp.rep()
+      mustHaveIntegerType(count)
       context = context.newChildContext({ inLoop: true })
-      const b = body.rep()
+      const body = block.rep()
       context = context.parent
-      return new core.RepeatStatement(c, b)
+      return new core.RepeatStatement(count, body)
     },
 
-    LoopStmt_range(_for, id, _in, low, op, high, body) {
-      const [x, y] = [low.rep(), high.rep()]
-      mustHaveIntegerType(x)
-      mustHaveIntegerType(y)
+    LoopStmt_range(_for, id, _in, exp1, op, exp2, block) {
+      const [low, high] = [exp1.rep(), exp2.rep()]
+      mustHaveIntegerType(low)
+      mustHaveIntegerType(high)
       const iterator = new core.Variable(id.sourceString, INT, true)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
-      const b = body.rep()
+      const body = block.rep()
       context = context.parent
-      return new core.ForRangeStatement(iterator, x, op.rep(), y, b)
+      return new core.ForRangeStatement(iterator, low, op.rep(), high, body)
     },
 
-    LoopStmt_collection(_for, id, _in, collection, body) {
-      const c = collection.rep()
-      mustHaveAnArrayType(c)
-      const i = new core.Variable(id.sourceString, true, c.type.baseType)
+    LoopStmt_collection(_for, id, _in, exp, block) {
+      const collection = exp.rep()
+      mustHaveAnArrayType(collection)
+      const iterator = new core.Variable(id.sourceString, true, collection.type.baseType)
       context = context.newChildContext({ inLoop: true })
-      context.add(i.name, i)
-      const b = body.rep()
+      context.add(iterator.name, iterator)
+      const body = block.rep()
       context = context.parent
-      return new core.ForStatement(i, c, b)
+      return new core.ForStatement(iterator, collection, body)
     },
 
     Block(_open, body, _close) {
@@ -388,19 +391,19 @@ export default function analyze(sourceCode) {
       return body.rep()
     },
 
-    Exp_conditional(test, _questionMark, consequent, _colon, alternate) {
-      const x = test.rep()
-      mustHaveBooleanType(x)
-      const [y, z] = [consequent.rep(), alternate.rep()]
-      mustBeTheSameType(y, z)
-      return new core.Conditional(x, y, z)
+    Exp_conditional(exp, _questionMark, thenExp, _colon, elseExp) {
+      const test = exp.rep()
+      mustHaveBooleanType(test)
+      const [consequent, alternate] = [thenExp.rep(), elseExp.rep()]
+      mustBeTheSameType(consequent, alternate)
+      return new core.Conditional(test, consequent, alternate)
     },
 
-    Exp1_unwrapelse(unwrap, op, alternate) {
-      const [x, o, y] = [unwrap.rep(), op.sourceString, alternate.rep()]
-      mustHaveAnOptionalType(x)
-      mustBeAssignable(y, { toType: x.type.baseType })
-      return new core.BinaryExpression(o, x, y, x.type)
+    Exp1_unwrapelse(exp, op, elseExp) {
+      const [optional, o, alternate] = [exp.rep(), op.sourceString, elseExp.rep()]
+      mustHaveAnOptionalType(optional)
+      mustBeAssignable(alternate, { toType: optional.type.baseType })
+      return new core.BinaryExpression(o, optional, alternate, optional.type)
     },
 
     Exp2_or(left, ops, right) {
@@ -502,11 +505,11 @@ export default function analyze(sourceCode) {
       return new core.UnaryExpression(o, x, type)
     },
 
-    Exp9_emptyarray(_keyword, _left, _of, type, _right) {
+    Exp9_emptyarray(_brackets, _left, _of, type, _right) {
       return new core.EmptyArray(type.rep())
     },
 
-    Exp9_arrayexp(_left, args, _right) {
+    Exp9_arrayexp(_open, args, _close) {
       const elements = args.asIteration().rep()
       mustAllHaveSameType(elements)
       return new core.ArrayExpression(elements)
@@ -520,38 +523,38 @@ export default function analyze(sourceCode) {
       return expression.rep()
     },
 
-    Exp9_subscript(array, _left, subscript, _right) {
-      const [a, i] = [array.rep(), subscript.rep()]
-      mustHaveAnArrayType(a)
-      mustHaveIntegerType(i)
-      return new core.SubscriptExpression(a, i)
+    Exp9_subscript(arrayExp, _open, subscriptExp, _close) {
+      const [array, subscript] = [arrayExp.rep(), subscriptExp.rep()]
+      mustHaveAnArrayType(array)
+      mustHaveIntegerType(subscript)
+      return new core.SubscriptExpression(array, subscript)
     },
 
-    Exp9_member(object, dot, field) {
-      const x = object.rep()
+    Exp9_member(objectExp, dot, fieldId) {
+      const object = objectExp.rep()
       const isOptional = dot.sourceString === "?."
       let structType
       if (isOptional) {
-        mustHaveOptionalStructType(x)
-        structType = x.type.baseType
+        mustHaveOptionalStructType(object)
+        structType = object.type.baseType
       } else {
-        mustHaveAStructType(x)
-        structType = x.type
+        mustHaveAStructType(object)
+        structType = object.type
       }
-      memberMustBeDeclared(field.sourceString, { in: structType })
-      const f = structType.fields.find(f => f.name === field.sourceString)
-      return new core.MemberExpression(x, f, isOptional)
+      memberMustBeDeclared(fieldId.sourceString, { in: structType })
+      const field = structType.fields.find(f => f.name === fieldId.sourceString)
+      return new core.MemberExpression(object, field, isOptional)
     },
 
-    Exp9_call(callee, _left, args, _right) {
-      const [c, a] = [callee.rep(), args.asIteration().rep()]
-      mustBeCallable(c)
-      if (c instanceof core.StructType) {
-        constructorArgumentsMustMatch(a, c)
-        return new core.ConstructorCall(c, a, c)
+    Exp9_call(exp, _open, exps, _close) {
+      const [callee, args] = [exp.rep(), exps.asIteration().rep()]
+      mustBeCallable(callee)
+      if (callee instanceof core.StructType) {
+        constructorArgumentsMustMatch(args, callee)
+        return new core.ConstructorCall(callee, args, callee)
       } else {
-        callArgumentsMustMatch(a, c.type)
-        return new core.FunctionCall(c, a, c.type.returnType)
+        callArgumentsMustMatch(args, callee.type)
+        return new core.FunctionCall(callee, args, callee.type.returnType)
       }
     },
 

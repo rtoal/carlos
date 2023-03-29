@@ -241,10 +241,8 @@ export default function analyze(sourceCode) {
       const returnType = type.rep()[0] ?? VOID
       const params = paramList.asIteration().rep()
       const paramTypes = params.map(param => param.type)
-      const fun = new core.Function(
-        id.sourceString,
-        new core.FunctionType(paramTypes, returnType)
-      )
+      const funType = new core.FunctionType(paramTypes, returnType)
+      const fun = new core.Function(id.sourceString, funType)
       context.add(id.sourceString, fun)
       context = context.newChildContext({ inLoop: false, function: fun })
       for (const param of params) context.add(param.name, param)

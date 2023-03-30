@@ -10,7 +10,8 @@ Syntax: carlos <filename> <outputType>
 
 Prints to stdout according to <outputType>, which must be one of:
 
-  analyzed   the semantically analyzed representation
+  parsed     a message that the program was matched ok by the grammar
+  analyzed   the statically analyzed representation
   optimized  the optimized semantically analyzed representation
   js         the translation to JavaScript
 `
@@ -25,6 +26,7 @@ async function compileFromFile(filename, outputType) {
   }
 }
 
+console.log(import.meta.url, process.argv[1])
 if (process.argv.length !== 4) {
   console.log(help)
 } else {

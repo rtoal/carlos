@@ -3,8 +3,6 @@ import * as ohm from "ohm-js"
 import * as core from "./core.js"
 import * as stdlib from "./stdlib.js"
 
-const grammar = ohm.grammar(fs.readFileSync("src/carlos.ohm"))
-
 // Save typing
 const INT = core.Type.INT
 const FLOAT = core.Type.FLOAT
@@ -216,10 +214,10 @@ class Context {
   }
 }
 
-export default function analyze(sourceCode) {
+export default function analyze(match) {
   let context = new Context({})
 
-  const analyzer = grammar.createSemantics().addOperation("rep", {
+  const analyzer = match.matcher.grammar.createSemantics().addOperation("rep", {
     Program(statements) {
       return new core.Program(statements.rep())
     },
@@ -612,7 +610,5 @@ export default function analyze(sourceCode) {
   for (const [name, type] of Object.entries(stdlib.contents)) {
     context.add(name, type)
   }
-  const match = grammar.match(sourceCode)
-  if (!match.succeeded()) throw new Error(match.message)
   return analyzer(match).rep()
 }

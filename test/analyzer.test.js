@@ -1,4 +1,5 @@
 import assert from "assert/strict"
+import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
 
 // Programs that are semantically correct
@@ -174,20 +175,20 @@ const semanticErrors = [
 
 describe("The analyzer", () => {
   it("throws on syntax errors", () => {
-    assert.throws(() => analyze("*(^%$"))
+    assert.throws(() => analyze(parse("*(^%$")))
   })
   for (const [scenario, source] of semanticChecks) {
     it(`recognizes ${scenario}`, () => {
-      assert.ok(analyze(source))
+      assert.ok(analyze(parse(source)))
     })
   }
   for (const [scenario, source, errorMessagePattern] of semanticErrors) {
     it(`throws on ${scenario}`, () => {
-      assert.throws(() => analyze(source), errorMessagePattern)
+      assert.throws(() => analyze(parse(source)), errorMessagePattern)
     })
   }
   it("builds an unoptimized AST for a trivial program", () => {
-    const ast = analyze("print(1+2);")
+    const ast = analyze(parse("print(1+2);"))
     assert.equal(ast.statements[0].callee.name, "print")
     assert.equal(ast.statements[0].args[0].left, 1n)
   })

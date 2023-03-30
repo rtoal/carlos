@@ -279,13 +279,13 @@ export default function analyze(sourceCode) {
 
     Type_id(id) {
       const entity = context.lookup(id.sourceString)
-      entityMustBeAType(entity)
+      entityMustBeAType(entity, { at: id })
       return entity
     },
 
     Statement_bump(exp, operator, _semicolon) {
       const variable = exp.rep()
-      mustHaveIntegerType(variable)
+      mustHaveIntegerType(variable, { at: exp })
       return operator.sourceString === "++"
         ? new core.Increment(variable)
         : new core.Decrement(variable)
@@ -295,7 +295,7 @@ export default function analyze(sourceCode) {
       const source = expression.rep()
       const target = variable.rep()
       mustBeAssignable(source, { toType: target.type })
-      mustNotBeReadOnly(target)
+      mustNotBeReadOnly(target, { at: variable })
       return new core.Assignment(target, source)
     },
 
@@ -303,28 +303,28 @@ export default function analyze(sourceCode) {
       return call.rep()
     },
 
-    Statement_break(_break, _semicolon) {
-      mustBeInLoop(context)
+    Statement_break(breakKeyword, _semicolon) {
+      mustBeInLoop(context, { at: breakKeyword })
       return new core.BreakStatement()
     },
 
     Statement_return(returnKeyword, exp, _semicolon) {
-      mustBeInAFunction(context, returnKeyword)
+      mustBeInAFunction(context, { at: returnKeyword })
       mustReturnSomething(context.function)
       const returnExpression = exp.rep()
       mustBeReturnable({ expression: returnExpression, from: context.function })
       return new core.ReturnStatement(returnExpression)
     },
 
-    Statement_shortreturn(_return, _semicolon) {
-      mustBeInAFunction(context)
+    Statement_shortreturn(returnKeyword, _semicolon) {
+      mustBeInAFunction(context, { at: returnKeyword })
       mustNotReturnAnything(context.function)
       return new core.ShortReturnStatement()
     },
 
     IfStmt_long(_if, exp, thenBlock, _else, elseBlock) {
       const test = exp.rep()
-      mustHaveBooleanType(test)
+      mustHaveBooleanType(test, { at: exp })
       context = context.newChildContext()
       const consequent = thenBlock.rep()
       context = context.parent
@@ -334,13 +334,13 @@ export default function analyze(sourceCode) {
       return new core.IfStatement(test, consequent, alternate)
     },
 
-    IfStmt_elsif(_if, exp, thenBlock, _else, elseIfStatement) {
+    IfStmt_elsif(_if, exp, block, _else, trailingIfStatement) {
       const test = exp.rep()
-      mustHaveBooleanType(test)
+      mustHaveBooleanType(test, { at: exp })
       context = context.newChildContext()
-      const consequent = thenBlock.rep()
+      const consequent = block.rep()
       // Do NOT make a new context for the alternate!
-      const alternate = elseIfStatement.rep()
+      const alternate = trailingIfStatement.rep()
       return new core.IfStatement(test, consequent, alternate)
     },
 
@@ -471,11 +471,11 @@ export default function analyze(sourceCode) {
       return new core.BinaryExpression(o, x, y, BOOLEAN)
     },
 
-    Exp5_shift(left, op, right) {
-      const [x, o, y] = [left.rep(), op.rep(), right.rep()]
-      mustHaveIntegerType(x)
-      mustHaveIntegerType(y)
-      return new core.BinaryExpression(o, x, y, INT)
+    Exp5_shift(exp1, shiftOp, exp2) {
+      const [left, op, right] = [exp1.rep(), shiftOp.rep(), exp2.rep()]
+      mustHaveIntegerType(left, { at: exp1 })
+      mustHaveIntegerType(right, { at: exp2 })
+      return new core.BinaryExpression(op, left, right, INT)
     },
 
     Exp6_add(left, op, right) {
@@ -489,18 +489,18 @@ export default function analyze(sourceCode) {
       return new core.BinaryExpression(o, x, y, x.type)
     },
 
-    Exp7_multiply(left, op, right) {
-      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
-      mustHaveNumericType(x)
-      mustBeTheSameType(x, y)
-      return new core.BinaryExpression(o, x, y, x.type)
+    Exp7_multiply(exp1, multiplicativeOp, exp2) {
+      const [left, op, right] = [exp1.rep(), multiplicativeOp.rep(), exp2.rep()]
+      mustHaveNumericType(left, { at: exp1 })
+      mustBeTheSameType(left, right, { at: multiplicativeOp })
+      return new core.BinaryExpression(op, left, right, left.type)
     },
 
-    Exp8_power(left, op, right) {
-      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
-      mustHaveNumericType(x)
-      mustBeTheSameType(x, y)
-      return new core.BinaryExpression(o, x, y, x.type)
+    Exp8_power(exp1, powerOp, exp2) {
+      const [left, op, right] = [exp1.rep(), powerOp.rep(), exp2.rep()]
+      mustHaveNumericType(left, { at: exp1 })
+      mustBeTheSameType(left, right, { at: powerOp })
+      return new core.BinaryExpression(op, left, right, left.type)
     },
 
     Exp8_unary(op, operand) {
@@ -519,7 +519,7 @@ export default function analyze(sourceCode) {
 
     Exp9_arrayexp(_open, args, _close) {
       const elements = args.asIteration().rep()
-      mustAllHaveSameType(elements)
+      mustAllHaveSameType(elements, { at: args })
       return new core.ArrayExpression(elements)
     },
 

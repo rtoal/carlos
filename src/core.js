@@ -248,6 +248,7 @@ export class FunctionCall {
 }
 
 export class ConstructorCall {
+  // Syntactically similar, but semantically different, from function calls
   constructor(callee, args, type) {
     Object.assign(this, { callee, args, type })
   }
@@ -255,7 +256,7 @@ export class ConstructorCall {
 
 // We want every expression to have a type property. But we aren't creating
 // special entities for numbers, strings, and booleans; instead, we are
-// just using JavaScript values for those. Fortunately we can monkeypatch
+// just using JavaScript values for those. Fortunately we can monkey patch
 // the JS classes for these to give us what we want.
 String.prototype.type = Type.STRING
 Number.prototype.type = Type.FLOAT

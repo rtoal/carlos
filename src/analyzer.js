@@ -13,8 +13,18 @@ const BOOLEAN = core.Type.BOOLEAN
 const ANY = core.Type.ANY
 const VOID = core.Type.VOID
 
+// A single point for error checking. Pass in a condition that must be true.
+// Use errorLocation to give contextual information about the error that will
+// appear: this should be either a node from the concrete syntax tree or an
+// object in which the node is the value of the "at" property. If this location
+// is a well-formed CST node, Ohm's getLineAndColumnMessage will be used to
+// generate a helpful error message.
 function must(condition, message, errorLocation) {
-  if (!condition) core.error(message, errorLocation)
+  if (!condition) {
+    const token = errorLocation?.at ?? errorLocation
+    const prefix = token?.source?.getLineAndColumnMessage?.()
+    throw new Error(`${prefix}${message}`)
+  }
 }
 
 function mustNotAlreadyBeDeclared(context, name) {
@@ -334,18 +344,18 @@ export default function analyze(sourceCode) {
       return new core.IfStatement(test, consequent, alternate)
     },
 
-    IfStmt_short(_if, exp, thenBlock) {
+    IfStmt_short(_if, exp, block) {
       const test = exp.rep()
-      mustHaveBooleanType(test, exp)
+      mustHaveBooleanType(test, { at: exp })
       context = context.newChildContext()
-      const consequent = thenBlock.rep()
+      const consequent = block.rep()
       context = context.parent
       return new core.ShortIfStatement(test, consequent)
     },
 
     LoopStmt_while(_while, exp, block) {
       const test = exp.rep()
-      mustHaveBooleanType(test)
+      mustHaveBooleanType(test, { at: exp })
       context = context.newChildContext({ inLoop: true })
       const body = block.rep()
       context = context.parent
@@ -354,7 +364,7 @@ export default function analyze(sourceCode) {
 
     LoopStmt_repeat(_repeat, exp, block) {
       const count = exp.rep()
-      mustHaveIntegerType(count)
+      mustHaveIntegerType(count, { at: exp })
       context = context.newChildContext({ inLoop: true })
       const body = block.rep()
       context = context.parent
@@ -363,19 +373,19 @@ export default function analyze(sourceCode) {
 
     LoopStmt_range(_for, id, _in, exp1, op, exp2, block) {
       const [low, high] = [exp1.rep(), exp2.rep()]
-      mustHaveIntegerType(low)
-      mustHaveIntegerType(high)
+      mustHaveIntegerType(low, { at: exp1 })
+      mustHaveIntegerType(high, { at: exp2 })
       const iterator = new core.Variable(id.sourceString, INT, true)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
       const body = block.rep()
       context = context.parent
-      return new core.ForRangeStatement(iterator, low, op.rep(), high, body)
+      return new core.ForRangeStatement(iterator, low, op.sourceString, high, body)
     },
 
     LoopStmt_collection(_for, id, _in, exp, block) {
       const collection = exp.rep()
-      mustHaveAnArrayType(collection)
+      mustHaveAnArrayType(collection, { at: exp })
       const iterator = new core.Variable(id.sourceString, true, collection.type.baseType)
       context = context.newChildContext({ inLoop: true })
       context.add(iterator.name, iterator)
@@ -389,17 +399,17 @@ export default function analyze(sourceCode) {
       return body.rep()
     },
 
-    Exp_conditional(exp, _questionMark, thenExp, _colon, elseExp) {
+    Exp_conditional(exp, _questionMark, thenExp, colon, elseExp) {
       const test = exp.rep()
-      mustHaveBooleanType(test)
+      mustHaveBooleanType(test, { at: exp })
       const [consequent, alternate] = [thenExp.rep(), elseExp.rep()]
-      mustBeTheSameType(consequent, alternate)
+      mustBeTheSameType(consequent, alternate, { at: colon })
       return new core.Conditional(test, consequent, alternate)
     },
 
     Exp1_unwrapelse(exp, op, elseExp) {
       const [optional, o, alternate] = [exp.rep(), op.sourceString, elseExp.rep()]
-      mustHaveAnOptionalType(optional)
+      mustHaveAnOptionalType(optional, { at: exp })
       mustBeAssignable(alternate, { toType: optional.type.baseType })
       return new core.BinaryExpression(o, optional, alternate, optional.type)
     },
@@ -521,32 +531,32 @@ export default function analyze(sourceCode) {
       return expression.rep()
     },
 
-    Exp9_subscript(arrayExp, _open, subscriptExp, _close) {
-      const [array, subscript] = [arrayExp.rep(), subscriptExp.rep()]
-      mustHaveAnArrayType(array)
-      mustHaveIntegerType(subscript)
+    Exp9_subscript(exp1, _open, exp2, _close) {
+      const [array, subscript] = [exp1.rep(), exp2.rep()]
+      mustHaveAnArrayType(array, { at: exp1 })
+      mustHaveIntegerType(subscript, { at: exp2 })
       return new core.SubscriptExpression(array, subscript)
     },
 
-    Exp9_member(objectExp, dot, fieldId) {
-      const object = objectExp.rep()
+    Exp9_member(exp, dot, id) {
+      const object = exp.rep()
       const isOptional = dot.sourceString === "?."
       let structType
       if (isOptional) {
-        mustHaveOptionalStructType(object)
+        mustHaveOptionalStructType(object, { at: exp })
         structType = object.type.baseType
       } else {
-        mustHaveAStructType(object)
+        mustHaveAStructType(object, { at: exp })
         structType = object.type
       }
-      memberMustBeDeclared(fieldId.sourceString, { in: structType })
-      const field = structType.fields.find(f => f.name === fieldId.sourceString)
+      memberMustBeDeclared(id.sourceString, { in: structType })
+      const field = structType.fields.find(f => f.name === id.sourceString)
       return new core.MemberExpression(object, field, isOptional)
     },
 
     Exp9_call(exp, _open, exps, _close) {
       const [callee, args] = [exp.rep(), exps.asIteration().rep()]
-      mustBeCallable(callee)
+      mustBeCallable(callee, { at: exp })
       if (callee instanceof core.StructType) {
         constructorArgumentsMustMatch(args, callee)
         return new core.ConstructorCall(callee, args, callee)
@@ -603,6 +613,6 @@ export default function analyze(sourceCode) {
     context.add(name, type)
   }
   const match = grammar.match(sourceCode)
-  if (!match.succeeded()) core.error(match.message)
+  if (!match.succeeded()) throw new Error(match.message)
   return analyzer(match).rep()
 }

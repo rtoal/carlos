@@ -253,14 +253,6 @@ export class ConstructorCall {
   }
 }
 
-// Throw an error message that takes advantage of Ohm's messaging
-export function error(message, node) {
-  if (node) {
-    throw new Error(`${node.source.getLineAndColumnMessage()}${message}`)
-  }
-  throw new Error(message)
-}
-
 // We want every expression to have a type property. But we aren't creating
 // special entities for numbers, strings, and booleans; instead, we are
 // just using JavaScript values for those. Fortunately we can monkeypatch

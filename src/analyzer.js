@@ -468,7 +468,7 @@ export default function analyze(match) {
     },
 
     Exp5_shift(exp1, shiftOp, exp2) {
-      const [left, op, right] = [exp1.rep(), shiftOp.rep(), exp2.rep()]
+      const [left, op, right] = [exp1.rep(), shiftOp.sourceString, exp2.rep()]
       mustHaveIntegerType(left, { at: exp1 })
       mustHaveIntegerType(right, { at: exp2 })
       return new core.BinaryExpression(op, left, right, INT)
@@ -486,14 +486,14 @@ export default function analyze(match) {
     },
 
     Exp7_multiply(exp1, mulOp, exp2) {
-      const [left, op, right] = [exp1.rep(), mulOp.rep(), exp2.rep()]
+      const [left, op, right] = [exp1.rep(), mulOp.sourceString, exp2.rep()]
       mustHaveNumericType(left, { at: exp1 })
       mustBeTheSameType(left, right, { at: mulOp })
       return new core.BinaryExpression(op, left, right, left.type)
     },
 
     Exp8_power(exp1, powerOp, exp2) {
-      const [left, op, right] = [exp1.rep(), powerOp.rep(), exp2.rep()]
+      const [left, op, right] = [exp1.rep(), powerOp.sourceString, exp2.rep()]
       mustHaveNumericType(left, { at: exp1 })
       mustBeTheSameType(left, right, { at: powerOp })
       return new core.BinaryExpression(op, left, right, left.type)
@@ -600,10 +600,6 @@ export default function analyze(match) {
 
     stringlit(_openQuote, _chars, _closeQuote) {
       // Carlos strings will be represented as plain JS strings
-      return this.sourceString
-    },
-
-    _terminal() {
       return this.sourceString
     },
 

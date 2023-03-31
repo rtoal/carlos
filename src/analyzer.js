@@ -15,12 +15,12 @@ const BOOLEAN = core.Type.BOOLEAN
 const ANY = core.Type.ANY
 const VOID = core.Type.VOID
 
-// A single point for error checking. Pass in a condition that must be true.
+// The single gate for error checking. Pass in a condition that must be true.
 // Use errorLocation to give contextual information about the error that will
-// appear: this should be either a node from the concrete syntax tree or an
-// object in which the node is the value of the "at" property. If this location
-// is a well-formed CST node, Ohm's getLineAndColumnMessage will be used to
-// generate a helpful error message.
+// appear: this can be (1) missing, to leave the error message as-is, or (2)
+// a node from the Ohm parse tree, or (3) an object whose "at" property holds
+// parse tree node. In the latter cases, Ohm's getLineAndColumnMessage will be
+// used to prefix the error message.
 function must(condition, message, errorLocation) {
   if (!condition) {
     const token = errorLocation?.at ?? errorLocation
@@ -29,8 +29,8 @@ function must(condition, message, errorLocation) {
   }
 }
 
-function mustNotAlreadyBeDeclared(context, name) {
-  must(!context.lookup(name), `Identifier ${name} already declared`)
+function mustNotAlreadyBeDeclared(context, name, at) {
+  must(!context.lookup(name), `Identifier ${name} already declared`, at)
 }
 
 function mustHaveBeenFound(entity, name, at) {
@@ -146,7 +146,7 @@ function fieldsMustBeDistinct(fields, at) {
   must(fieldNames.size === fields.length, "Fields must be distinct", at)
 }
 
-function memberMustBeDeclared(field, { in: structType }, at) {
+function memberMustBeDeclared(structType, field, at) {
   must(structType.fields.map(f => f.name).includes(field), "No such field", at)
 }
 
@@ -159,11 +159,8 @@ function mustBeInAFunction(context, at) {
 }
 
 function mustBeCallable(e, at) {
-  must(
-    e instanceof core.StructType || e.type.constructor == core.FunctionType,
-    "Call of non-function or non-constructor",
-    at
-  )
+  const callable = e instanceof core.StructType || e.type instanceof core.FunctionType
+  must(callable, "Call of non-function or non-constructor", at)
 }
 
 function mustNotReturnAnything(f, at) {
@@ -178,22 +175,12 @@ function mustBeReturnable({ expression: e, from: f }, at) {
   mustBeAssignable(e, { toType: f.type.returnType }, at)
 }
 
-function argumentsMustMatch(args, targetTypes, at) {
+function mustHaveRightNumberOfArguments(argCount, paramCount, at) {
   must(
-    targetTypes.length === args.length,
-    `${targetTypes.length} argument(s) required but ${args.length} passed`,
+    argCount === paramCount,
+    `${paramCount} argument(s) required but ${argCount} passed`,
     at
   )
-  targetTypes.forEach((type, i) => mustBeAssignable(args[i], { toType: type }))
-}
-
-function callArgumentsMustMatch(args, calleeType, at) {
-  argumentsMustMatch(args, calleeType.paramTypes, at)
-}
-
-function constructorArgumentsMustMatch(args, structType, at) {
-  const fieldTypes = structType.fields.map(f => f.type)
-  argumentsMustMatch(args, fieldTypes, at)
 }
 
 class Context {
@@ -201,7 +188,6 @@ class Context {
     Object.assign(this, { parent, locals, inLoop, function: f })
   }
   add(name, entity) {
-    mustNotAlreadyBeDeclared(this, name)
     this.locals.set(name, entity)
   }
   lookup(name) {
@@ -224,6 +210,7 @@ export default function analyze(match) {
       const initializer = exp.rep()
       const readOnly = modifier.sourceString === "const"
       const variable = new core.Variable(id.sourceString, readOnly, initializer.type)
+      mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
       context.add(id.sourceString, variable)
       return new core.VariableDeclaration(variable, initializer)
     },
@@ -231,6 +218,7 @@ export default function analyze(match) {
     TypeDecl(_struct, id, _left, fields, _right) {
       // To allow recursion, enter into context without any fields yet
       const type = new core.StructType(id.sourceString, [])
+      mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
       context.add(id.sourceString, type)
       // Now add the types as you parse and analyze
       type.fields = fields.rep()
@@ -249,9 +237,13 @@ export default function analyze(match) {
       const paramTypes = params.map(param => param.type)
       const funType = new core.FunctionType(paramTypes, returnType)
       const fun = new core.Function(id.sourceString, funType)
+      mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
       context.add(id.sourceString, fun)
       context = context.newChildContext({ inLoop: false, function: fun })
-      for (const param of params) context.add(param.name, param)
+      for (const param of params) {
+        // mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
+        context.add(param.name, param)
+      }
       const body = block.rep()
       context = context.parent
       return new core.FunctionDeclaration(id.sourceString, fun, params, body)
@@ -291,7 +283,7 @@ export default function analyze(match) {
     Statement_assign(variable, _eq, expression, _semicolon) {
       const source = expression.rep()
       const target = variable.rep()
-      mustBeAssignable(source, { toType: target.type })
+      mustBeAssignable(source, { toType: target.type }, { at: variable })
       mustNotBeReadOnly(target, { at: variable })
       return new core.Assignment(target, source)
     },
@@ -461,11 +453,11 @@ export default function analyze(match) {
       return x
     },
 
-    Exp4_compare(left, op, right) {
-      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
-      if (["<", "<=", ">", ">="].includes(op.sourceString)) mustHaveNumericOrStringType(x)
-      mustBeTheSameType(x, y)
-      return new core.BinaryExpression(o, x, y, BOOLEAN)
+    Exp4_compare(exp1, relop, exp2) {
+      const [left, op, right] = [exp1.rep(), relop.sourceString, exp2.rep()]
+      if (["<", "<=", ">", ">="].includes(op)) mustHaveNumericOrStringType(left)
+      mustBeTheSameType(left, right)
+      return new core.BinaryExpression(op, left, right, BOOLEAN)
     },
 
     Exp5_shift(exp1, shiftOp, exp2) {
@@ -475,21 +467,21 @@ export default function analyze(match) {
       return new core.BinaryExpression(op, left, right, INT)
     },
 
-    Exp6_add(left, op, right) {
-      const [x, o, y] = [left.rep(), op.sourceString, right.rep()]
-      if (o === "+") {
-        mustHaveNumericOrStringType(x)
+    Exp6_add(exp1, addOp, exp2) {
+      const [left, op, right] = [exp1.rep(), addOp.sourceString, exp2.rep()]
+      if (op === "+") {
+        mustHaveNumericOrStringType(left, { at: exp1 })
       } else {
-        mustHaveNumericType(x)
+        mustHaveNumericType(left, { at: exp1 })
       }
-      mustBeTheSameType(x, y)
-      return new core.BinaryExpression(o, x, y, x.type)
+      mustBeTheSameType(left, right, { at: addOp })
+      return new core.BinaryExpression(op, left, right, left.type)
     },
 
-    Exp7_multiply(exp1, multiplicativeOp, exp2) {
-      const [left, op, right] = [exp1.rep(), multiplicativeOp.rep(), exp2.rep()]
+    Exp7_multiply(exp1, mulOp, exp2) {
+      const [left, op, right] = [exp1.rep(), mulOp.rep(), exp2.rep()]
       mustHaveNumericType(left, { at: exp1 })
-      mustBeTheSameType(left, right, { at: multiplicativeOp })
+      mustBeTheSameType(left, right, { at: mulOp })
       return new core.BinaryExpression(op, left, right, left.type)
     },
 
@@ -546,21 +538,28 @@ export default function analyze(match) {
         mustHaveAStructType(object, { at: exp })
         structType = object.type
       }
-      memberMustBeDeclared(id.sourceString, { in: structType })
+      memberMustBeDeclared(structType, id.sourceString, { at: id })
       const field = structType.fields.find(f => f.name === id.sourceString)
       return new core.MemberExpression(object, field, isOptional)
     },
 
-    Exp9_call(exp, _open, exps, _close) {
-      const [callee, args] = [exp.rep(), exps.asIteration().rep()]
+    Exp9_call(exp, open, expList, _close) {
+      const callee = exp.rep()
       mustBeCallable(callee, { at: exp })
-      if (callee instanceof core.StructType) {
-        constructorArgumentsMustMatch(args, callee)
-        return new core.ConstructorCall(callee, args, callee)
-      } else {
-        callArgumentsMustMatch(args, callee.type)
-        return new core.FunctionCall(callee, args, callee.type.returnType)
-      }
+      const exps = expList.asIteration().children
+      const isConstructorCall = callee instanceof core.StructType
+      const targetTypes = isConstructorCall
+        ? callee.fields.map(f => f.type)
+        : callee.type.paramTypes
+      mustHaveRightNumberOfArguments(exps.length, targetTypes.length, { at: open })
+      const args = exps.map((exp, i) => {
+        const arg = exp.rep()
+        mustBeAssignable(arg, { toType: targetTypes[i] }, { at: exp })
+        return arg
+      })
+      return isConstructorCall
+        ? new core.ConstructorCall(callee, args, callee)
+        : new core.FunctionCall(callee, args, callee.type.returnType)
     },
 
     Exp9_id(id) {
@@ -607,7 +606,9 @@ export default function analyze(match) {
     },
   })
 
-  // Analysis starts here
+  // Analysis starts here. First load up the initial context with entities
+  // from the standard library. Then do the analysis using the semantics
+  // object created above.
   for (const [name, type] of Object.entries(stdlib.contents)) {
     context.add(name, type)
   }

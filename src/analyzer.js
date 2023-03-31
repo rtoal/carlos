@@ -67,7 +67,7 @@ function mustHaveAStructType(e, at) {
 
 function mustHaveOptionalStructType(e, at) {
   must(
-    e.type instanceof core.OptionalType && e.type.baseType.constructor == core.StructType,
+    e.type instanceof core.OptionalType && e.type.baseType instanceof core.StructType,
     "Expected an optional struct",
     at
   )
@@ -141,9 +141,9 @@ function mustNotBeReadOnly(e, at) {
   must(!e.readOnly, `Cannot assign to constant ${e.name}`, at)
 }
 
-function fieldsMustBeDistinct(fields, at) {
-  const fieldNames = new Set(fields.map(f => f.name))
-  must(fieldNames.size === fields.length, "Fields must be distinct", at)
+function mustHaveDistinctFields(type, at) {
+  const fieldNames = new Set(type.fields.map(f => f.name))
+  must(fieldNames.size === type.fields.length, "Fields must be distinct", at)
 }
 
 function memberMustBeDeclared(structType, field, at) {
@@ -171,7 +171,7 @@ function mustReturnSomething(f, at) {
   must(f.type.returnType !== VOID, "Cannot return a value from this function", at)
 }
 
-function mustBeReturnable({ expression: e, from: f }, at) {
+function mustBeReturnable(e, { from: f }, at) {
   mustBeAssignable(e, { toType: f.type.returnType }, at)
 }
 
@@ -222,7 +222,7 @@ export default function analyze(match) {
       context.add(id.sourceString, type)
       // Now add the types as you parse and analyze
       type.fields = fields.rep()
-      fieldsMustBeDistinct(type.fields)
+      mustHaveDistinctFields(type)
       mustNotBeRecursive(type)
       return new core.TypeDeclaration(type)
     },
@@ -301,7 +301,7 @@ export default function analyze(match) {
       mustBeInAFunction(context, { at: returnKeyword })
       mustReturnSomething(context.function)
       const returnExpression = exp.rep()
-      mustBeReturnable({ expression: returnExpression, from: context.function })
+      mustBeReturnable(returnExpression, { from: context.function }, { at: exp })
       return new core.ReturnStatement(returnExpression)
     },
 
@@ -311,14 +311,14 @@ export default function analyze(match) {
       return new core.ShortReturnStatement()
     },
 
-    IfStmt_long(_if, exp, thenBlock, _else, elseBlock) {
+    IfStmt_long(_if, exp, block1, _else, block2) {
       const test = exp.rep()
       mustHaveBooleanType(test, { at: exp })
       context = context.newChildContext()
-      const consequent = thenBlock.rep()
+      const consequent = block1.rep()
       context = context.parent
       context = context.newChildContext()
-      const alternate = elseBlock.rep()
+      const alternate = block2.rep()
       context = context.parent
       return new core.IfStatement(test, consequent, alternate)
     },
@@ -388,73 +388,80 @@ export default function analyze(match) {
       return body.rep()
     },
 
-    Exp_conditional(exp, _questionMark, thenExp, colon, elseExp) {
+    Exp_conditional(exp, _questionMark, exp1, colon, exp2) {
       const test = exp.rep()
       mustHaveBooleanType(test, { at: exp })
-      const [consequent, alternate] = [thenExp.rep(), elseExp.rep()]
+      const [consequent, alternate] = [exp1.rep(), exp2.rep()]
       mustBeTheSameType(consequent, alternate, { at: colon })
       return new core.Conditional(test, consequent, alternate)
     },
 
-    Exp1_unwrapelse(exp, op, elseExp) {
-      const [optional, o, alternate] = [exp.rep(), op.sourceString, elseExp.rep()]
-      mustHaveAnOptionalType(optional, { at: exp })
+    Exp1_unwrapelse(exp1, elseOp, exp2) {
+      const [optional, op, alternate] = [exp1.rep(), elseOp.sourceString, exp2.rep()]
+      mustHaveAnOptionalType(optional, { at: exp1 })
       mustBeAssignable(alternate, { toType: optional.type.baseType })
-      return new core.BinaryExpression(o, optional, alternate, optional.type)
+      return new core.BinaryExpression(op, optional, alternate, optional.type)
     },
 
-    Exp2_or(left, ops, right) {
-      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustHaveBooleanType(x)
-      for (let y of ys) {
-        mustHaveBooleanType(y)
-        x = new core.BinaryExpression(o, x, y, BOOLEAN)
+    Exp2_or(exp, orOps, exps) {
+      let left = exp.rep()
+      mustHaveBooleanType(left, { at: exp })
+      for (let [i, e] of exps.children.entries()) {
+        let [op, right] = [orOps.children[i].sourceString, e.rep()]
+        mustHaveBooleanType(right, { at: e })
+        left = new core.BinaryExpression(op, left, right, BOOLEAN)
       }
-      return x
+      return left
     },
 
-    Exp2_and(left, ops, right) {
-      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustHaveBooleanType(x)
-      for (let y of ys) {
-        mustHaveBooleanType(y)
-        x = new core.BinaryExpression(o, x, y, BOOLEAN)
+    Exp2_and(exp, andOps, exps) {
+      let left = exp.rep()
+      mustHaveBooleanType(left, { at: exp })
+      for (let [i, e] of exps.children.entries()) {
+        let [op, right] = [andOps.children[i].sourceString, e.rep()]
+        mustHaveBooleanType(right, { at: e })
+        left = new core.BinaryExpression(op, left, right, BOOLEAN)
       }
-      return x
+      return left
     },
 
-    Exp3_bitor(left, ops, right) {
-      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustHaveIntegerType(x)
-      for (let y of ys) {
-        mustHaveIntegerType(y)
-        x = new core.BinaryExpression(o, x, y, INT)
+    Exp3_bitor(exp, orOps, exps) {
+      let left = exp.rep()
+      mustHaveIntegerType(left, { at: exp })
+      for (let [i, e] of exps.children.entries()) {
+        let [op, right] = [orOps.children[i].sourceString, e.rep()]
+        mustHaveIntegerType(right, { at: e })
+        left = new core.BinaryExpression(op, left, right, INT)
       }
-      return x
+      return left
     },
 
-    Exp3_bitxor(left, ops, right) {
-      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustHaveIntegerType(x)
-      for (let y of ys) {
-        mustHaveIntegerType(y)
-        x = new core.BinaryExpression(o, x, y, INT)
+    Exp3_bitxor(exp, xorOps, exps) {
+      let left = exp.rep()
+      mustHaveIntegerType(left, { at: exp })
+      for (let [i, e] of exps.children.entries()) {
+        let [op, right] = [xorOps.children[i].sourceString, e.rep()]
+        mustHaveIntegerType(right, { at: e })
+        left = new core.BinaryExpression(op, left, right, INT)
       }
-      return x
+      return left
     },
 
-    Exp3_bitand(left, ops, right) {
-      let [x, o, ys] = [left.rep(), ops.rep()[0], right.rep()]
-      mustHaveIntegerType(x)
-      for (let y of ys) {
-        mustHaveIntegerType(y)
-        x = new core.BinaryExpression(o, x, y, INT)
+    Exp3_bitand(exp, andOps, exps) {
+      let left = exp.rep()
+      mustHaveIntegerType(left, { at: exp })
+      for (let [i, e] of exps.children.entries()) {
+        let [op, right] = [andOps.children[i].sourceString, e.rep()]
+        mustHaveIntegerType(right, { at: e })
+        left = new core.BinaryExpression(op, left, right, INT)
       }
-      return x
+      return left
     },
 
     Exp4_compare(exp1, relop, exp2) {
       const [left, op, right] = [exp1.rep(), relop.sourceString, exp2.rep()]
+      // == and != can have any operand types as long as they are the same
+      // But inequality operators can only be applied to numbers and strings
       if (["<", "<=", ">", ">="].includes(op)) mustHaveNumericOrStringType(left)
       mustBeTheSameType(left, right)
       return new core.BinaryExpression(op, left, right, BOOLEAN)
@@ -492,17 +499,17 @@ export default function analyze(match) {
       return new core.BinaryExpression(op, left, right, left.type)
     },
 
-    Exp8_unary(op, operand) {
-      const [o, x] = [op.sourceString, operand.rep()]
+    Exp8_unary(unaryOp, exp) {
+      const [op, operand] = [unaryOp.sourceString, exp.rep()]
       let type
-      if (o === "#") mustHaveAnArrayType(x), (type = INT)
-      else if (o === "-") mustHaveNumericType(x), (type = x.type)
-      else if (o === "!") mustHaveBooleanType(x), (type = BOOLEAN)
-      else if (o === "some") type = new core.OptionalType(x.type)
-      return new core.UnaryExpression(o, x, type)
+      if (op === "#") mustHaveAnArrayType(operand), (type = INT)
+      else if (op === "-") mustHaveNumericType(operand), (type = operand.type)
+      else if (op === "!") mustHaveBooleanType(operand), (type = BOOLEAN)
+      else if (op === "some") type = new core.OptionalType(operand.type)
+      return new core.UnaryExpression(op, operand, type)
     },
 
-    Exp9_emptyarray(_brackets, _left, _of, type, _right) {
+    Exp9_emptyarray(_brackets, _open, _of, type, _close) {
       return new core.EmptyArray(type.rep())
     },
 
@@ -547,17 +554,17 @@ export default function analyze(match) {
       const callee = exp.rep()
       mustBeCallable(callee, { at: exp })
       const exps = expList.asIteration().children
-      const isConstructorCall = callee instanceof core.StructType
-      const targetTypes = isConstructorCall
-        ? callee.fields.map(f => f.type)
-        : callee.type.paramTypes
+      const targetTypes =
+        callee instanceof core.StructType
+          ? callee.fields.map(f => f.type)
+          : callee.type.paramTypes
       mustHaveRightNumberOfArguments(exps.length, targetTypes.length, { at: open })
       const args = exps.map((exp, i) => {
         const arg = exp.rep()
         mustBeAssignable(arg, { toType: targetTypes[i] }, { at: exp })
         return arg
       })
-      return isConstructorCall
+      return callee instanceof core.StructType
         ? new core.ConstructorCall(callee, args, callee)
         : new core.FunctionCall(callee, args, callee.type.returnType)
     },

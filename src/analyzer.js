@@ -538,9 +538,8 @@ export default function analyze(match) {
 
     Exp9_member(exp, dot, id) {
       const object = exp.rep()
-      const isOptional = dot.sourceString === "?."
       let structType
-      if (isOptional) {
+      if (dot.sourceString === "?.") {
         mustHaveOptionalStructType(object, { at: exp })
         structType = object.type.baseType
       } else {
@@ -549,7 +548,7 @@ export default function analyze(match) {
       }
       memberMustBeDeclared(structType, id.sourceString, { at: id })
       const field = structType.fields.find(f => f.name === id.sourceString)
-      return new core.MemberExpression(object, field, isOptional)
+      return new core.MemberExpression(object, dot.sourceString, field)
     },
 
     Exp9_call(exp, open, expList, _close) {

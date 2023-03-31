@@ -228,9 +228,10 @@ export class EmptyArray {
 
 export class MemberExpression {
   // Example: state.population
-  constructor(object, field, isOptional) {
-    Object.assign(this, { object, field, isOptional })
-    this.type = isOptional ? new OptionalType(field.type) : field.type
+  // Example: winner?.city
+  constructor(object, op, field) {
+    Object.assign(this, { object, op, field })
+    this.type = op == "?." ? new OptionalType(field.type) : field.type
   }
 }
 
@@ -242,7 +243,7 @@ export class FunctionCall {
 }
 
 export class ConstructorCall {
-  // Syntactically similar, but semantically different, from function calls
+  // Syntactically similar to but semantically different from function calls
   constructor(callee, args, type) {
     Object.assign(this, { callee, args, type })
   }

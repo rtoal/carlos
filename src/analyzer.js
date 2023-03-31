@@ -30,7 +30,7 @@ function must(condition, message, errorLocation) {
 }
 
 function mustNotAlreadyBeDeclared(context, name) {
-  must(!context.sees(name), `Identifier ${name} already declared`)
+  must(!context.lookup(name), `Identifier ${name} already declared`)
 }
 
 function mustHaveBeenFound(entity, name, at) {
@@ -199,10 +199,6 @@ function constructorArgumentsMustMatch(args, structType, at) {
 class Context {
   constructor({ parent = null, locals = new Map(), inLoop = false, function: f = null }) {
     Object.assign(this, { parent, locals, inLoop, function: f })
-  }
-  sees(name) {
-    // Search "outward" through enclosing scopes
-    return this.locals.has(name) || this.parent?.sees(name)
   }
   add(name, entity) {
     mustNotAlreadyBeDeclared(this, name)

@@ -203,7 +203,7 @@ export default function analyze(match) {
 
   const analyzer = match.matcher.grammar.createSemantics().addOperation("rep", {
     Program(statements) {
-      return new core.Program(statements.rep())
+      return new core.Program(statements.children.map(s => s.rep()))
     },
 
     VarDecl(modifier, id, _eq, exp, _semicolon) {
@@ -221,7 +221,7 @@ export default function analyze(match) {
       mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
       context.add(id.sourceString, type)
       // Now add the types as you parse and analyze
-      type.fields = fields.rep()
+      type.fields = fields.children.map(field => field.rep())
       mustHaveDistinctFields(type)
       mustNotBeRecursive(type)
       return new core.TypeDeclaration(type)
@@ -232,8 +232,8 @@ export default function analyze(match) {
     },
 
     FunDecl(_fun, id, _open, paramList, _close, _colons, type, block) {
-      const returnType = type.rep()[0] ?? VOID
-      const params = paramList.asIteration().rep()
+      const returnType = type.children?.[0]?.rep() ?? VOID
+      const params = paramList.asIteration().children.map(p => p.rep())
       const paramTypes = params.map(param => param.type)
       const funType = new core.FunctionType(paramTypes, returnType)
       const fun = new core.Function(id.sourceString, funType)
@@ -261,8 +261,10 @@ export default function analyze(match) {
       return new core.ArrayType(baseType.rep())
     },
 
-    Type_function(_left, inTypes, _right, _arrow, outType) {
-      return new core.FunctionType(inTypes.asIteration().rep(), outType.rep())
+    Type_function(_left, types, _right, _arrow, type) {
+      const paramTypes = types.asIteration().children.map(t => t.rep())
+      const returnType = type.rep()
+      return new core.FunctionType(paramTypes, returnType)
     },
 
     Type_id(id) {
@@ -383,9 +385,9 @@ export default function analyze(match) {
       return new core.ForStatement(iterator, collection, body)
     },
 
-    Block(_open, body, _close) {
+    Block(_open, statements, _close) {
       // No need for a block node, just return the list of statements
-      return body.rep()
+      return statements.children.map(s => s.rep())
     },
 
     Exp_conditional(exp, _questionMark, exp1, colon, exp2) {
@@ -514,7 +516,7 @@ export default function analyze(match) {
     },
 
     Exp9_arrayexp(_open, args, _close) {
-      const elements = args.asIteration().rep()
+      const elements = args.asIteration().children.map(e => e.rep())
       mustAllHaveSameType(elements, { at: args })
       return new core.ArrayExpression(elements)
     },
@@ -601,11 +603,6 @@ export default function analyze(match) {
     stringlit(_openQuote, _chars, _closeQuote) {
       // Carlos strings will be represented as plain JS strings
       return this.sourceString
-    },
-
-    _iter(...children) {
-      // Ohm shortcut to allow applying rep() directly to iter nodes
-      return children.map(child => child.rep())
     },
   })
 

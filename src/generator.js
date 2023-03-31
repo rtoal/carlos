@@ -1,9 +1,9 @@
-// CODE GENERATOR: Carlos -> JavaScript
+// CODE GENERATOR
 //
 // Invoke generate(program) with the program node to get back the JavaScript
 // translation as a string.
 
-import { IfStatement, Type, StructType } from "./core.js"
+import { IfStatement, Type } from "./core.js"
 import * as stdlib from "./stdlib.js"
 
 export default function generate(program) {

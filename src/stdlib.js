@@ -1,6 +1,6 @@
 // STANDARD LIBRARY
 //
-// Carlos comes with a lot of predefined entities. Some are constants, some
+// Carlos comes with a few predefined entities. Some are constants, some
 // are types, and some are functions. Each are defined in this module, and
 // exported in a single object
 

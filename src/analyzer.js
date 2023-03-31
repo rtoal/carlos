@@ -1,9 +1,13 @@
-import fs from "fs"
-import * as ohm from "ohm-js"
+// ANALYZER
+//
+// The analyze() function takes the grammar match object (the CST) from Ohm
+// and produces a decorated Abstract Syntax "Tree" (technically a graph) that
+// includes all entities including those from the standard library.
+
 import * as core from "./core.js"
 import * as stdlib from "./stdlib.js"
 
-// Save typing
+// A few declarations to save typing
 const INT = core.Type.INT
 const FLOAT = core.Type.FLOAT
 const STRING = core.Type.STRING
@@ -29,8 +33,8 @@ function mustNotAlreadyBeDeclared(context, name) {
   must(!context.sees(name), `Identifier ${name} already declared`)
 }
 
-function mustHaveBeenFound(entity, name) {
-  must(entity, `Identifier ${name} not declared`)
+function mustHaveBeenFound(entity, name, at) {
+  must(entity, `Identifier ${name} not declared`, at)
 }
 
 function mustHaveNumericType(e, at) {
@@ -205,9 +209,7 @@ class Context {
     this.locals.set(name, entity)
   }
   lookup(name) {
-    const entity = this.locals.get(name) || this.parent?.lookup(name)
-    mustHaveBeenFound(entity, name)
-    return entity
+    return this.locals.get(name) || this.parent?.lookup(name)
   }
   newChildContext(props) {
     return new Context({ ...this, ...props, parent: this, locals: new Map() })
@@ -277,6 +279,7 @@ export default function analyze(match) {
 
     Type_id(id) {
       const entity = context.lookup(id.sourceString)
+      mustHaveBeenFound(entity, id.sourceString, { at: id })
       entityMustBeAType(entity, { at: id })
       return entity
     },
@@ -564,9 +567,11 @@ export default function analyze(match) {
       }
     },
 
-    Exp9_id(_id) {
-      // When an id appears in an expr, it had better have been declared
-      return context.lookup(this.sourceString)
+    Exp9_id(id) {
+      // When an id appears in an expression, it had better have been declared
+      const entity = context.lookup(id.sourceString)
+      mustHaveBeenFound(entity, id.sourceString, { at: id })
+      return entity
     },
 
     id(_first, _rest) {

@@ -1,6 +1,6 @@
-import util from "util"
 import assert from "assert/strict"
 import compile from "../src/compiler.js"
+import { Program } from "../src/core.js"
 
 const sampleProgram = "print(0);"
 
@@ -15,17 +15,17 @@ describe("The compiler", () => {
   })
   it("accepts the parsed option", done => {
     const compiled = compile(sampleProgram, "parsed")
-    assert(util.format(compiled).startsWith("Syntax is ok"))
+    assert(compiled.startsWith("Syntax is ok"))
     done()
   })
   it("accepts the analyzed option", done => {
     const compiled = compile(sampleProgram, "analyzed")
-    assert(util.format(compiled).startsWith("   1 | Program"))
+    assert(compiled instanceof Program)
     done()
   })
   it("accepts the optimized option", done => {
     const compiled = compile(sampleProgram, "optimized")
-    assert(util.format(compiled).startsWith("   1 | Program"))
+    assert(compiled instanceof Program)
     done()
   })
   it("generates js code when given the js option", done => {

@@ -252,6 +252,7 @@ export class ConstructorCall {
 const floatToFloatType = new FunctionType([Type.FLOAT], Type.FLOAT)
 const floatFloatToFloatType = new FunctionType([Type.FLOAT, Type.FLOAT], Type.FLOAT)
 const stringToIntsType = new FunctionType([Type.STRING], new ArrayType(Type.INT))
+const anysToVoidType = new FunctionType([Type.ANY], Type.VOID)
 
 export const standardLibrary = Object.freeze({
   int: Type.INT,
@@ -260,7 +261,7 @@ export const standardLibrary = Object.freeze({
   string: Type.STRING,
   void: Type.VOID,
   π: new Variable("π", true, Type.FLOAT),
-  print: new Function("print", new FunctionType([Type.ANY], Type.VOID)),
+  print: new Function("print", anysToVoidType),
   sin: new Function("sin", floatToFloatType),
   cos: new Function("cos", floatToFloatType),
   exp: new Function("exp", floatToFloatType),

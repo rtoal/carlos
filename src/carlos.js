@@ -29,7 +29,6 @@ async function compileFromFile(filename, outputType) {
   }
 }
 
-console.log(import.meta.url, process.argv[1])
 if (process.argv.length !== 4) {
   console.log(help)
 } else {

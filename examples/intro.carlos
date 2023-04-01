@@ -1,0 +1,12 @@
+// The intro sample script from the language home page
+
+const languageName = "Carlos";
+
+function greeting(): string {
+  return random(["Welcome", "こんにちは", "Bienvenido"]);
+}
+
+print("👋👋👋");
+repeat 5 {
+  print(greeting() + " " + languageName);
+}

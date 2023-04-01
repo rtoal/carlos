@@ -123,11 +123,8 @@ function assignable(fromType, toType) {
 }
 
 function mustBeAssignable(e, { toType: type }, at) {
-  must(
-    assignable(e.type, type),
-    `Cannot assign a ${e.type.description} to a ${type.description}`,
-    at
-  )
+  const message = `Cannot assign a ${e.type.description} to a ${type.description}`
+  must(assignable(e.type, type), message, at)
 }
 
 function mustNotBeReadOnly(e, at) {
@@ -169,11 +166,8 @@ function mustBeReturnable(e, { from: f }, at) {
 }
 
 function mustHaveRightNumberOfArguments(argCount, paramCount, at) {
-  must(
-    argCount === paramCount,
-    `${paramCount} argument(s) required but ${argCount} passed`,
-    at
-  )
+  const message = `${paramCount} argument(s) required but ${argCount} passed`
+  must(argCount === paramCount, message, at)
 }
 
 class Context {

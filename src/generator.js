@@ -100,7 +100,7 @@ export default function generate(program) {
     IfStatement(s) {
       output.push(`if (${gen(s.test)}) {`)
       gen(s.consequent)
-      if (s.alternate.constructor === IfStatement) {
+      if (s.alternate instanceof IfStatement) {
         output.push("} else")
         gen(s.alternate)
       } else {

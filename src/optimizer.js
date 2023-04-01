@@ -139,7 +139,7 @@ const optimizers = {
     s.iterator = optimize(s.iterator)
     s.collection = optimize(s.collection)
     s.body = optimize(s.body)
-    if (s.collection.constructor === core.EmptyArray) {
+    if (s.collection instanceof core.EmptyArray) {
       return []
     }
     return s
@@ -159,7 +159,7 @@ const optimizers = {
     e.right = optimize(e.right)
     if (e.op === "??") {
       // Coalesce Empty Optional Unwraps
-      if (e.left.constructor === core.EmptyOptional) {
+      if (e.left instanceof core.EmptyOptional) {
         return e.right
       }
     } else if (e.op === "&&") {

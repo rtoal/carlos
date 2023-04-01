@@ -17,14 +17,11 @@ const VOID = core.Type.VOID
 
 // The single gate for error checking. Pass in a condition that must be true.
 // Use errorLocation to give contextual information about the error that will
-// appear: this can be (1) missing, to leave the error message as-is, or (2)
-// a node from the Ohm parse tree, or (3) an object whose "at" property holds
-// parse tree node. In the latter cases, Ohm's getLineAndColumnMessage will be
-// used to prefix the error message.
+// appear: this should be an object whose "at" property is a parse tree node.
+// Ohm's getLineAndColumnMessage will be used to prefix the error message.
 function must(condition, message, errorLocation) {
   if (!condition) {
-    const token = errorLocation?.at ?? errorLocation
-    const prefix = token?.source?.getLineAndColumnMessage?.()
+    const prefix = errorLocation.at.source.getLineAndColumnMessage()
     throw new Error(`${prefix}${message}`)
   }
 }
@@ -107,8 +104,8 @@ function equivalent(t1, t2) {
     (t1 instanceof core.ArrayType &&
       t2 instanceof core.ArrayType &&
       equivalent(t1.baseType, t2.baseType)) ||
-    (t1.constructor === core.FunctionType &&
-      t2.constructor === core.FunctionType &&
+    (t1 instanceof core.FunctionType &&
+      t2 instanceof core.FunctionType &&
       equivalent(t1.returnType, t2.returnType) &&
       t1.paramTypes.length === t2.paramTypes.length &&
       t1.paramTypes.every((t, i) => equivalent(t, t2.paramTypes[i])))
@@ -119,8 +116,8 @@ function assignable(fromType, toType) {
   return (
     toType == ANY ||
     equivalent(fromType, toType) ||
-    (fromType.constructor === core.FunctionType &&
-      toType.constructor === core.FunctionType &&
+    (fromType instanceof core.FunctionType &&
+      toType instanceof core.FunctionType &&
       // covariant in return types
       assignable(fromType.returnType, toType.returnType) &&
       fromType.paramTypes.length === toType.paramTypes.length &&
@@ -220,10 +217,11 @@ export default function analyze(match) {
       const type = new core.StructType(id.sourceString, [])
       mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
       context.add(id.sourceString, type)
-      // Now add the types as you parse and analyze
+      // Now add the types as you parse and analyze. Since we already added
+      // the struct type itself into the context, we can use it in fields.
       type.fields = fields.children.map(field => field.rep())
-      mustHaveDistinctFields(type)
-      mustNotBeRecursive(type)
+      mustHaveDistinctFields(type, { at: id })
+      mustNotBeRecursive(type, { at: id })
       return new core.TypeDeclaration(type)
     },
 
@@ -301,7 +299,7 @@ export default function analyze(match) {
 
     Statement_return(returnKeyword, exp, _semicolon) {
       mustBeInAFunction(context, { at: returnKeyword })
-      mustReturnSomething(context.function)
+      mustReturnSomething(context.function, { at: returnKeyword })
       const returnExpression = exp.rep()
       mustBeReturnable(returnExpression, { from: context.function }, { at: exp })
       return new core.ReturnStatement(returnExpression)
@@ -309,7 +307,7 @@ export default function analyze(match) {
 
     Statement_shortreturn(returnKeyword, _semicolon) {
       mustBeInAFunction(context, { at: returnKeyword })
-      mustNotReturnAnything(context.function)
+      mustNotReturnAnything(context.function, { at: returnKeyword })
       return new core.ShortReturnStatement()
     },
 
@@ -401,7 +399,7 @@ export default function analyze(match) {
     Exp1_unwrapelse(exp1, elseOp, exp2) {
       const [optional, op, alternate] = [exp1.rep(), elseOp.sourceString, exp2.rep()]
       mustHaveAnOptionalType(optional, { at: exp1 })
-      mustBeAssignable(alternate, { toType: optional.type.baseType })
+      mustBeAssignable(alternate, { toType: optional.type.baseType }, { at: exp2 })
       return new core.BinaryExpression(op, optional, alternate, optional.type)
     },
 
@@ -464,8 +462,10 @@ export default function analyze(match) {
       const [left, op, right] = [exp1.rep(), relop.sourceString, exp2.rep()]
       // == and != can have any operand types as long as they are the same
       // But inequality operators can only be applied to numbers and strings
-      if (["<", "<=", ">", ">="].includes(op)) mustHaveNumericOrStringType(left)
-      mustBeTheSameType(left, right)
+      if (["<", "<=", ">", ">="].includes(op)) {
+        mustHaveNumericOrStringType(left, { at: exp1 })
+      }
+      mustBeTheSameType(left, right, { at: relop })
       return new core.BinaryExpression(op, left, right, BOOLEAN)
     },
 
@@ -504,10 +504,18 @@ export default function analyze(match) {
     Exp8_unary(unaryOp, exp) {
       const [op, operand] = [unaryOp.sourceString, exp.rep()]
       let type
-      if (op === "#") mustHaveAnArrayType(operand), (type = INT)
-      else if (op === "-") mustHaveNumericType(operand), (type = operand.type)
-      else if (op === "!") mustHaveBooleanType(operand), (type = BOOLEAN)
-      else if (op === "some") type = new core.OptionalType(operand.type)
+      if (op === "#") {
+        mustHaveAnArrayType(operand, { at: exp })
+        type = INT
+      } else if (op === "-") {
+        mustHaveNumericType(operand, { at: exp })
+        type = operand.type
+      } else if (op === "!") {
+        mustHaveBooleanType(operand, { at: exp })
+        type = BOOLEAN
+      } else if (op === "some") {
+        type = new core.OptionalType(operand.type)
+      }
       return new core.UnaryExpression(op, operand, type)
     },
 

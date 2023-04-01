@@ -3,21 +3,20 @@
 // Invoke generate(program) with the program node to get back the JavaScript
 // translation as a string.
 
-import { IfStatement, Type } from "./core.js"
-import * as stdlib from "./stdlib.js"
+import { IfStatement, Type, standardLibrary } from "./core.js"
 
 export default function generate(program) {
   const output = []
 
   const standardFunctions = new Map([
-    [stdlib.contents.print, x => `console.log(${x})`],
-    [stdlib.contents.sin, x => `Math.sin(${x})`],
-    [stdlib.contents.cos, x => `Math.cos(${x})`],
-    [stdlib.contents.exp, x => `Math.exp(${x})`],
-    [stdlib.contents.ln, x => `Math.log(${x})`],
-    [stdlib.contents.hypot, ([x, y]) => `Math.hypot(${x},${y})`],
-    [stdlib.contents.bytes, s => `[...Buffer.from(${s}, "utf8")]`],
-    [stdlib.contents.codepoints, s => `[...(${s})].map(s=>s.codePointAt(0))`],
+    [standardLibrary.print, x => `console.log(${x})`],
+    [standardLibrary.sin, x => `Math.sin(${x})`],
+    [standardLibrary.cos, x => `Math.cos(${x})`],
+    [standardLibrary.exp, x => `Math.exp(${x})`],
+    [standardLibrary.ln, x => `Math.log(${x})`],
+    [standardLibrary.hypot, ([x, y]) => `Math.hypot(${x},${y})`],
+    [standardLibrary.bytes, s => `[...Buffer.from(${s}, "utf8")]`],
+    [standardLibrary.codepoints, s => `[...(${s})].map(s=>s.codePointAt(0))`],
   ])
 
   // Variable and function names in JS will be suffixed with _1, _2, _3,
@@ -71,7 +70,7 @@ export default function generate(program) {
     },
     Variable(v) {
       // Standard library constants just get special treatment
-      if (v === stdlib.contents.π) {
+      if (v === standardLibrary.π) {
         return "Math.PI"
       }
       return targetName(v)

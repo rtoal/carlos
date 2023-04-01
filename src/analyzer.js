@@ -5,7 +5,6 @@
 // includes all entities including those from the standard library.
 
 import * as core from "./core.js"
-import * as stdlib from "./stdlib.js"
 
 // A few declarations to save typing
 const INT = core.Type.INT
@@ -610,7 +609,7 @@ export default function analyze(match) {
   // Analysis starts here. First load up the initial context with entities
   // from the standard library. Then do the analysis using the semantics
   // object created above.
-  for (const [name, type] of Object.entries(stdlib.contents)) {
+  for (const [name, type] of Object.entries(core.standardLibrary)) {
     context.add(name, type)
   }
   return analyzer(match).rep()

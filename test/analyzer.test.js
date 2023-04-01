@@ -167,7 +167,7 @@ const semanticErrors = [
     'function f(x: int): int {return 1;} function g(y: int): string {return "uh-oh";} f = g;',
     /Cannot assign a \(int\)->string to a \(int\)->int/,
   ],
-  ["bad call to stdlib sin()", "print(sin(true));", /Cannot assign a boolean to a float/],
+  ["bad call to sin()", "print(sin(true));", /Cannot assign a boolean to a float/],
   ["Non-type in param", "let x=1;function f(y:x){}", /Type expected/],
   ["Non-type in return type", "let x=1;function f():x{return 1;}", /Type expected/],
   ["Non-type in field type", "let x=1;struct S {y:x}", /Type expected/],

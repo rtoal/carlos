@@ -249,6 +249,27 @@ export class ConstructorCall {
   }
 }
 
+const floatToFloatType = new FunctionType([Type.FLOAT], Type.FLOAT)
+const floatFloatToFloatType = new FunctionType([Type.FLOAT, Type.FLOAT], Type.FLOAT)
+const stringToIntsType = new FunctionType([Type.STRING], new ArrayType(Type.INT))
+
+export const standardLibrary = Object.freeze({
+  int: Type.INT,
+  float: Type.FLOAT,
+  boolean: Type.BOOLEAN,
+  string: Type.STRING,
+  void: Type.VOID,
+  π: new Variable("π", true, Type.FLOAT),
+  print: new Function("print", new FunctionType([Type.ANY], Type.VOID)),
+  sin: new Function("sin", floatToFloatType),
+  cos: new Function("cos", floatToFloatType),
+  exp: new Function("exp", floatToFloatType),
+  ln: new Function("ln", floatToFloatType),
+  hypot: new Function("hypot", floatFloatToFloatType),
+  bytes: new Function("bytes", stringToIntsType),
+  codepoints: new Function("codepoints", stringToIntsType),
+})
+
 // We want every expression to have a type property. But we aren't creating
 // special entities for numbers, strings, and booleans; instead, we are
 // just using JavaScript values for those. Fortunately we can monkey patch

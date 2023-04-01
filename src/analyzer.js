@@ -223,7 +223,7 @@ export default function analyze(match) {
     },
 
     Field(id, _colon, type) {
-      return new core.Field(id.rep(), type.rep())
+      return new core.Field(id.sourceString, type.rep())
     },
 
     FunDecl(_fun, id, _open, paramList, _close, _colons, type, block) {
@@ -580,10 +580,6 @@ export default function analyze(match) {
       const entity = context.lookup(id.sourceString)
       mustHaveBeenFound(entity, id.sourceString, { at: id })
       return entity
-    },
-
-    id(_first, _rest) {
-      return this.sourceString
     },
 
     true(_) {

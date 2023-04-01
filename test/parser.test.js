@@ -1,4 +1,4 @@
-import assert from "assert/strict"
+import assert from "node:assert/strict"
 import parse from "../src/parser.js"
 
 // Programs expected to be syntactically correct

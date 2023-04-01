@@ -87,12 +87,9 @@ function mustAllHaveSameType(expressions, at) {
   )
 }
 
-function mustNotBeRecursive(struct, at) {
-  must(
-    !struct.fields.map(f => f.type).includes(struct),
-    "Struct type must not be recursive",
-    at
-  )
+function mustNotBeSelfContaining(struct, at) {
+  const containsSelf = struct.fields.map(f => f.type).includes(struct)
+  must(!containsSelf, "Struct type must not be self-containing", at)
 }
 
 function equivalent(t1, t2) {
@@ -221,7 +218,7 @@ export default function analyze(match) {
       // the struct type itself into the context, we can use it in fields.
       type.fields = fields.children.map(field => field.rep())
       mustHaveDistinctFields(type, { at: id })
-      mustNotBeRecursive(type, { at: id })
+      mustNotBeSelfContaining(type, { at: id })
       return new core.TypeDeclaration(type)
     },
 
@@ -608,7 +605,8 @@ export default function analyze(match) {
     },
 
     stringlit(_openQuote, _chars, _closeQuote) {
-      // Carlos strings will be represented as plain JS strings
+      // Carlos strings will be represented as plain JS strings, including
+      // the quotation marks
       return this.sourceString
     },
   })

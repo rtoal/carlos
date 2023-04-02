@@ -219,10 +219,9 @@ export class ArrayExpression {
 }
 
 export class EmptyArray {
-  // Example: [](of float)
-  constructor(arrayType) {
-    this.baseType = arrayType.baseType
-    this.type = arrayType
+  // Example: [float]()
+  constructor(type) {
+    this.type = type
   }
 }
 

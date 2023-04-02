@@ -65,7 +65,7 @@ Carlos {
               | Exp9 ("." | "?.") id                          --member
               | stringlit ~mut
               | id                                            --id
-              | "[]" "(" of Type ")" ~mut                     --emptyarray
+              | Type_array "(" ")" ~mut                       --emptyarray
               | "[" NonemptyListOf<Exp, ","> "]" ~mut         --arrayexp
               | "(" Exp ")" ~mut                              --parens
 

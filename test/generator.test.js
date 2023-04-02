@@ -121,7 +121,7 @@ const fixtures = [
     source: `
       let a = [true, false, true];
       let b = [10, 40 - 20, 30];
-      const c = [](of [int]);
+      const c = [[int]]();
       print(a[1] || (b[0] < 88 ? false : true));
     `,
     expected: dedent`

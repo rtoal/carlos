@@ -73,6 +73,10 @@ function entityMustBeAType(e, at) {
   must(e instanceof core.Type, "Type expected", at)
 }
 
+function mustBeAnArrayType(t, at) {
+  must(t instanceof core.ArrayType, "Must be an array type", at)
+}
+
 function mustBeTheSameType(e1, e2, at) {
   must(equivalent(e1.type, e2.type), "Operands do not have the same type", at)
 }
@@ -509,8 +513,10 @@ export default function analyze(match) {
       return new core.UnaryExpression(op, operand, type)
     },
 
-    Exp9_emptyarray(_brackets, _open, _of, type, _close) {
-      return new core.EmptyArray(type.rep())
+    Exp9_emptyarray(ty, _open, _close) {
+      const type = ty.rep()
+      mustBeAnArrayType(type, { at: ty })
+      return new core.EmptyArray(type)
     },
 
     Exp9_arrayexp(_open, args, _close) {

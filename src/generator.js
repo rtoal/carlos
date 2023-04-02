@@ -145,10 +145,16 @@ export default function generate(program) {
       return `(${gen(e.left)} ${op} ${gen(e.right)})`
     },
     UnaryExpression(e) {
+      const operand = gen(e.operand)
       if (e.op === "some") {
-        e.op = ""
+        return operand
+      } else if (e.op === "#") {
+        return `${operand}.length`
+      } else if (e.op === "random") {
+        randomCalled = true
+        return `_r(${operand})`
       }
-      return `${e.op}(${gen(e.operand)})`
+      return `${e.op}(${operand})`
     },
     EmptyOptional(e) {
       return "undefined"
@@ -198,6 +204,8 @@ export default function generate(program) {
     },
   }
 
+  let randomCalled = false
   gen(program)
+  if (randomCalled) output.push("function _r(a){return a[~~(Math.random()*a.length)]}")
   return output.join("\n")
 }

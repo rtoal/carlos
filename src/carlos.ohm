@@ -54,7 +54,7 @@ Carlos {
               | Exp8
   Exp8        = Exp9 "**" Exp8                                --power
               | Exp9
-              | ("#" | "-" | "!" | some) Exp9                 --unary
+              | ("#" | "-" | "!" | some | random) Exp9        --unary
   Exp9        = true ~mut
               | false ~mut
               | floatlit ~mut
@@ -89,7 +89,7 @@ Carlos {
   repeat      = "repeat" ~alnum
   for         = "for" ~alnum
   in          = "in" ~alnum
-  of          = "of" ~alnum
+  random      = "random" ~alnum
   break       = "break" ~alnum
   return      = "return" ~alnum
   some        = "some" ~alnum
@@ -97,7 +97,7 @@ Carlos {
   true        = "true" ~alnum
   false       = "false" ~alnum
   keyword     = let | const | struct | function | if | else | while | repeat
-              | for | in | of | break | return | some | no | true | false
+              | for | in | break | return | some | no | random | true | false
   id          = ~keyword letter alnum*
 
   space      += "//" (~"\n" any)*                             --comment

@@ -120,15 +120,18 @@ const fixtures = [
     name: "arrays",
     source: `
       let a = [true, false, true];
-      let b = [10, 40 - 20, 30];
+      let b = [10, #a - 20, 30];
       const c = [[int]]();
+      const d = random b;
       print(a[1] || (b[0] < 88 ? false : true));
     `,
     expected: dedent`
       let a_1 = [true,false,true];
-      let b_2 = [10,20,30];
+      let b_2 = [10,(a_1.length - 20),30];
       let c_3 = [];
+      let d_4 = _r(b_2);
       console.log((a_1[1] || (((b_2[0] < 88)) ? (false) : (true))));
+      function _r(a){return a[~~(Math.random()*a.length)]}
     `,
   },
   {
@@ -165,7 +168,7 @@ const fixtures = [
       this["x_4"] = x_4;
       }
       }
-      let z_5 = (new S_3(1));
+      let z_5 = new S_3(1);
       let w_6 = (z_5?.["x_4"]);
     `,
   },

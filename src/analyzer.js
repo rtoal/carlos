@@ -509,6 +509,9 @@ export default function analyze(match) {
         type = BOOLEAN
       } else if (op === "some") {
         type = new core.OptionalType(operand.type)
+      } else if (op === "random") {
+        mustHaveAnArrayType(operand, { at: exp })
+        type = operand.type.baseType
       }
       return new core.UnaryExpression(op, operand, type)
     },

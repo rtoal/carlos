@@ -81,7 +81,7 @@ $ node src/carlos.js examples/intro.carlos analyzed
 
 ```
 $ node src/carlos.js examples/intro.carlos optimized
-  1 | Program statements=[#2,#5,#12,#17]
+   1 | Program statements=[#2,#5,#12,#17]
    2 | VariableDeclaration variable=#3 initializer='"Carlos"'
    3 | Variable name='languageName' readOnly=true type=#4
    4 | Type description='string'

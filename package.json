@@ -1,8 +1,8 @@
 {
   "name": "carlos",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A compiler for the Carlos programming language",
-  "main": "index.js",
+  "main": "carlos.js",
   "type": "module",
   "directories": {
     "doc": "docs",
@@ -17,8 +17,8 @@
     "url": "git+https://github.com/rtoal/carlos-lang.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "rtoal",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/rtoal/carlos-lang/issues"
   },

@@ -56,24 +56,89 @@ Syntax is ok
 
 ```
 $ node src/carlos.js examples/intro.carlos analyzed
-
+   1 | Program statements=[#2,#5,#12,#17]
+   2 | VariableDeclaration variable=#3 initializer='"Carlos"'
+   3 | Variable name='languageName' readOnly=true type=#4
+   4 | Type description='string'
+   5 | FunctionDeclaration name='greeting' fun=#6 params=[] body=[#8]
+   6 | Function name='greeting' type=#7
+   7 | FunctionType description='()->string' paramTypes=[] returnType=#4
+   8 | ReturnStatement expression=#9
+   9 | UnaryExpression op='random' operand=#10 type=#4
+  10 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#11
+  11 | ArrayType description='[string]' baseType=#4
+  12 | FunctionCall callee=#13 args=['"👋👋👋"'] type=#16
+  13 | Function name='print' type=#14
+  14 | FunctionType description='(any)->void' paramTypes=[#15] returnType=#16
+  15 | Type description='any'
+  16 | Type description='void'
+  17 | RepeatStatement count=5n body=[#18]
+  18 | FunctionCall callee=#13 args=[#19] type=#16
+  19 | BinaryExpression op='+' left=#20 right=#3 type=#4
+  20 | BinaryExpression op='+' left=#21 right='" "' type=#4
+  21 | FunctionCall callee=#6 args=[] type=#4
 ```
 
 ```
-$ node src/carlos.js examples/small.carlos optimized
-
+$ node src/carlos.js examples/intro.carlos optimized
+  1 | Program statements=[#2,#5,#12,#17]
+   2 | VariableDeclaration variable=#3 initializer='"Carlos"'
+   3 | Variable name='languageName' readOnly=true type=#4
+   4 | Type description='string'
+   5 | FunctionDeclaration name='greeting' fun=#6 params=[] body=[#8]
+   6 | Function name='greeting' type=#7
+   7 | FunctionType description='()->string' paramTypes=[] returnType=#4
+   8 | ReturnStatement expression=#9
+   9 | UnaryExpression op='random' operand=#10 type=#4
+  10 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#11
+  11 | ArrayType description='[string]' baseType=#4
+  12 | FunctionCall callee=#13 args=['"👋👋👋"'] type=#16
+  13 | Function name='print' type=#14
+  14 | FunctionType description='(any)->void' paramTypes=[#15] returnType=#16
+  15 | Type description='any'
+  16 | Type description='void'
+  17 | RepeatStatement count=5n body=[#18]
+  18 | FunctionCall callee=#13 args=[#19] type=#16
+  19 | BinaryExpression op='+' left=#20 right=#3 type=#4
+  20 | BinaryExpression op='+' left=#21 right='" "' type=#4
+  21 | FunctionCall callee=#6 args=[] type=#4
 ```
 
 ```
-$ node src/carlos.js examples/small.carlos js
+$ node src/carlos.js examples/intro.carlos js
+let languageName_1 = "Carlos";
+function greeting_2() {
+return _r(["Welcome","こんにちは","Bienvenido"]);
+}
+console.log("👋👋👋");
+for (let i_3 = 0; i_3 < 5; i_3++) {
+console.log(((greeting_2() + " ") + languageName_1));
+}
+function _r(a){return a[~~(Math.random()*a.length)]}
+```
 
+Pipe the output back into node to compile and run on the same line:
+
+```
+$ node src/carlos.js examples/intro.carlos js | node
+👋👋👋
+こんにちは Carlos
+Welcome Carlos
+Bienvenido Carlos
+Welcome Carlos
+こんにちは Carlos
 ```
 
 Errors are displayed with a little bit of context:
 
 ```
- node src/carlos.js examples/bad.carlos js
-
+$ node src/carlos.js examples/bad.carlos js
+Error: Line 5, col 9:
+  4 | let z = some S(1);
+> 5 | let w = z.x;
+              ^
+  6 | print(w);
+Expected a struct
 ```
 
 ## Contributing

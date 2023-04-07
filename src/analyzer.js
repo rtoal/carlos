@@ -25,155 +25,6 @@ function must(condition, message, errorLocation) {
   }
 }
 
-function mustNotAlreadyBeDeclared(context, name, at) {
-  must(!context.lookup(name), `Identifier ${name} already declared`, at)
-}
-
-function mustHaveBeenFound(entity, name, at) {
-  must(entity, `Identifier ${name} not declared`, at)
-}
-
-function mustHaveNumericType(e, at) {
-  must([INT, FLOAT].includes(e.type), "Expected a number", at)
-}
-
-function mustHaveNumericOrStringType(e, at) {
-  must([INT, FLOAT, STRING].includes(e.type), "Expected a number or string", at)
-}
-
-function mustHaveBooleanType(e, at) {
-  must(e.type === BOOLEAN, "Expected a boolean", at)
-}
-
-function mustHaveIntegerType(e, at) {
-  must(e.type === INT, "Expected an integer", at)
-}
-
-function mustHaveAnArrayType(e, at) {
-  must(e.type instanceof core.ArrayType, "Expected an array", at)
-}
-
-function mustHaveAnOptionalType(e, at) {
-  must(e.type instanceof core.OptionalType, "Expected an optional", at)
-}
-
-function mustHaveAStructType(e, at) {
-  must(e.type instanceof core.StructType, "Expected a struct", at)
-}
-
-function mustHaveOptionalStructType(e, at) {
-  must(
-    e.type instanceof core.OptionalType && e.type.baseType instanceof core.StructType,
-    "Expected an optional struct",
-    at
-  )
-}
-
-function entityMustBeAType(e, at) {
-  must(e instanceof core.Type, "Type expected", at)
-}
-
-function mustBeAnArrayType(t, at) {
-  must(t instanceof core.ArrayType, "Must be an array type", at)
-}
-
-function mustBeTheSameType(e1, e2, at) {
-  must(equivalent(e1.type, e2.type), "Operands do not have the same type", at)
-}
-
-function mustAllHaveSameType(expressions, at) {
-  // Used to check array elements, for example
-  must(
-    expressions.slice(1).every(e => equivalent(e.type, expressions[0].type)),
-    "Not all elements have the same type",
-    at
-  )
-}
-
-function mustNotBeSelfContaining(struct, at) {
-  const containsSelf = struct.fields.map(f => f.type).includes(struct)
-  must(!containsSelf, "Struct type must not be self-containing", at)
-}
-
-function equivalent(t1, t2) {
-  return (
-    t1 === t2 ||
-    (t1 instanceof core.OptionalType &&
-      t2 instanceof core.OptionalType &&
-      equivalent(t1.baseType, t2.baseType)) ||
-    (t1 instanceof core.ArrayType &&
-      t2 instanceof core.ArrayType &&
-      equivalent(t1.baseType, t2.baseType)) ||
-    (t1 instanceof core.FunctionType &&
-      t2 instanceof core.FunctionType &&
-      equivalent(t1.returnType, t2.returnType) &&
-      t1.paramTypes.length === t2.paramTypes.length &&
-      t1.paramTypes.every((t, i) => equivalent(t, t2.paramTypes[i])))
-  )
-}
-
-function assignable(fromType, toType) {
-  return (
-    toType == ANY ||
-    equivalent(fromType, toType) ||
-    (fromType instanceof core.FunctionType &&
-      toType instanceof core.FunctionType &&
-      // covariant in return types
-      assignable(fromType.returnType, toType.returnType) &&
-      fromType.paramTypes.length === toType.paramTypes.length &&
-      // contravariant in parameter types
-      toType.paramTypes.every((t, i) => assignable(t, fromType.paramTypes[i])))
-  )
-}
-
-function mustBeAssignable(e, { toType: type }, at) {
-  const message = `Cannot assign a ${e.type.description} to a ${type.description}`
-  must(assignable(e.type, type), message, at)
-}
-
-function mustNotBeReadOnly(e, at) {
-  must(!e.readOnly, `Cannot assign to constant ${e.name}`, at)
-}
-
-function mustHaveDistinctFields(type, at) {
-  const fieldNames = new Set(type.fields.map(f => f.name))
-  must(fieldNames.size === type.fields.length, "Fields must be distinct", at)
-}
-
-function memberMustBeDeclared(structType, field, at) {
-  must(structType.fields.map(f => f.name).includes(field), "No such field", at)
-}
-
-function mustBeInLoop(context, at) {
-  must(context.inLoop, "Break can only appear in a loop", at)
-}
-
-function mustBeInAFunction(context, at) {
-  must(context.function, "Return can only appear in a function", at)
-}
-
-function mustBeCallable(e, at) {
-  const callable = e instanceof core.StructType || e.type instanceof core.FunctionType
-  must(callable, "Call of non-function or non-constructor", at)
-}
-
-function mustNotReturnAnything(f, at) {
-  must(f.type.returnType === VOID, "Something should be returned", at)
-}
-
-function mustReturnSomething(f, at) {
-  must(f.type.returnType !== VOID, "Cannot return a value from this function", at)
-}
-
-function mustBeReturnable(e, { from: f }, at) {
-  mustBeAssignable(e, { toType: f.type.returnType }, at)
-}
-
-function mustHaveRightNumberOfArguments(argCount, paramCount, at) {
-  const message = `${paramCount} argument(s) required but ${argCount} passed`
-  must(argCount === paramCount, message, at)
-}
-
 class Context {
   constructor({ parent = null, locals = new Map(), inLoop = false, function: f = null }) {
     Object.assign(this, { parent, locals, inLoop, function: f })
@@ -192,6 +43,155 @@ class Context {
 export default function analyze(match) {
   let context = new Context({})
 
+  function mustNotAlreadyBeDeclared(name, at) {
+    must(!context.lookup(name), `Identifier ${name} already declared`, at)
+  }
+
+  function mustHaveBeenFound(entity, name, at) {
+    must(entity, `Identifier ${name} not declared`, at)
+  }
+
+  function mustHaveNumericType(e, at) {
+    must([INT, FLOAT].includes(e.type), "Expected a number", at)
+  }
+
+  function mustHaveNumericOrStringType(e, at) {
+    must([INT, FLOAT, STRING].includes(e.type), "Expected a number or string", at)
+  }
+
+  function mustHaveBooleanType(e, at) {
+    must(e.type === BOOLEAN, "Expected a boolean", at)
+  }
+
+  function mustHaveIntegerType(e, at) {
+    must(e.type === INT, "Expected an integer", at)
+  }
+
+  function mustHaveAnArrayType(e, at) {
+    must(e.type instanceof core.ArrayType, "Expected an array", at)
+  }
+
+  function mustHaveAnOptionalType(e, at) {
+    must(e.type instanceof core.OptionalType, "Expected an optional", at)
+  }
+
+  function mustHaveAStructType(e, at) {
+    must(e.type instanceof core.StructType, "Expected a struct", at)
+  }
+
+  function mustHaveOptionalStructType(e, at) {
+    must(
+      e.type instanceof core.OptionalType && e.type.baseType instanceof core.StructType,
+      "Expected an optional struct",
+      at
+    )
+  }
+
+  function entityMustBeAType(e, at) {
+    must(e instanceof core.Type, "Type expected", at)
+  }
+
+  function mustBeAnArrayType(t, at) {
+    must(t instanceof core.ArrayType, "Must be an array type", at)
+  }
+
+  function mustBeTheSameType(e1, e2, at) {
+    must(equivalent(e1.type, e2.type), "Operands do not have the same type", at)
+  }
+
+  function mustAllHaveSameType(expressions, at) {
+    // Used to check array elements, for example
+    must(
+      expressions.slice(1).every(e => equivalent(e.type, expressions[0].type)),
+      "Not all elements have the same type",
+      at
+    )
+  }
+
+  function mustNotBeSelfContaining(struct, at) {
+    const containsSelf = struct.fields.map(f => f.type).includes(struct)
+    must(!containsSelf, "Struct type must not be self-containing", at)
+  }
+
+  function equivalent(t1, t2) {
+    return (
+      t1 === t2 ||
+      (t1 instanceof core.OptionalType &&
+        t2 instanceof core.OptionalType &&
+        equivalent(t1.baseType, t2.baseType)) ||
+      (t1 instanceof core.ArrayType &&
+        t2 instanceof core.ArrayType &&
+        equivalent(t1.baseType, t2.baseType)) ||
+      (t1 instanceof core.FunctionType &&
+        t2 instanceof core.FunctionType &&
+        equivalent(t1.returnType, t2.returnType) &&
+        t1.paramTypes.length === t2.paramTypes.length &&
+        t1.paramTypes.every((t, i) => equivalent(t, t2.paramTypes[i])))
+    )
+  }
+
+  function assignable(fromType, toType) {
+    return (
+      toType == ANY ||
+      equivalent(fromType, toType) ||
+      (fromType instanceof core.FunctionType &&
+        toType instanceof core.FunctionType &&
+        // covariant in return types
+        assignable(fromType.returnType, toType.returnType) &&
+        fromType.paramTypes.length === toType.paramTypes.length &&
+        // contravariant in parameter types
+        toType.paramTypes.every((t, i) => assignable(t, fromType.paramTypes[i])))
+    )
+  }
+
+  function mustBeAssignable(e, { toType: type }, at) {
+    const message = `Cannot assign a ${e.type.description} to a ${type.description}`
+    must(assignable(e.type, type), message, at)
+  }
+
+  function mustNotBeReadOnly(e, at) {
+    must(!e.readOnly, `Cannot assign to constant ${e.name}`, at)
+  }
+
+  function mustHaveDistinctFields(type, at) {
+    const fieldNames = new Set(type.fields.map(f => f.name))
+    must(fieldNames.size === type.fields.length, "Fields must be distinct", at)
+  }
+
+  function memberMustBeDeclared(structType, field, at) {
+    must(structType.fields.map(f => f.name).includes(field), "No such field", at)
+  }
+
+  function mustBeInLoop(at) {
+    must(context.inLoop, "Break can only appear in a loop", at)
+  }
+
+  function mustBeInAFunction(at) {
+    must(context.function, "Return can only appear in a function", at)
+  }
+
+  function mustBeCallable(e, at) {
+    const callable = e instanceof core.StructType || e.type instanceof core.FunctionType
+    must(callable, "Call of non-function or non-constructor", at)
+  }
+
+  function mustNotReturnAnything(f, at) {
+    must(f.type.returnType === VOID, "Something should be returned", at)
+  }
+
+  function mustReturnSomething(f, at) {
+    must(f.type.returnType !== VOID, "Cannot return a value from this function", at)
+  }
+
+  function mustBeReturnable(e, { from: f }, at) {
+    mustBeAssignable(e, { toType: f.type.returnType }, at)
+  }
+
+  function mustHaveRightNumberOfArguments(argCount, paramCount, at) {
+    const message = `${paramCount} argument(s) required but ${argCount} passed`
+    must(argCount === paramCount, message, at)
+  }
+
   const analyzer = match.matcher.grammar.createSemantics().addOperation("rep", {
     Program(statements) {
       return new core.Program(statements.children.map(s => s.rep()))
@@ -201,7 +201,7 @@ export default function analyze(match) {
       const initializer = exp.rep()
       const readOnly = modifier.sourceString === "const"
       const variable = new core.Variable(id.sourceString, readOnly, initializer.type)
-      mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
+      mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       context.add(id.sourceString, variable)
       return new core.VariableDeclaration(variable, initializer)
     },
@@ -209,7 +209,7 @@ export default function analyze(match) {
     TypeDecl(_struct, id, _left, fields, _right) {
       // To allow recursion, enter into context without any fields yet
       const type = new core.StructType(id.sourceString, [])
-      mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
+      mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       context.add(id.sourceString, type)
       // Now add the types as you parse and analyze. Since we already added
       // the struct type itself into the context, we can use it in fields.
@@ -229,7 +229,7 @@ export default function analyze(match) {
       const paramTypes = params.map(param => param.type)
       const funType = new core.FunctionType(paramTypes, returnType)
       const fun = new core.Function(id.sourceString, funType)
-      mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
+      mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       context.add(id.sourceString, fun)
       context = context.newChildContext({ inLoop: false, function: fun })
       for (const param of params) {
@@ -287,12 +287,12 @@ export default function analyze(match) {
     },
 
     Statement_break(breakKeyword, _semicolon) {
-      mustBeInLoop(context, { at: breakKeyword })
+      mustBeInLoop({ at: breakKeyword })
       return new core.BreakStatement()
     },
 
     Statement_return(returnKeyword, exp, _semicolon) {
-      mustBeInAFunction(context, { at: returnKeyword })
+      mustBeInAFunction({ at: returnKeyword })
       mustReturnSomething(context.function, { at: returnKeyword })
       const returnExpression = exp.rep()
       mustBeReturnable(returnExpression, { from: context.function }, { at: exp })
@@ -300,7 +300,7 @@ export default function analyze(match) {
     },
 
     Statement_shortreturn(returnKeyword, _semicolon) {
-      mustBeInAFunction(context, { at: returnKeyword })
+      mustBeInAFunction({ at: returnKeyword })
       mustNotReturnAnything(context.function, { at: returnKeyword })
       return new core.ShortReturnStatement()
     },

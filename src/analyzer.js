@@ -223,26 +223,39 @@ export default function analyze(match) {
       return new core.Field(id.sourceString, type.rep())
     },
 
-    FunDecl(_fun, id, _open, paramList, _close, _colons, type, block) {
-      const returnType = type.children?.[0]?.rep() ?? VOID
-      const params = paramList.asIteration().children.map(p => p.rep())
-      const paramTypes = params.map(param => param.type)
-      const funType = new core.FunctionType(paramTypes, returnType)
-      const fun = new core.Function(id.sourceString, funType)
+    FunDecl(_fun, id, parameters, _colons, type, block) {
+      // Start by making the function, but we don't yet know its type.
+      // Also add it to the context so that we can have recursion.
+      const fun = new core.Function(id.sourceString)
       mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       context.add(id.sourceString, fun)
+
+      // Parameters are part of the child context
       context = context.newChildContext({ inLoop: false, function: fun })
-      for (const param of params) {
-        // mustNotAlreadyBeDeclared(context, id.sourceString, { at: id })
-        context.add(param.name, param)
-      }
+      const params = parameters.rep()
+
+      // Now that the parameters are known, we compute the function's type.
+      // This is fine; we did not need the type to analyze the parameters,
+      // but we do need to set it before analyzing the body.
+      const paramTypes = params.map(param => param.type)
+      const returnType = type.children?.[0]?.rep() ?? VOID
+      fun.type = new core.FunctionType(paramTypes, returnType)
+
+      // Analyze body while still in child context
       const body = block.rep()
       context = context.parent
       return new core.FunctionDeclaration(id.sourceString, fun, params, body)
     },
 
+    Params(_open, paramList, _close) {
+      return paramList.asIteration().children.map(p => p.rep())
+    },
+
     Param(id, _colon, type) {
-      return new core.Variable(id.sourceString, false, type.rep())
+      const param = new core.Variable(id.sourceString, false, type.rep())
+      mustNotAlreadyBeDeclared(param.name, { at: id })
+      context.add(param.name, param)
+      return param
     },
 
     Type_optional(baseType, _questionMark) {

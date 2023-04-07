@@ -16,7 +16,8 @@ Carlos {
   VarDecl     = (let | const) id "=" Exp ";"
   TypeDecl    = struct id "{" Field* "}"
   Field       = id ":" Type
-  FunDecl     = function id "(" ListOf<Param, ","> ")" (":" Type)? Block
+  FunDecl     = function id Params (":" Type)? Block
+  Params      = "(" ListOf<Param, ","> ")"
   Param       = id ":" Type
 
   Type        = Type "?"                                      --optional

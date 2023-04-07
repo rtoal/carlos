@@ -108,8 +108,17 @@ export default function analyze(match) {
     )
   }
 
-  function mustNotBeSelfContaining(struct, at) {
-    const containsSelf = struct.fields.map(f => f.type).includes(struct)
+  function includesAsField(structType, type) {
+    // Directly or indirectly!
+    return structType.fields.some(
+      field =>
+        field.type === type ||
+        (field.type instanceof core.StructType && includesAsField(field.type, type))
+    )
+  }
+
+  function mustNotBeSelfContaining(structType, at) {
+    const containsSelf = includesAsField(structType, structType)
     must(!containsSelf, "Struct type must not be self-containing", at)
   }
 

@@ -41,7 +41,7 @@ const semanticChecks = [
   ["random with array literals, strings", 'print(random ["a", "b"]);'],
   ["random on array variables", "let a=[true, false];print(random a);"],
   ["variables", "let x=[[[[1]]]]; print(x[0][0][0][0]+2);"],
-  ["recursive structs", "struct S {z: S?} let x = S(no S);"],
+  ["pseudo recursive struct", "struct S {z: S?} let x = S(no S);"],
   ["nested structs", "struct T{y:int} struct S{z: T} let x=S(T(1)); print(x.z.y);"],
   ["member exp", "struct S {x: int} let y = S(1);print(y.x);"],
   ["optional member exp", "struct S {x: int} let y = some S(1);print(y?.x);"],

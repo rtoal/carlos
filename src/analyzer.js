@@ -419,35 +419,35 @@ export default function analyze(match) {
       return new core.BinaryExpression(op, optional, alternate, optional.type)
     },
 
-    Exp2_or(exp, orOps, exps) {
+    Exp2_or(exp, _ops, exps) {
       let left = exp.rep()
       mustHaveBooleanType(left, { at: exp })
-      for (let [i, e] of exps.children.entries()) {
-        let [op, right] = [orOps.children[i].sourceString, e.rep()]
+      for (let e of exps.children) {
+        let right = e.rep()
         mustHaveBooleanType(right, { at: e })
-        left = new core.BinaryExpression(op, left, right, BOOLEAN)
+        left = new core.BinaryExpression("||", left, right, BOOLEAN)
       }
       return left
     },
 
-    Exp2_and(exp, andOps, exps) {
+    Exp2_and(exp, _ops, exps) {
       let left = exp.rep()
       mustHaveBooleanType(left, { at: exp })
-      for (let [i, e] of exps.children.entries()) {
-        let [op, right] = [andOps.children[i].sourceString, e.rep()]
+      for (let e of exps.children) {
+        let right = e.rep()
         mustHaveBooleanType(right, { at: e })
-        left = new core.BinaryExpression(op, left, right, BOOLEAN)
+        left = new core.BinaryExpression("&&", left, right, BOOLEAN)
       }
       return left
     },
 
-    Exp3_bitor(exp, orOps, exps) {
+    Exp3_bitor(exp, _ops, exps) {
       let left = exp.rep()
       mustHaveIntegerType(left, { at: exp })
-      for (let [i, e] of exps.children.entries()) {
-        let [op, right] = [orOps.children[i].sourceString, e.rep()]
+      for (let e of exps.children) {
+        let right = e.rep()
         mustHaveIntegerType(right, { at: e })
-        left = new core.BinaryExpression(op, left, right, INT)
+        left = new core.BinaryExpression("|", left, right, INT)
       }
       return left
     },
@@ -455,10 +455,10 @@ export default function analyze(match) {
     Exp3_bitxor(exp, xorOps, exps) {
       let left = exp.rep()
       mustHaveIntegerType(left, { at: exp })
-      for (let [i, e] of exps.children.entries()) {
-        let [op, right] = [xorOps.children[i].sourceString, e.rep()]
+      for (let e of exps.children) {
+        let right = e.rep()
         mustHaveIntegerType(right, { at: e })
-        left = new core.BinaryExpression(op, left, right, INT)
+        left = new core.BinaryExpression("^", left, right, INT)
       }
       return left
     },
@@ -466,10 +466,10 @@ export default function analyze(match) {
     Exp3_bitand(exp, andOps, exps) {
       let left = exp.rep()
       mustHaveIntegerType(left, { at: exp })
-      for (let [i, e] of exps.children.entries()) {
-        let [op, right] = [andOps.children[i].sourceString, e.rep()]
+      for (let e of exps.children) {
+        let right = e.rep()
         mustHaveIntegerType(right, { at: e })
-        left = new core.BinaryExpression(op, left, right, INT)
+        left = new core.BinaryExpression("&", left, right, INT)
       }
       return left
     },

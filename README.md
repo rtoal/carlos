@@ -21,6 +21,19 @@ repeat 5 {
 
 The language is specified at its [home page](https://cs.lmu.edu/~ray/notes/carlos/).
 
+Features include:
+
+- Value types: `int`, `float`, `string`, `boolean`
+- Reference types: arrays, structs, optionals, functions
+- A user-accessible bottom type, `void`
+- A user-accessible top type, `any`
+- No billion dollar mistake!
+- Fully statically typed
+- Fully strongly typed (no implicit type conversions)
+- Type inference for local variables
+- Fully first-class functions
+- Function assignment is covariant in return type, contravariant in parameter types
+
 ## Building
 
 Nodejs is required to build and run this project. Make sure you have a recent version of Node, since the source code uses a fair amount of very modern JavaScript.

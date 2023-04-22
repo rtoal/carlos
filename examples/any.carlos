@@ -1,0 +1,10 @@
+// Examples of the any type
+
+function identity(x: any): any {
+  return x;
+}
+
+// You can't do much with anys except print them
+print(identity(3));
+print(identity("hello"));
+print(identity(some true));

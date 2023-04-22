@@ -259,6 +259,7 @@ export const standardLibrary = Object.freeze({
   boolean: Type.BOOLEAN,
   string: Type.STRING,
   void: Type.VOID,
+  any: Type.ANY,
   π: new Variable("π", true, Type.FLOAT),
   print: new Function("print", anysToVoidType),
   sin: new Function("sin", floatToFloatType),

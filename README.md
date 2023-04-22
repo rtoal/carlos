@@ -23,16 +23,21 @@ The language is specified at its [home page](https://cs.lmu.edu/~ray/notes/carlo
 
 Features include:
 
-- Value types: `int`, `float`, `string`, `boolean`
-- Reference types: arrays, structs, optionals, functions
+- Basic types: `int`, `float`, `string`, `boolean`
+- Type constructors: arrays, structures, optionals, functions
 - A user-accessible bottom type, `void`
 - A user-accessible top type, `any`
 - No billion dollar mistake!
 - Fully statically typed
 - Fully strongly typed (no implicit type conversions)
 - Type inference for local variables
+- Manifest types are required for empty arrays and empty optionals
 - Fully first-class functions
 - Function assignment is covariant in return type, contravariant in parameter types
+- No explicit pointers
+- Sensible operators for optionals (`?.`, `?[]`, `??`)
+
+Carlos is completely null-safe. There is no `null` value, and no `null` reference of any kind. One can use optionals for information that is not required.
 
 ## Building
 

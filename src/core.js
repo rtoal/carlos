@@ -1,281 +1,186 @@
-export class Program {
-  // Example: let x = 1; print(x * 5); print("done");
-  constructor(statements) {
-    this.statements = statements
-  }
+export function program(statements) {
+  return { kind: "Program", statements }
 }
 
-export class VariableDeclaration {
-  // Example: const dozen = 12;
-  constructor(variable, initializer) {
-    Object.assign(this, { variable, initializer })
-  }
+export function variableDeclaration(variable, initializer) {
+  return { kind: "VariableDeclaration", variable, initializer }
 }
 
-export class Variable {
-  // Generated when processing a variable declaration
-  constructor(name, readOnly, type) {
-    Object.assign(this, { name, readOnly, type })
-  }
+export function variable(name, readOnly, type) {
+  return { kind: "Variable", name, readOnly, type }
 }
 
-export class TypeDeclaration {
-  // Example: struct S {x: int?, y: [double]}
-  constructor(type) {
-    this.type = type
-  }
+export function typeDeclaration(type) {
+  return { kind: "TypeDeclaration", type }
 }
 
-export class Type {
-  // Type of all basic type int, float, string, etc. and superclass of others
-  static BOOLEAN = new Type("boolean")
-  static INT = new Type("int")
-  static FLOAT = new Type("float")
-  static STRING = new Type("string")
-  static VOID = new Type("void")
-  static ANY = new Type("any")
-  constructor(description) {
-    // The description is a convenient way to view the type. For basic
-    // types or structs, it will just be the names. For arrays, you will
-    // see "[T]". For optionals, "T?". For functions "(T1,...Tn)->T0".
-    Object.assign(this, { description })
-  }
+export const boolType = { kind: "BoolType", description: "boolean" }
+export const intType = { kind: "IntType", description: "int" }
+export const floatType = { kind: "FloatType", description: "float" }
+export const stringType = { kind: "StringType", description: "string" }
+export const voidType = { kind: "VoidType", description: "void" }
+export const anyType = { kind: "AnyType", description: "any" }
+
+export function structType(name, fields) {
+  return { kind: "StructType", name, fields }
 }
 
-export class StructType extends Type {
-  // Generated when processing a type declaration
-  constructor(name, fields) {
-    super(name)
-    Object.assign(this, { fields })
-  }
+export function field(name, type) {
+  return { kind: "Field", name, type }
 }
 
-export class Field {
-  constructor(name, type) {
-    Object.assign(this, { name, type })
-  }
+export function functionDeclaration(name, fun, params, body) {
+  return { kind: "FunctionDeclaration", name, fun, params, body }
 }
 
-export class FunctionDeclaration {
-  // Example: function f(x: [int?], y: string): Vector {}
-  constructor(name, fun, params, body) {
-    Object.assign(this, { name, fun, params, body })
-  }
+export function fun(name, type) {
+  return { kind: "Function", name, type }
 }
 
-export class Function {
-  // Generated when processing a function declaration
-  constructor(name, type) {
-    Object.assign(this, { name, type })
-  }
+export function arrayType(baseType) {
+  return { kind: "ArrayType", baseType, description: `[${baseType.description}]` }
 }
 
-export class ArrayType extends Type {
-  // Example: [int]
-  constructor(baseType) {
-    super(`[${baseType.description}]`)
-    this.baseType = baseType
-  }
-}
-
-export class FunctionType extends Type {
+export function functionType(paramTypes, returnType) {
   // Example: (boolean,[string]?)->float
-  constructor(paramTypes, returnType) {
-    super(`(${paramTypes.map(t => t.description).join(",")})->${returnType.description}`)
-    Object.assign(this, { paramTypes, returnType })
+  return {
+    kind: "FunctionType",
+    paramTypes,
+    returnType,
+    description: `(${paramTypes.map(t => t.description).join(",")})->${
+      returnType.description
+    }`,
   }
 }
 
-export class OptionalType extends Type {
-  // Example: string?
-  constructor(baseType) {
-    super(`${baseType.description}?`)
-    this.baseType = baseType
-  }
+export function optionalType(baseType) {
+  return { kind: "OptionalType", baseType, description: `${baseType.description}?` }
 }
 
-export class Increment {
-  // Example: count++
-  constructor(variable) {
-    this.variable = variable
-  }
+export function Increment(variable) {
+  return { kind: "Increment", variable }
 }
 
-export class Decrement {
-  // Example: count--
-  constructor(variable) {
-    this.variable = variable
-  }
+export function Decrement(variable) {
+  return { kind: "Decrement", variable }
 }
 
-export class Assignment {
-  // Example: a[z].p = 50 * 22 ** 3 - x
-  constructor(target, source) {
-    Object.assign(this, { target, source })
-  }
+export function assignment(target, source) {
+  return { kind: "Assignment", target, source }
 }
 
-export class BreakStatement {
-  // Intentionally empty
+export function breakStatement() {
+  return { kind: "BreakStatement" }
 }
 
-export class ReturnStatement {
-  // Example: return c[5]
-  constructor(expression) {
-    this.expression = expression
-  }
+export function returnStatement(expression) {
+  return { kind: "ReturnStatement", expression }
 }
 
-export class ShortReturnStatement {
-  // Intentionally empty
+export function shortReturnStatement() {
+  return { kind: "ShortReturnStatement" }
 }
 
-export class IfStatement {
-  // Example: if x < 3 { print(100); } else { break; }
-  constructor(test, consequent, alternate) {
-    Object.assign(this, { test, consequent, alternate })
-  }
+export function printStatement(expression) {
+  return { kind: "PrintStatement", expression }
 }
 
-export class ShortIfStatement {
-  // Example: if x < 3 { print(100); }
-  constructor(test, consequent) {
-    Object.assign(this, { test, consequent })
-  }
+export function ifStatement(test, consequent, alternate) {
+  return { kind: "IfStatement", test, consequent, alternate }
 }
 
-export class WhileStatement {
-  // Example: while level != 90 { level += random(-3, 8); }
-  constructor(test, body) {
-    Object.assign(this, { test, body })
-  }
+export function shortIfStatement(test, consequent) {
+  return { kind: "ShortIfStatement", test, consequent }
 }
 
-export class RepeatStatement {
-  // Example: repeat 10 { print("Hello"); }
-  constructor(count, body) {
-    Object.assign(this, { count, body })
-  }
+export function whileStatement(test, body) {
+  return { kind: "WhileStatement", test, body }
 }
 
-export class ForRangeStatement {
-  // Example: for i in 0..<10 { process(i << 2); }
-  constructor(iterator, low, op, high, body) {
-    Object.assign(this, { iterator, low, high, op, body })
-  }
+export function repeatStatement(count, body) {
+  return { kind: "RepeatStatement", count, body }
 }
 
-export class ForStatement {
-  // Example: for ball in balls { ball.bounce();  }
-  constructor(iterator, collection, body) {
-    Object.assign(this, { iterator, collection, body })
-  }
+export function forRangeStatement(iterator, low, op, high, body) {
+  return { kind: "ForRangeStatement", iterator, low, op, high, body }
 }
 
-export class Conditional {
-  // Example: latitude >= 0 ? "North" : "South"
-  constructor(test, consequent, alternate) {
-    Object.assign(this, { test, consequent, alternate })
-    this.type = consequent.type
-  }
+export function forStatement(iterator, collection, body) {
+  return { kind: "ForStatement", iterator, collection, body }
 }
 
-export class BinaryExpression {
-  // Example: 3 & 22
-  constructor(op, left, right, type) {
-    Object.assign(this, { op, left, right, type })
-  }
+export function functionCall(callee, args) {
+  return { kind: "FunctionCall", callee, args }
 }
 
-export class UnaryExpression {
-  // Example: -55
-  constructor(op, operand, type) {
-    Object.assign(this, { op, operand, type })
-  }
+export function conditional(test, consequent, alternate) {
+  return { kind: "Conditional", test, consequent, alternate }
 }
 
-export class EmptyOptional {
-  // Example: no int
-  constructor(baseType) {
-    this.baseType = baseType
-    this.type = new OptionalType(baseType)
-  }
+export function binary(op, left, right) {
+  return { kind: "BinaryExpression", op, left, right }
 }
 
-export class SubscriptExpression {
-  // Example: a[20]
-  constructor(array, index) {
-    Object.assign(this, { array, index })
-    this.type = array.type.baseType
-  }
+export function unary(op, operand) {
+  return { kind: "UnaryExpression", op, operand }
 }
 
-export class ArrayExpression {
-  // Example: ["Emma", "Norman", "Ray"]
-  constructor(elements) {
-    this.elements = elements
-    this.type = new ArrayType(elements[0].type)
-  }
+export function emptyOptional(baseType) {
+  return { kind: "EmptyOptional", baseType, type: optionalType(baseType) }
 }
 
-export class EmptyArray {
-  // Example: [float]()
-  constructor(type) {
-    this.type = type
-  }
+export function subscript(array, index) {
+  return { kind: "SubscriptExpression", array, index }
 }
 
-export class MemberExpression {
-  // Example: state.population
-  // Example: winner?.city
-  constructor(object, op, field) {
-    Object.assign(this, { object, op, field })
-    this.type = op == "?." ? new OptionalType(field.type) : field.type
-  }
+export function array(elements) {
+  return { kind: "ArrayExpression", elements }
 }
 
-export class FunctionCall {
-  // Example: move(player, 90, "west")
-  constructor(callee, args, type) {
-    Object.assign(this, { callee, args, type })
-  }
+export function emptyArray(type) {
+  return { kind: "EmptyArray", type }
 }
 
-export class ConstructorCall {
-  // Syntactically similar to but semantically different from function calls
-  constructor(callee, args, type) {
-    Object.assign(this, { callee, args, type })
-  }
+export function memberExpression(object, op, field) {
+  return { kind: "MemberExpression", object, op, field }
 }
 
-const floatToFloatType = new FunctionType([Type.FLOAT], Type.FLOAT)
-const floatFloatToFloatType = new FunctionType([Type.FLOAT, Type.FLOAT], Type.FLOAT)
-const stringToIntsType = new FunctionType([Type.STRING], new ArrayType(Type.INT))
-const anysToVoidType = new FunctionType([Type.ANY], Type.VOID)
+export function constructorCall(callee, args) {
+  return { kind: "ConstructorCall", callee, args }
+}
+
+export function call(callee, args, type) {
+  return { kind: "Call", callee, args, type }
+}
+
+const floatToFloatType = functionType([floatType], floatType)
+const floatFloatToFloatType = functionType([floatType, floatType], floatType)
+const stringToIntsType = functionType([stringType], arrayType(intType))
+const anysToVoidType = functionType([anyType], voidType)
 
 export const standardLibrary = Object.freeze({
-  int: Type.INT,
-  float: Type.FLOAT,
-  boolean: Type.BOOLEAN,
-  string: Type.STRING,
-  void: Type.VOID,
-  any: Type.ANY,
-  π: new Variable("π", true, Type.FLOAT),
-  print: new Function("print", anysToVoidType),
-  sin: new Function("sin", floatToFloatType),
-  cos: new Function("cos", floatToFloatType),
-  exp: new Function("exp", floatToFloatType),
-  ln: new Function("ln", floatToFloatType),
-  hypot: new Function("hypot", floatFloatToFloatType),
-  bytes: new Function("bytes", stringToIntsType),
-  codepoints: new Function("codepoints", stringToIntsType),
+  int: intType,
+  float: floatType,
+  boolean: boolType,
+  string: stringType,
+  void: voidType,
+  any: anyType,
+  π: variable("π", true, floatType),
+  print: fun("print", anysToVoidType),
+  sin: fun("sin", floatToFloatType),
+  cos: fun("cos", floatToFloatType),
+  exp: fun("exp", floatToFloatType),
+  ln: fun("ln", floatToFloatType),
+  hypot: fun("hypot", floatFloatToFloatType),
+  bytes: fun("bytes", stringToIntsType),
+  codepoints: fun("codepoints", stringToIntsType),
 })
 
 // We want every expression to have a type property. But we aren't creating
 // special entities for numbers, strings, and booleans; instead, we are
 // just using JavaScript values for those. Fortunately we can monkey patch
 // the JS classes for these to give us what we want.
-String.prototype.type = Type.STRING
-Number.prototype.type = Type.FLOAT
-BigInt.prototype.type = Type.INT
-Boolean.prototype.type = Type.BOOLEAN
+String.prototype.type = stringType
+Number.prototype.type = floatType
+BigInt.prototype.type = intType
+Boolean.prototype.type = boolType

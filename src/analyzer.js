@@ -26,6 +26,12 @@ function must(condition, message, errorLocation) {
 }
 
 class Context {
+  // Like most statically-scoped languages, Carlos contexts will contain a
+  // map for their locally declared identifiers and a reference to the parent
+  // context. The parent of the global context is null. In addition, the
+  // context records whether analysis is current within a loop (so we can
+  // properly check break statements), and reference to the current function
+  // (so we can properly check return statements).
   constructor({ parent = null, locals = new Map(), inLoop = false, function: f = null }) {
     Object.assign(this, { parent, locals, inLoop, function: f })
   }

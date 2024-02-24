@@ -79,7 +79,7 @@ export default function analyze(match) {
     must(e.type?.kind === "StructType", "Expected a struct", at)
   }
 
-  function mustHaveOptionalStructType(e, at) {
+  function mustHaveAnOptionalStructType(e, at) {
     must(
       e.type?.kind === "OptionalType" && e.type.baseType?.kind === "StructType",
       "Expected an optional struct",
@@ -87,15 +87,7 @@ export default function analyze(match) {
     )
   }
 
-  function entityMustBeAType(e, at) {
-    must(e?.kind.endsWith("Type"), "Type expected", at)
-  }
-
-  function mustBeAnArrayType(t, at) {
-    must(t?.kind === "ArrayType", "Must be an array type", at)
-  }
-
-  function mustBeTheSameType(e1, e2, at) {
+  function mustBothHaveTheSameType(e1, e2, at) {
     must(equivalent(e1.type, e2.type), "Operands do not have the same type", at)
   }
 
@@ -106,6 +98,14 @@ export default function analyze(match) {
       "Not all elements have the same type",
       at
     )
+  }
+
+  function mustBeAType(e, at) {
+    must(e?.kind.endsWith("Type"), "Type expected", at)
+  }
+
+  function mustBeAnArrayType(t, at) {
+    must(t?.kind === "ArrayType", "Must be an array type", at)
   }
 
   function includesAsField(structType, type) {
@@ -167,7 +167,7 @@ export default function analyze(match) {
     must(fieldNames.size === type.fields.length, "Fields must be distinct", at)
   }
 
-  function memberMustBeDeclared(structType, field, at) {
+  function mustHaveMember(structType, field, at) {
     must(structType.fields.map(f => f.name).includes(field), "No such field", at)
   }
 
@@ -196,7 +196,7 @@ export default function analyze(match) {
     mustBeAssignable(e, { toType: f.type.returnType }, at)
   }
 
-  function mustHaveRightNumberOfArguments(argCount, paramCount, at) {
+  function mustHaveCorrectArgumentCount(argCount, paramCount, at) {
     const message = `${paramCount} argument(s) required but ${argCount} passed`
     must(argCount === paramCount, message, at)
   }
@@ -284,7 +284,7 @@ export default function analyze(match) {
     Type_id(id) {
       const entity = context.lookup(id.sourceString)
       mustHaveBeenFound(entity, id.sourceString, { at: id })
-      entityMustBeAType(entity, { at: id })
+      mustBeAType(entity, { at: id })
       return entity
     },
 
@@ -408,7 +408,7 @@ export default function analyze(match) {
       const test = exp.rep()
       mustHaveBooleanType(test, { at: exp })
       const [consequent, alternate] = [exp1.rep(), exp2.rep()]
-      mustBeTheSameType(consequent, alternate, { at: colon })
+      mustBothHaveTheSameType(consequent, alternate, { at: colon })
       return core.conditional(test, consequent, alternate, consequent.type)
     },
 
@@ -481,7 +481,7 @@ export default function analyze(match) {
       if (["<", "<=", ">", ">="].includes(op)) {
         mustHaveNumericOrStringType(left, { at: exp1 })
       }
-      mustBeTheSameType(left, right, { at: relop })
+      mustBothHaveTheSameType(left, right, { at: relop })
       return core.binary(op, left, right, BOOLEAN)
     },
 
@@ -499,21 +499,21 @@ export default function analyze(match) {
       } else {
         mustHaveNumericType(left, { at: exp1 })
       }
-      mustBeTheSameType(left, right, { at: addOp })
+      mustBothHaveTheSameType(left, right, { at: addOp })
       return core.binary(op, left, right, left.type)
     },
 
     Exp7_multiply(exp1, mulOp, exp2) {
       const [left, op, right] = [exp1.rep(), mulOp.sourceString, exp2.rep()]
       mustHaveNumericType(left, { at: exp1 })
-      mustBeTheSameType(left, right, { at: mulOp })
+      mustBothHaveTheSameType(left, right, { at: mulOp })
       return core.binary(op, left, right, left.type)
     },
 
     Exp8_power(exp1, powerOp, exp2) {
       const [left, op, right] = [exp1.rep(), powerOp.sourceString, exp2.rep()]
       mustHaveNumericType(left, { at: exp1 })
-      mustBeTheSameType(left, right, { at: powerOp })
+      mustBothHaveTheSameType(left, right, { at: powerOp })
       return core.binary(op, left, right, left.type)
     },
 
@@ -569,13 +569,13 @@ export default function analyze(match) {
       const object = exp.rep()
       let structType
       if (dot.sourceString === "?.") {
-        mustHaveOptionalStructType(object, { at: exp })
+        mustHaveAnOptionalStructType(object, { at: exp })
         structType = object.type.baseType
       } else {
         mustHaveAStructType(object, { at: exp })
         structType = object.type
       }
-      memberMustBeDeclared(structType, id.sourceString, { at: id })
+      mustHaveMember(structType, id.sourceString, { at: id })
       const field = structType.fields.find(f => f.name === id.sourceString)
       return core.memberExpression(object, dot.sourceString, field)
     },
@@ -588,7 +588,7 @@ export default function analyze(match) {
         callee?.kind === "StructType"
           ? callee.fields.map(f => f.type)
           : callee.type.paramTypes
-      mustHaveRightNumberOfArguments(exps.length, targetTypes.length, { at: open })
+      mustHaveCorrectArgumentCount(exps.length, targetTypes.length, { at: open })
       const args = exps.map((exp, i) => {
         const arg = exp.rep()
         mustBeAssignable(arg, { toType: targetTypes[i] }, { at: exp })

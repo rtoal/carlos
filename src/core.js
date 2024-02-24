@@ -22,7 +22,7 @@ export const voidType = { kind: "VoidType", description: "void" }
 export const anyType = { kind: "AnyType", description: "any" }
 
 export function structType(name, fields) {
-  return { kind: "StructType", name, fields }
+  return { kind: "StructType", name, fields, description: name }
 }
 
 export function field(name, type) {
@@ -57,11 +57,11 @@ export function optionalType(baseType) {
   return { kind: "OptionalType", baseType, description: `${baseType.description}?` }
 }
 
-export function Increment(variable) {
+export function increment(variable) {
   return { kind: "Increment", variable }
 }
 
-export function Decrement(variable) {
+export function decrement(variable) {
   return { kind: "Decrement", variable }
 }
 
@@ -69,9 +69,7 @@ export function assignment(target, source) {
   return { kind: "Assignment", target, source }
 }
 
-export function breakStatement() {
-  return { kind: "BreakStatement" }
-}
+export const breakStatement = { kind: "BreakStatement" }
 
 export function returnStatement(expression) {
   return { kind: "ReturnStatement", expression }
@@ -79,10 +77,6 @@ export function returnStatement(expression) {
 
 export function shortReturnStatement() {
   return { kind: "ShortReturnStatement" }
-}
-
-export function printStatement(expression) {
-  return { kind: "PrintStatement", expression }
 }
 
 export function ifStatement(test, consequent, alternate) {
@@ -110,19 +104,19 @@ export function forStatement(iterator, collection, body) {
 }
 
 export function functionCall(callee, args) {
-  return { kind: "FunctionCall", callee, args }
+  return { kind: "FunctionCall", callee, args, type: callee.type.returnType }
 }
 
-export function conditional(test, consequent, alternate) {
-  return { kind: "Conditional", test, consequent, alternate }
+export function conditional(test, consequent, alternate, type) {
+  return { kind: "Conditional", test, consequent, alternate, type }
 }
 
-export function binary(op, left, right) {
-  return { kind: "BinaryExpression", op, left, right }
+export function binary(op, left, right, type) {
+  return { kind: "BinaryExpression", op, left, right, type }
 }
 
-export function unary(op, operand) {
-  return { kind: "UnaryExpression", op, operand }
+export function unary(op, operand, type) {
+  return { kind: "UnaryExpression", op, operand, type }
 }
 
 export function emptyOptional(baseType) {
@@ -130,11 +124,11 @@ export function emptyOptional(baseType) {
 }
 
 export function subscript(array, index) {
-  return { kind: "SubscriptExpression", array, index }
+  return { kind: "SubscriptExpression", array, index, type: array.type.baseType }
 }
 
-export function array(elements) {
-  return { kind: "ArrayExpression", elements }
+export function arrayExpression(elements) {
+  return { kind: "ArrayExpression", elements, type: arrayType(elements[0].type) }
 }
 
 export function emptyArray(type) {
@@ -142,21 +136,18 @@ export function emptyArray(type) {
 }
 
 export function memberExpression(object, op, field) {
-  return { kind: "MemberExpression", object, op, field }
+  return { kind: "MemberExpression", object, op, field, type: field.type }
 }
 
 export function constructorCall(callee, args) {
-  return { kind: "ConstructorCall", callee, args }
+  return { kind: "ConstructorCall", callee, args, type: callee }
 }
 
-export function call(callee, args, type) {
-  return { kind: "Call", callee, args, type }
-}
-
+// These local constants are used to simplify the standard library definitions.
 const floatToFloatType = functionType([floatType], floatType)
 const floatFloatToFloatType = functionType([floatType, floatType], floatType)
 const stringToIntsType = functionType([stringType], arrayType(intType))
-const anysToVoidType = functionType([anyType], voidType)
+const anyToVoidType = functionType([anyType], voidType)
 
 export const standardLibrary = Object.freeze({
   int: intType,
@@ -166,7 +157,7 @@ export const standardLibrary = Object.freeze({
   void: voidType,
   any: anyType,
   π: variable("π", true, floatType),
-  print: fun("print", anysToVoidType),
+  print: fun("print", anyToVoidType),
   sin: fun("sin", floatToFloatType),
   cos: fun("cos", floatToFloatType),
   exp: fun("exp", floatToFloatType),

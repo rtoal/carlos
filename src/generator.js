@@ -1,9 +1,8 @@
-// CODE GENERATOR
-//
-// Invoke generate(program) with the program node to get back the JavaScript
-// translation as a string.
+// The code generator exports a single function, generate(program), which
+// accepts a program representation and returns the JavaScript translation
+// as a string.
 
-import { IfStatement, Type, standardLibrary } from "./core.js"
+import { voidType, standardLibrary } from "./core.js"
 
 export default function generate(program) {
   const output = []
@@ -32,15 +31,13 @@ export default function generate(program) {
     }
   })(new Map())
 
-  function gen(node) {
-    return generators[node.constructor.name](node)
-  }
+  const gen = node => generators?.[node?.kind]?.(node) ?? node
 
   const generators = {
     // Key idea: when generating an expression, just return the JS string; when
     // generating a statement, write lines of translated JS to the output array.
     Program(p) {
-      gen(p.statements)
+      p.statements.forEach(gen)
     },
     VariableDeclaration(d) {
       // We don't care about const vs. let in the generated code! The analyzer has
@@ -50,7 +47,7 @@ export default function generate(program) {
     TypeDeclaration(d) {
       // The only type declaration in Carlos is the struct! Becomes a JS class.
       output.push(`class ${gen(d.type)} {`)
-      output.push(`constructor(${gen(d.type.fields).join(",")}) {`)
+      output.push(`constructor(${d.type.fields.map(gen).join(",")}) {`)
       for (let field of d.type.fields) {
         output.push(`this[${JSON.stringify(gen(field))}] = ${gen(field)};`)
       }
@@ -64,8 +61,8 @@ export default function generate(program) {
       return targetName(f)
     },
     FunctionDeclaration(d) {
-      output.push(`function ${gen(d.fun)}(${gen(d.params).join(", ")}) {`)
-      gen(d.body)
+      output.push(`function ${gen(d.fun)}(${d.params.map(gen).join(", ")}) {`)
+      d.body.forEach(gen)
       output.push("}")
     },
     Variable(v) {
@@ -98,43 +95,43 @@ export default function generate(program) {
     },
     IfStatement(s) {
       output.push(`if (${gen(s.test)}) {`)
-      gen(s.consequent)
-      if (s.alternate instanceof IfStatement) {
+      s.consequent.forEach(gen)
+      if (s.alternate?.kind?.endsWith?.("IfStatement")) {
         output.push("} else")
         gen(s.alternate)
       } else {
         output.push("} else {")
-        gen(s.alternate)
+        s.alternate.forEach(gen)
         output.push("}")
       }
     },
     ShortIfStatement(s) {
       output.push(`if (${gen(s.test)}) {`)
-      gen(s.consequent)
+      s.consequent.forEach(gen)
       output.push("}")
     },
     WhileStatement(s) {
       output.push(`while (${gen(s.test)}) {`)
-      gen(s.body)
+      s.body.forEach(gen)
       output.push("}")
     },
     RepeatStatement(s) {
       // JS can only repeat n times if you give it a counter variable!
       const i = targetName({ name: "i" })
       output.push(`for (let ${i} = 0; ${i} < ${gen(s.count)}; ${i}++) {`)
-      gen(s.body)
+      s.body.forEach(gen)
       output.push("}")
     },
     ForRangeStatement(s) {
       const i = targetName(s.iterator)
       const op = s.op === "..." ? "<=" : "<"
       output.push(`for (let ${i} = ${gen(s.low)}; ${i} ${op} ${gen(s.high)}; ${i}++) {`)
-      gen(s.body)
+      s.body.forEach(gen)
       output.push("}")
     },
     ForStatement(s) {
       output.push(`for (let ${gen(s.iterator)} of ${gen(s.collection)}) {`)
-      gen(s.body)
+      s.body.forEach(gen)
       output.push("}")
     },
     Conditional(e) {
@@ -163,7 +160,7 @@ export default function generate(program) {
       return `${gen(e.array)}[${gen(e.index)}]`
     },
     ArrayExpression(e) {
-      return `[${gen(e.elements).join(",")}]`
+      return `[${e.elements.map(gen).join(",")}]`
     },
     EmptyArray(e) {
       return "[]"
@@ -176,31 +173,16 @@ export default function generate(program) {
     },
     FunctionCall(c) {
       const targetCode = standardFunctions.has(c.callee)
-        ? standardFunctions.get(c.callee)(gen(c.args))
-        : `${gen(c.callee)}(${gen(c.args).join(", ")})`
+        ? standardFunctions.get(c.callee)(c.args.map(gen))
+        : `${gen(c.callee)}(${c.args.map(gen).join(", ")})`
       // Calls in expressions vs in statements are handled differently
-      if (c.callee.type.returnType !== Type.VOID) {
+      if (c.callee.type.returnType !== voidType) {
         return targetCode
       }
       output.push(`${targetCode};`)
     },
     ConstructorCall(c) {
-      return `new ${gen(c.callee)}(${gen(c.args).join(", ")})`
-    },
-    Number(e) {
-      return e
-    },
-    BigInt(e) {
-      return e
-    },
-    Boolean(e) {
-      return e
-    },
-    String(e) {
-      return e
-    },
-    Array(a) {
-      return a.map(gen)
+      return `new ${gen(c.callee)}(${c.args.map(gen).join(", ")})`
     },
   }
 

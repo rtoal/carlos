@@ -1,7 +1,5 @@
-// OPTIMIZER
-//
-// This module exports a single function to perform machine-independent
-// optimizations on the analyzed semantic graph.
+// The optimizer module exports a single function, optimize(node), to perform
+// machine-independent optimizations on the analyzed semantic representation.
 //
 // The only optimizations supported here are:
 //
@@ -24,12 +22,12 @@
 import * as core from "./core.js"
 
 export default function optimize(node) {
-  return optimizers[node.constructor.name](node)
+  return optimizers?.[node.kind]?.(node) ?? node
 }
 
 const optimizers = {
   Program(p) {
-    p.statements = optimize(p.statements)
+    p.statements = p.statements.flatMap(optimize)
     return p
   },
   VariableDeclaration(d) {
@@ -41,23 +39,10 @@ const optimizers = {
     d.type = optimize(d.type)
     return d
   },
-  StructType(t) {
-    return t
-  },
-  Field(f) {
-    f.name = f.name.lexeme
-    return f
-  },
   FunctionDeclaration(d) {
     d.fun = optimize(d.fun)
-    if (d.body) d.body = optimize(d.body)
+    if (d.body) d.body = d.body.flatMap(optimize)
     return d
-  },
-  Variable(v) {
-    return v
-  },
-  Function(f) {
-    return f
   },
   Increment(s) {
     s.variable = optimize(s.variable)
@@ -87,8 +72,12 @@ const optimizers = {
   },
   IfStatement(s) {
     s.test = optimize(s.test)
-    s.consequent = optimize(s.consequent)
-    s.alternate = optimize(s.alternate)
+    s.consequent = s.consequent.flatMap(optimize)
+    if (s.alternate?.kind?.endsWith?.("IfStatement")) {
+      s.alternate = optimize(s.alternate)
+    } else {
+      s.alternate = s.alternate.flatMap(optimize)
+    }
     if (s.test.constructor === Boolean) {
       return s.test ? s.consequent : s.alternate
     }
@@ -96,7 +85,7 @@ const optimizers = {
   },
   ShortIfStatement(s) {
     s.test = optimize(s.test)
-    s.consequent = optimize(s.consequent)
+    s.consequent = s.consequent.flatMap(optimize)
     if (s.test.constructor === Boolean) {
       return s.test ? s.consequent : []
     }
@@ -108,7 +97,7 @@ const optimizers = {
       // while false is a no-op
       return []
     }
-    s.body = optimize(s.body)
+    s.body = s.body.flatMap(optimize)
     return s
   },
   RepeatStatement(s) {
@@ -117,7 +106,7 @@ const optimizers = {
       // repeat 0 times is a no-op
       return []
     }
-    s.body = optimize(s.body)
+    s.body = s.body.flatMap(optimize)
     return s
   },
   ForRangeStatement(s) {
@@ -125,7 +114,7 @@ const optimizers = {
     s.low = optimize(s.low)
     s.op = optimize(s.op)
     s.high = optimize(s.high)
-    s.body = optimize(s.body)
+    s.body = s.body.flatMap(optimize)
     if (s.low.constructor === Number) {
       if (s.high.constructor === Number) {
         if (s.low > s.high) {
@@ -138,8 +127,8 @@ const optimizers = {
   ForStatement(s) {
     s.iterator = optimize(s.iterator)
     s.collection = optimize(s.collection)
-    s.body = optimize(s.body)
-    if (s.collection instanceof core.EmptyArray) {
+    s.body = s.body.flatMap(optimize)
+    if (s.collection?.kind === "EmptyArray") {
       return []
     }
     return s
@@ -159,7 +148,7 @@ const optimizers = {
     e.right = optimize(e.right)
     if (e.op === "??") {
       // Coalesce Empty Optional Unwraps
-      if (e.left instanceof core.EmptyOptional) {
+      if (e.left?.kind === "EmptyOptional") {
         return e.right
       }
     } else if (e.op === "&&") {
@@ -185,10 +174,10 @@ const optimizers = {
         else if (e.op === ">") return e.left > e.right
       } else if (e.left === 0 && e.op === "+") return e.right
       else if (e.left === 1 && e.op === "*") return e.right
-      else if (e.left === 0 && e.op === "-") return new core.UnaryExpression("-", e.right)
+      else if (e.left === 0 && e.op === "-") return core.unary("-", e.right)
       else if (e.left === 1 && e.op === "**") return 1
       else if (e.left === 0 && ["*", "/"].includes(e.op)) return 0
-    } else if (e.right.constructor === Number) {
+    } else if ([Number, BigInt].includes(e.right.constructor)) {
       // Numeric constant folding when right operand is constant
       if (["+", "-"].includes(e.op) && e.right === 0) return e.left
       else if (["*", "/"].includes(e.op) && e.right === 1) return e.left
@@ -207,19 +196,13 @@ const optimizers = {
     }
     return e
   },
-  EmptyOptional(e) {
-    return e
-  },
   SubscriptExpression(e) {
     e.array = optimize(e.array)
     e.index = optimize(e.index)
     return e
   },
   ArrayExpression(e) {
-    e.elements = optimize(e.elements)
-    return e
-  },
-  EmptyArray(e) {
+    e.elements = e.elements.map(optimize)
     return e
   },
   MemberExpression(e) {
@@ -228,28 +211,12 @@ const optimizers = {
   },
   FunctionCall(c) {
     c.callee = optimize(c.callee)
-    c.args = optimize(c.args)
+    c.args = c.args.map(optimize)
     return c
   },
   ConstructorCall(c) {
     c.callee = optimize(c.callee)
-    c.args = optimize(c.args)
+    c.args = c.args.map(optimize)
     return c
-  },
-  BigInt(e) {
-    return e
-  },
-  Number(e) {
-    return e
-  },
-  Boolean(e) {
-    return e
-  },
-  String(e) {
-    return e
-  },
-  Array(a) {
-    // Flatmap since each element can be an array
-    return a.flatMap(optimize)
   },
 }

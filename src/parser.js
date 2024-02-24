@@ -1,7 +1,5 @@
-// PARSER
-//
 // The parse() function uses Ohm to produce a match object for a given
-// source code program, using the grammar in the carlos.ohm.
+// source code program, using the grammar in the file carlos.ohm.
 
 import * as fs from "node:fs"
 import * as ohm from "ohm-js"

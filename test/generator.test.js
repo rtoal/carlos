@@ -49,11 +49,10 @@ const fixtures = [
       }
       if ((x_1 === 0)) {
         console.log(1);
-      } else {
+      } else
         if ((x_1 === 2)) {
           console.log(3);
         }
-      }
       if ((x_1 === 0)) {
         console.log(1);
       } else

@@ -41,13 +41,22 @@ export default function analyze(match) {
   // The single gate for error checking. Pass in a condition that must be true.
   // Use errorLocation to give contextual information about the error that will
   // appear: this should be an object whose "at" property is a parse tree node.
-  // Ohm's getLineAndColumnMessage will be used to prefix the error message.
+  // Ohm's getLineAndColumnMessage will be used to prefix the error message. This
+  // allows any semantic analysis errors to be presented to an end user in the
+  // same format as Ohm's reporting of syntax errors.
   function must(condition, message, errorLocation) {
     if (!condition) {
       const prefix = errorLocation.at.source.getLineAndColumnMessage()
       throw new Error(`${prefix}${message}`)
     }
   }
+
+  // Next come a number of carefully named utility functions that keep the
+  // analysis code clean and readable. Without these utilities, the analysis
+  // code would be cluttered with if-statements and error messages. Each of
+  // the utilities accept a parameter that should be an object with an "at"
+  // property that is a parse tree node. This is used to provide contextual
+  // information in the error message.
 
   function mustNotAlreadyBeDeclared(name, at) {
     must(!context.lookup(name), `Identifier ${name} already declared`, at)
@@ -86,6 +95,7 @@ export default function analyze(match) {
   }
 
   function mustHaveAnOptionalStructType(e, at) {
+    // Used to check e?.x expressions, e must be an optional struct
     must(
       e.type?.kind === "OptionalType" && e.type.baseType?.kind === "StructType",
       "Expected an optional struct",
@@ -98,7 +108,8 @@ export default function analyze(match) {
   }
 
   function mustAllHaveSameType(expressions, at) {
-    // Used to check array elements, for example
+    // Used to check the elements of an array expression, and the two
+    // arms of a conditional expression, among other scenarios.
     must(
       expressions.slice(1).every(e => equivalent(e.type, expressions[0].type)),
       "Not all elements have the same type",
@@ -107,6 +118,7 @@ export default function analyze(match) {
   }
 
   function mustBeAType(e, at) {
+    // This is a rather ugly hack
     must(e?.kind.endsWith("Type"), "Type expected", at)
   }
 
@@ -115,7 +127,7 @@ export default function analyze(match) {
   }
 
   function includesAsField(structType, type) {
-    // Directly or indirectly!
+    // Whether the struct type has a field of type type, directly or indirectly
     return structType.fields.some(
       field =>
         field.type === type ||
@@ -238,7 +250,15 @@ export default function analyze(match) {
     must(argCount === paramCount, message, at)
   }
 
-  const analyzer = match.matcher.grammar.createSemantics().addOperation("rep", {
+  // Building the program representation will be done together with semantic
+  // analysis and error checking. In Ohm, we do this with a semantics object
+  // that has an operation for each relevant rule in the grammar. Since the
+  // purpose of analysis is to build the program representation, we will name
+  // the operations "rep" for "representation". Most of the rules are straight-
+  // forward except for those dealing with function and type declarations,
+  // since types and functions need to be dealt with in two steps to allow
+  // recursion.
+  const builder = match.matcher.grammar.createSemantics().addOperation("rep", {
     Program(statements) {
       return core.program(statements.children.map(s => s.rep()))
     },
@@ -289,11 +309,14 @@ export default function analyze(match) {
 
       // Analyze body while still in child context
       const body = block.rep()
+
+      // Go back up to the outer context before returning
       context = context.parent
       return core.functionDeclaration(id.sourceString, fun, params, body)
     },
 
     Params(_open, paramList, _close) {
+      // Returns a list of variable nodes
       return paramList.asIteration().children.map(p => p.rep())
     },
 
@@ -674,5 +697,5 @@ export default function analyze(match) {
   for (const [name, type] of Object.entries(core.standardLibrary)) {
     context.add(name, type)
   }
-  return analyzer(match).rep()
+  return builder(match).rep()
 }

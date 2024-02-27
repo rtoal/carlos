@@ -100,12 +100,12 @@ const syntaxErrors = [
 
 describe("The parser", () => {
   for (const [scenario, source] of syntaxChecks) {
-    it(`properly specifies ${scenario}`, () => {
+    it(`matches ${scenario}`, () => {
       assert(parse(source).succeeded())
     })
   }
   for (const [scenario, source, errorMessagePattern] of syntaxErrors) {
-    it(`does not permit ${scenario}`, () => {
+    it(`throws on ${scenario}`, () => {
       assert.throws(() => parse(source), errorMessagePattern)
     })
   }

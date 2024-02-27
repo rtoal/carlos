@@ -84,7 +84,7 @@ const syntaxErrors = [
   ["unbalanced brackets", "function f(): int[;", /Line 1, col 18/],
   ["empty array without type", "print([]);", /Line 1, col 8/],
   ["random used like a function", "print(random(1,2));", /Line 1, col 15/],
-  [("bad array literal", "print([1,2,]);", /Line 1, col 12/)],
+  ["bad array literal", "print([1,2,]);", /Line 1, col 12/],
   ["empty subscript", "print(a[]);", /Line 1, col 9/],
   ["true is not assignable", "true = 1;", /Line 1, col 5/],
   ["false is not assignable", "false = 1;", /Line 1, col 6/],

@@ -14,15 +14,15 @@ export function typeDeclaration(type) {
   return { kind: "TypeDeclaration", type }
 }
 
-export const boolType = { kind: "BoolType", description: "boolean" }
-export const intType = { kind: "IntType", description: "int" }
-export const floatType = { kind: "FloatType", description: "float" }
-export const stringType = { kind: "StringType", description: "string" }
-export const voidType = { kind: "VoidType", description: "void" }
-export const anyType = { kind: "AnyType", description: "any" }
+export const boolType = { kind: "BoolType" }
+export const intType = { kind: "IntType" }
+export const floatType = { kind: "FloatType" }
+export const stringType = { kind: "StringType" }
+export const voidType = { kind: "VoidType" }
+export const anyType = { kind: "AnyType" }
 
 export function structType(name, fields) {
-  return { kind: "StructType", name, fields, description: name }
+  return { kind: "StructType", name, fields }
 }
 
 export function field(name, type) {
@@ -38,7 +38,7 @@ export function fun(name, type) {
 }
 
 export function arrayType(baseType) {
-  return { kind: "ArrayType", baseType, description: `[${baseType.description}]` }
+  return { kind: "ArrayType", baseType }
 }
 
 export function functionType(paramTypes, returnType) {
@@ -47,14 +47,11 @@ export function functionType(paramTypes, returnType) {
     kind: "FunctionType",
     paramTypes,
     returnType,
-    description: `(${paramTypes.map(t => t.description).join(",")})->${
-      returnType.description
-    }`,
   }
 }
 
 export function optionalType(baseType) {
-  return { kind: "OptionalType", baseType, description: `${baseType.description}?` }
+  return { kind: "OptionalType", baseType }
 }
 
 export function increment(variable) {

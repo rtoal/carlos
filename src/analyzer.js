@@ -159,8 +159,39 @@ export default function analyze(match) {
     )
   }
 
+  function typeDescription(type) {
+    switch (type.kind) {
+      case "IntType":
+        return "int"
+      case "FloatType":
+        return "float"
+      case "StringType":
+        return "string"
+      case "BoolType":
+        return "boolean"
+      case "VoidType":
+        return "void"
+      case "AnyType":
+        return "any"
+      case "StructType":
+        return type.name
+      case "FunctionType":
+        const paramTypes = type.paramTypes.map(typeDescription).join(", ")
+        const returnType = typeDescription(type.returnType)
+        return `(${paramTypes})->${returnType}`
+      case "ArrayType":
+        return `[${typeDescription(type.baseType)}]`
+      case "OptionalType":
+        return `${typeDescription(type.baseType)}?`
+      default:
+        return ""
+    }
+  }
+
   function mustBeAssignable(e, { toType: type }, at) {
-    const message = `Cannot assign a ${e.type.description} to a ${type.description}`
+    const message = `Cannot assign a ${typeDescription(e.type)} to a ${typeDescription(
+      type
+    )}`
     must(assignable(e.type, type), message, at)
   }
 

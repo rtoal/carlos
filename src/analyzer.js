@@ -14,17 +14,6 @@ const BOOLEAN = core.boolType
 const ANY = core.anyType
 const VOID = core.voidType
 
-// The single gate for error checking. Pass in a condition that must be true.
-// Use errorLocation to give contextual information about the error that will
-// appear: this should be an object whose "at" property is a parse tree node.
-// Ohm's getLineAndColumnMessage will be used to prefix the error message.
-function must(condition, message, errorLocation) {
-  if (!condition) {
-    const prefix = errorLocation.at.source.getLineAndColumnMessage()
-    throw new Error(`${prefix}${message}`)
-  }
-}
-
 class Context {
   // Like most statically-scoped languages, Carlos contexts will contain a
   // map for their locally declared identifiers and a reference to the parent
@@ -48,6 +37,17 @@ class Context {
 
 export default function analyze(match) {
   let context = new Context({})
+
+  // The single gate for error checking. Pass in a condition that must be true.
+  // Use errorLocation to give contextual information about the error that will
+  // appear: this should be an object whose "at" property is a parse tree node.
+  // Ohm's getLineAndColumnMessage will be used to prefix the error message.
+  function must(condition, message, errorLocation) {
+    if (!condition) {
+      const prefix = errorLocation.at.source.getLineAndColumnMessage()
+      throw new Error(`${prefix}${message}`)
+    }
+  }
 
   function mustNotAlreadyBeDeclared(name, at) {
     must(!context.lookup(name), `Identifier ${name} already declared`, at)

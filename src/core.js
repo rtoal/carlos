@@ -42,12 +42,7 @@ export function arrayType(baseType) {
 }
 
 export function functionType(paramTypes, returnType) {
-  // Example: (boolean,[string]?)->float
-  return {
-    kind: "FunctionType",
-    paramTypes,
-    returnType,
-  }
+  return { kind: "FunctionType", paramTypes, returnType }
 }
 
 export function optionalType(baseType) {
@@ -100,10 +95,6 @@ export function forStatement(iterator, collection, body) {
   return { kind: "ForStatement", iterator, collection, body }
 }
 
-export function functionCall(callee, args) {
-  return { kind: "FunctionCall", callee, args, type: callee.type.returnType }
-}
-
 export function conditional(test, consequent, alternate, type) {
   return { kind: "Conditional", test, consequent, alternate, type }
 }
@@ -134,6 +125,10 @@ export function emptyArray(type) {
 
 export function memberExpression(object, op, field) {
   return { kind: "MemberExpression", object, op, field, type: field.type }
+}
+
+export function functionCall(callee, args) {
+  return { kind: "FunctionCall", callee, args, type: callee.type.returnType }
 }
 
 export function constructorCall(callee, args) {

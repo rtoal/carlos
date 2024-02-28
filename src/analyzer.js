@@ -30,13 +30,21 @@ class Context {
   lookup(name) {
     return this.locals.get(name) || this.parent?.lookup(name)
   }
+  static root() {
+    return new Context({ locals: new Map(Object.entries(core.standardLibrary)) })
+  }
   newChildContext(props) {
     return new Context({ ...this, ...props, parent: this, locals: new Map() })
   }
 }
 
 export default function analyze(match) {
-  let context = new Context({})
+  // Track the context manually via a simple variable. The initial context
+  // contains the mappings from the standard library. Add to this context
+  // as necessary. When needing to descent into a new scope, create a new
+  // context with the current context as its parent. When leaving a scope,
+  // reset this variable to the parent context.
+  let context = Context.root()
 
   // The single gate for error checking. Pass in a condition that must be true.
   // Use errorLocation to give contextual information about the error that will
@@ -195,8 +203,6 @@ export default function analyze(match) {
         return `[${typeDescription(type.baseType)}]`
       case "OptionalType":
         return `${typeDescription(type.baseType)}?`
-      default:
-        return ""
     }
   }
 
@@ -691,11 +697,5 @@ export default function analyze(match) {
     },
   })
 
-  // Analysis starts here. First load up the initial context with entities
-  // from the standard library. Then do the analysis using the semantics
-  // object created above.
-  for (const [name, type] of Object.entries(core.standardLibrary)) {
-    context.add(name, type)
-  }
   return builder(match).rep()
 }

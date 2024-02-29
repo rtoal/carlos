@@ -128,7 +128,7 @@ const fixtures = [
       let a_1 = [true,false,true];
       let b_2 = [10,(a_1.length - 20),30];
       let c_3 = [];
-      let d_4 = ((a=>a[~~(Math.random()*a.length)])(b_2)");
+      let d_4 = ((a=>a[~~(Math.random()*a.length)])(b_2));
       console.log((a_1[1] || (((b_2[0] < 88)) ? (false) : (true))));
     `,
   },

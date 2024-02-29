@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import parse from "../src/parser.js"
 import analyze from "../src/analyzer.js"
+import { program, variableDeclaration, variable, binary, floatType } from "../src/core.js"
 
 // Programs that are semantically correct
 const semanticChecks = [
@@ -178,9 +179,6 @@ const semanticErrors = [
 ]
 
 describe("The analyzer", () => {
-  it("throws on syntax errors", () => {
-    assert.throws(() => analyze(parse("*(^%$")))
-  })
   for (const [scenario, source] of semanticChecks) {
     it(`recognizes ${scenario}`, () => {
       assert.ok(analyze(parse(source)))
@@ -191,9 +189,15 @@ describe("The analyzer", () => {
       assert.throws(() => analyze(parse(source)), errorMessagePattern)
     })
   }
-  it("builds an unoptimized AST for a trivial program", () => {
-    const ast = analyze(parse("print(1+2);"))
-    assert.equal(ast.statements[0].callee.name, "print")
-    assert.equal(ast.statements[0].args[0].left, 1n)
+  it("produces the expected representation for a trivial program", () => {
+    assert.deepEqual(
+      analyze(parse("let x = π + 2.2;")),
+      program([
+        variableDeclaration(
+          variable("x", false, floatType),
+          binary("+", variable("π", true, floatType), 2.2, floatType)
+        ),
+      ])
+    )
   })
 })

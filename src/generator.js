@@ -5,6 +5,9 @@
 import { voidType, standardLibrary } from "./core.js"
 
 export default function generate(program) {
+  // When generating code for statements, we'll accumulate the lines of
+  // the target code here. When we finish generating, we'll join the lines
+  // with newlines and return the result.
   const output = []
 
   const standardFunctions = new Map([
@@ -67,9 +70,7 @@ export default function generate(program) {
     },
     Variable(v) {
       // Standard library constants just get special treatment
-      if (v === standardLibrary.π) {
-        return "Math.PI"
-      }
+      if (v === standardLibrary.π) return "Math.PI"
       return targetName(v)
     },
     Function(f) {
@@ -148,8 +149,7 @@ export default function generate(program) {
       } else if (e.op === "#") {
         return `${operand}.length`
       } else if (e.op === "random") {
-        randomCalled = true
-        return `_r(${operand})`
+        return `((a=>a[~~(Math.random()*a.length)])(${operand})")`
       }
       return `${e.op}(${operand})`
     },
@@ -186,8 +186,6 @@ export default function generate(program) {
     },
   }
 
-  let randomCalled = false
   gen(program)
-  if (randomCalled) output.push("function _r(a){return a[~~(Math.random()*a.length)]}")
   return output.join("\n")
 }

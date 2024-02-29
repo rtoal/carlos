@@ -149,7 +149,7 @@ export default function generate(program) {
       } else if (e.op === "#") {
         return `${operand}.length`
       } else if (e.op === "random") {
-        return `((a=>a[~~(Math.random()*a.length)])(${operand})")`
+        return `((a=>a[~~(Math.random()*a.length)])(${operand}))`
       }
       return `${e.op}(${operand})`
     },

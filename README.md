@@ -29,15 +29,15 @@ Features include:
 - A user-accessible top type, `any`
 - No billion dollar mistake!
 - Fully statically typed
-- Fully strongly typed (no implicit type conversions)
+- Fully strongly typed (no implicit type conversions, not even between `int` and `float`)
 - Type inference for local variables
-- Manifest types are required for empty arrays and empty optionals
+- Manifest types required for empty arrays and empty optionals
 - Fully first-class functions
-- Function assignment is covariant in return type, contravariant in parameter types
+- Function assignment covariant in return type, contravariant in parameter types
 - No explicit pointers
 - Sensible operators for optionals (`?.`, `?[]`, `??`)
 
-Carlos is completely null-safe. There is no `null` value, and no `null` reference of any kind. One can use optionals for information that is not required.
+Carlos is completely null-safe. There is no `null` value, and no `null` reference of any kind. Optionals are used for information that is not required.
 
 ## Building
 
@@ -72,49 +72,49 @@ $ node src/carlos.js examples/intro.carlos parsed
 Syntax is ok
 ```
 
-```
+````
 $ node src/carlos.js examples/intro.carlos analyzed
    1 | Program statements=[#2,#5,#12,#17]
    2 | VariableDeclaration variable=#3 initializer='"Carlos"'
    3 | Variable name='languageName' readOnly=true type=#4
-   4 | Type description='string'
+   4 | StringType
    5 | FunctionDeclaration name='greeting' fun=#6 params=[] body=[#8]
    6 | Function name='greeting' type=#7
-   7 | FunctionType description='()->string' paramTypes=[] returnType=#4
+   7 | FunctionType paramTypes=[] returnType=#4
    8 | ReturnStatement expression=#9
    9 | UnaryExpression op='random' operand=#10 type=#4
   10 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#11
-  11 | ArrayType description='[string]' baseType=#4
+  11 | ArrayType baseType=#4
   12 | FunctionCall callee=#13 args=['"👋👋👋"'] type=#16
   13 | Function name='print' type=#14
-  14 | FunctionType description='(any)->void' paramTypes=[#15] returnType=#16
-  15 | Type description='any'
-  16 | Type description='void'
+  14 | FunctionType paramTypes=[#15] returnType=#16
+  15 | AnyType
+  16 | VoidType
   17 | RepeatStatement count=5n body=[#18]
   18 | FunctionCall callee=#13 args=[#19] type=#16
   19 | BinaryExpression op='+' left=#20 right=#3 type=#4
   20 | BinaryExpression op='+' left=#21 right='" "' type=#4
-  21 | FunctionCall callee=#6 args=[] type=#4
-```
+  21 | FunctionCall callee=#6 args=[] type=#4```
+````
 
 ```
 $ node src/carlos.js examples/intro.carlos optimized
    1 | Program statements=[#2,#5,#12,#17]
    2 | VariableDeclaration variable=#3 initializer='"Carlos"'
    3 | Variable name='languageName' readOnly=true type=#4
-   4 | Type description='string'
+   4 | StringType
    5 | FunctionDeclaration name='greeting' fun=#6 params=[] body=[#8]
    6 | Function name='greeting' type=#7
-   7 | FunctionType description='()->string' paramTypes=[] returnType=#4
+   7 | FunctionType paramTypes=[] returnType=#4
    8 | ReturnStatement expression=#9
    9 | UnaryExpression op='random' operand=#10 type=#4
   10 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#11
-  11 | ArrayType description='[string]' baseType=#4
+  11 | ArrayType baseType=#4
   12 | FunctionCall callee=#13 args=['"👋👋👋"'] type=#16
   13 | Function name='print' type=#14
-  14 | FunctionType description='(any)->void' paramTypes=[#15] returnType=#16
-  15 | Type description='any'
-  16 | Type description='void'
+  14 | FunctionType paramTypes=[#15] returnType=#16
+  15 | AnyType
+  16 | VoidType
   17 | RepeatStatement count=5n body=[#18]
   18 | FunctionCall callee=#13 args=[#19] type=#16
   19 | BinaryExpression op='+' left=#20 right=#3 type=#4
@@ -126,13 +126,12 @@ $ node src/carlos.js examples/intro.carlos optimized
 $ node src/carlos.js examples/intro.carlos js
 let languageName_1 = "Carlos";
 function greeting_2() {
-return _r(["Welcome","こんにちは","Bienvenido"]);
+return ((a=>a[~~(Math.random()*a.length)])(["Welcome","こんにちは","Bienvenido"]));
 }
 console.log("👋👋👋");
 for (let i_3 = 0; i_3 < 5; i_3++) {
 console.log(((greeting_2() + " ") + languageName_1));
 }
-function _r(a){return a[~~(Math.random()*a.length)]}
 ```
 
 Pipe the output back into node to compile and run on the same line:

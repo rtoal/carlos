@@ -318,7 +318,7 @@ export default function analyze(match) {
 
       // Go back up to the outer context before returning
       context = context.parent
-      return core.functionDeclaration(id.sourceString, fun, params, body)
+      return core.functionDeclaration(fun, params, body)
     },
 
     Params(_open, paramList, _close) {

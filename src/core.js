@@ -29,8 +29,8 @@ export function field(name, type) {
   return { kind: "Field", name, type }
 }
 
-export function functionDeclaration(name, fun, params, body) {
-  return { kind: "FunctionDeclaration", name, fun, params, body }
+export function functionDeclaration(fun, params, body) {
+  return { kind: "FunctionDeclaration", fun, params, body }
 }
 
 export function fun(name, type) {

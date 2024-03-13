@@ -60,8 +60,8 @@ The `outputType` indicates what you wish to print to standard output:
 <table>
 <tr><th>Option</th><th>Description</th></tr>
 <tr><td>parsed</td><td>A message indicating the syntax is ok</td></tr>
-<tr><td>analyzed</td><td>The decorated AST</td></tr>
-<tr><td>optimized</td><td>The optimized decorated AST</td></tr>
+<tr><td>analyzed</td><td>The program representation (AST-like)</td></tr>
+<tr><td>optimized</td><td>The optimized representation</td></tr>
 <tr><td>js</td><td>The translation of the program to JavaScript</td></tr>
 </table>
 

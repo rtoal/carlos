@@ -1,0 +1,3 @@
+function f(a: int): int { return a + 3; }
+function g(a: int): int { return a * 2; }
+print(g(f(3))); // 12

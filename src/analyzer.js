@@ -410,7 +410,7 @@ export default function analyze(match) {
       mustHaveBooleanType(test, { at: exp })
       context = context.newChildContext()
       const consequent = block.rep()
-      // Do NOT make a new context for the alternate!
+      context = context.parent
       const alternate = trailingIfStatement.rep()
       return core.ifStatement(test, consequent, alternate)
     },

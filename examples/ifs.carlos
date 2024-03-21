@@ -1,0 +1,14 @@
+function f() {
+let x = 3;
+if (x < 0) {
+  print(x);
+} else if (x > 5) {
+  print("Oh no");
+} else {
+  print("ok");
+}
+}
+
+function g() {
+  let x = 3;
+}

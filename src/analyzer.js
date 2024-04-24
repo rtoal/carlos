@@ -446,7 +446,7 @@ export default function analyze(match) {
       const [low, high] = [exp1.rep(), exp2.rep()]
       mustHaveIntegerType(low, { at: exp1 })
       mustHaveIntegerType(high, { at: exp2 })
-      const iterator = core.variable(id.sourceString, INT, true)
+      const iterator = core.variable(id.sourceString, true, INT)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
       const body = block.rep()

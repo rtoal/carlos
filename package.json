@@ -10,7 +10,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "c8 mocha"
+    "test": "c8 node --test test/**/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -28,7 +28,6 @@
     "ohm-js": "^17.1.0"
   },
   "devDependencies": {
-    "c8": "^9.1.0",
-    "mocha": "^10.3.0"
+    "c8": "^10.1.3"
   }
 }

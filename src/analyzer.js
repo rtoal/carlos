@@ -193,9 +193,9 @@ export default function analyze(match) {
   }
 
   function mustBeAssignable(e, { toType: type }, at) {
-    const message = `Cannot assign a ${typeDescription(e.type)} to a ${typeDescription(
-      type
-    )}`
+    const source = typeDescription(e.type)
+    const target = typeDescription(type)
+    const message = `Cannot assign a ${source} to a ${target}`
     must(assignable(e.type, type), message, at)
   }
 

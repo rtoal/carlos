@@ -6,14 +6,6 @@
 
 import * as core from "./core.js"
 
-// A few declarations to save typing
-const INT = core.intType
-const FLOAT = core.floatType
-const STRING = core.stringType
-const BOOLEAN = core.boolType
-const ANY = core.anyType
-const VOID = core.voidType
-
 class Context {
   // Like most statically-scoped languages, Carlos contexts will contain a
   // map for their locally declared identifiers and a reference to the parent
@@ -75,19 +67,21 @@ export default function analyze(match) {
   }
 
   function mustHaveNumericType(e, at) {
-    must([INT, FLOAT].includes(e.type), "Expected a number", at)
+    const expectedTypes = [core.intType, core.floatType]
+    must(expectedTypes.includes(e.type), "Expected a number", at)
   }
 
   function mustHaveNumericOrStringType(e, at) {
-    must([INT, FLOAT, STRING].includes(e.type), "Expected a number or string", at)
+    const expectedTypes = [core.intType, core.floatType, core.stringType]
+    must(expectedTypes.includes(e.type), "Expected a number or string", at)
   }
 
   function mustHaveBooleanType(e, at) {
-    must(e.type === BOOLEAN, "Expected a boolean", at)
+    must(e.type === core.booleanType, "Expected a boolean", at)
   }
 
   function mustHaveIntegerType(e, at) {
-    must(e.type === INT, "Expected an integer", at)
+    must(e.type === core.intType, "Expected an integer", at)
   }
 
   function mustHaveAnArrayType(e, at) {
@@ -168,7 +162,7 @@ export default function analyze(match) {
 
   function assignable(fromType, toType) {
     return (
-      toType == ANY ||
+      toType == core.anyType ||
       equivalent(fromType, toType) ||
       (fromType?.kind === "FunctionType" &&
         toType?.kind === "FunctionType" &&
@@ -226,11 +220,13 @@ export default function analyze(match) {
   }
 
   function mustNotReturnAnything(f, at) {
-    must(f.type.returnType === VOID, "Something should be returned", at)
+    const returnsNothing = f.type.returnType === core.voidType
+    must(returnsNothing, "Something should be returned", at)
   }
 
   function mustReturnSomething(f, at) {
-    must(f.type.returnType !== VOID, "Cannot return a value from this function", at)
+    const returnsSomething = f.type.returnType !== core.voidType
+    must(returnsSomething, "Cannot return a value from this function", at)
   }
 
   function mustBeReturnable(e, { from: f }, at) {
@@ -256,18 +252,18 @@ export default function analyze(match) {
     },
 
     VarDecl(modifier, id, _eq, exp, _semicolon) {
+      mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       const initializer = exp.rep()
       const readOnly = modifier.sourceString === "const"
       const variable = core.variable(id.sourceString, readOnly, initializer.type)
-      mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       context.add(id.sourceString, variable)
       return core.variableDeclaration(variable, initializer)
     },
 
     TypeDecl(_struct, id, _left, fields, _right) {
+      mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       // To allow recursion, enter into context without any fields yet
       const type = core.structType(id.sourceString, [])
-      mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       context.add(id.sourceString, type)
       // Now add the types as you parse and analyze. Since we already added
       // the struct type itself into the context, we can use it in fields.
@@ -282,10 +278,9 @@ export default function analyze(match) {
     },
 
     FunDecl(_fun, id, parameters, _colons, type, block) {
-      // Start by making the function, but we don't yet know its type.
-      // Also add it to the context so that we can have recursion.
-      const fun = core.fun(id.sourceString)
       mustNotAlreadyBeDeclared(id.sourceString, { at: id })
+      // Add immediately so that we can have recursion
+      const fun = core.fun(id.sourceString)
       context.add(id.sourceString, fun)
 
       // Parameters are part of the child context
@@ -296,7 +291,7 @@ export default function analyze(match) {
       // This is fine; we did not need the type to analyze the parameters,
       // but we do need to set it before analyzing the body.
       const paramTypes = params.map(param => param.type)
-      const returnType = type.children?.[0]?.rep() ?? VOID
+      const returnType = type.children?.[0]?.rep() ?? core.voidType
       fun.type = core.functionType(paramTypes, returnType)
 
       // Analyze body while still in child context
@@ -432,7 +427,7 @@ export default function analyze(match) {
       const [low, high] = [exp1.rep(), exp2.rep()]
       mustHaveIntegerType(low, { at: exp1 })
       mustHaveIntegerType(high, { at: exp2 })
-      const iterator = core.variable(id.sourceString, true, INT)
+      const iterator = core.variable(id.sourceString, true, core.intType)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
       const body = block.rep()
@@ -477,7 +472,7 @@ export default function analyze(match) {
       for (let e of exps.children) {
         let right = e.rep()
         mustHaveBooleanType(right, { at: e })
-        left = core.binary("||", left, right, BOOLEAN)
+        left = core.binary("||", left, right, core.booleanType)
       }
       return left
     },
@@ -488,7 +483,7 @@ export default function analyze(match) {
       for (let e of exps.children) {
         let right = e.rep()
         mustHaveBooleanType(right, { at: e })
-        left = core.binary("&&", left, right, BOOLEAN)
+        left = core.binary("&&", left, right, core.booleanType)
       }
       return left
     },
@@ -499,7 +494,7 @@ export default function analyze(match) {
       for (let e of exps.children) {
         let right = e.rep()
         mustHaveIntegerType(right, { at: e })
-        left = core.binary("|", left, right, INT)
+        left = core.binary("|", left, right, core.intType)
       }
       return left
     },
@@ -510,7 +505,7 @@ export default function analyze(match) {
       for (let e of exps.children) {
         let right = e.rep()
         mustHaveIntegerType(right, { at: e })
-        left = core.binary("^", left, right, INT)
+        left = core.binary("^", left, right, core.intType)
       }
       return left
     },
@@ -521,7 +516,7 @@ export default function analyze(match) {
       for (let e of exps.children) {
         let right = e.rep()
         mustHaveIntegerType(right, { at: e })
-        left = core.binary("&", left, right, INT)
+        left = core.binary("&", left, right, core.intType)
       }
       return left
     },
@@ -534,14 +529,14 @@ export default function analyze(match) {
         mustHaveNumericOrStringType(left, { at: exp1 })
       }
       mustBothHaveTheSameType(left, right, { at: relop })
-      return core.binary(op, left, right, BOOLEAN)
+      return core.binary(op, left, right, core.booleanType)
     },
 
     Exp5_shift(exp1, shiftOp, exp2) {
       const [left, op, right] = [exp1.rep(), shiftOp.sourceString, exp2.rep()]
       mustHaveIntegerType(left, { at: exp1 })
       mustHaveIntegerType(right, { at: exp2 })
-      return core.binary(op, left, right, INT)
+      return core.binary(op, left, right, core.intType)
     },
 
     Exp6_add(exp1, addOp, exp2) {
@@ -574,13 +569,13 @@ export default function analyze(match) {
       let type
       if (op === "#") {
         mustHaveAnArrayType(operand, { at: exp })
-        type = INT
+        type = core.intType
       } else if (op === "-") {
         mustHaveNumericType(operand, { at: exp })
         type = operand.type
       } else if (op === "!") {
         mustHaveBooleanType(operand, { at: exp })
-        type = BOOLEAN
+        type = core.booleanType
       } else if (op === "some") {
         type = core.optionalType(operand.type)
       } else if (op === "random") {

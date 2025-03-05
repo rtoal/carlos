@@ -14,7 +14,7 @@ export function typeDeclaration(type) {
   return { kind: "TypeDeclaration", type }
 }
 
-export const boolType = "boolean"
+export const booleanType = "boolean"
 export const intType = "int"
 export const floatType = "float"
 export const stringType = "string"
@@ -144,7 +144,7 @@ const anyToVoidType = functionType([anyType], voidType)
 export const standardLibrary = Object.freeze({
   int: intType,
   float: floatType,
-  boolean: boolType,
+  boolean: booleanType,
   string: stringType,
   void: voidType,
   any: anyType,
@@ -166,4 +166,4 @@ export const standardLibrary = Object.freeze({
 String.prototype.type = stringType
 Number.prototype.type = floatType
 BigInt.prototype.type = intType
-Boolean.prototype.type = boolType
+Boolean.prototype.type = booleanType

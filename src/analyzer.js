@@ -193,8 +193,8 @@ export default function analyze(match) {
     must(assignable(e.type, type), message, at)
   }
 
-  function mustNotBeReadOnly(e, at) {
-    must(!e.readOnly, `Cannot assign to constant ${e.name}`, at)
+  function mustBeMutable(e, at) {
+    must(e.kind !== "Variable" || e.mutable, `Cannot assign to constant ${e.name}`, at)
   }
 
   function mustHaveDistinctFields(type, at) {
@@ -254,8 +254,8 @@ export default function analyze(match) {
     VarDecl(modifier, id, _eq, exp, _semicolon) {
       mustNotAlreadyBeDeclared(id.sourceString, { at: id })
       const initializer = exp.rep()
-      const readOnly = modifier.sourceString === "const"
-      const variable = core.variable(id.sourceString, readOnly, initializer.type)
+      const mutable = modifier.sourceString === "let"
+      const variable = core.variable(id.sourceString, mutable, initializer.type)
       context.add(id.sourceString, variable)
       return core.variableDeclaration(variable, initializer)
     },
@@ -347,7 +347,7 @@ export default function analyze(match) {
       const source = expression.rep()
       const target = variable.rep()
       mustBeAssignable(source, { toType: target.type }, { at: variable })
-      mustNotBeReadOnly(target, { at: variable })
+      mustBeMutable(target, { at: variable })
       return core.assignment(target, source)
     },
 
@@ -427,7 +427,7 @@ export default function analyze(match) {
       const [low, high] = [exp1.rep(), exp2.rep()]
       mustHaveIntegerType(low, { at: exp1 })
       mustHaveIntegerType(high, { at: exp2 })
-      const iterator = core.variable(id.sourceString, true, core.intType)
+      const iterator = core.variable(id.sourceString, false, core.intType)
       context = context.newChildContext({ inLoop: true })
       context.add(id.sourceString, iterator)
       const body = block.rep()
@@ -438,7 +438,7 @@ export default function analyze(match) {
     LoopStmt_collection(_for, id, _in, exp, block) {
       const collection = exp.rep()
       mustHaveAnArrayType(collection, { at: exp })
-      const iterator = core.variable(id.sourceString, true, collection.type.baseType)
+      const iterator = core.variable(id.sourceString, false, collection.type.baseType)
       context = context.newChildContext({ inLoop: true })
       context.add(iterator.name, iterator)
       const body = block.rep()

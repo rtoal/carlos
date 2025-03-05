@@ -76,7 +76,7 @@ Syntax is ok
 $ node src/carlos.js examples/intro.carlos analyzed
    1 | Program statements=[#2,#4,#11,#12]
    2 | VariableDeclaration variable=#3 initializer='"Carlos"'
-   3 | Variable name='languageName' readOnly=true type='string'
+   3 | Variable name='languageName' mutable=false type='string'
    4 | FunctionDeclaration fun=#5 params=[] body=[#7]
    5 | Function name='greeting' type=#6
    6 | FunctionType paramTypes=[] returnType='string'
@@ -96,7 +96,7 @@ $ node src/carlos.js examples/intro.carlos analyzed
 $ node src/carlos.js examples/intro.carlos optimized
    1 | Program statements=[#2,#4,#11,#12]
    2 | VariableDeclaration variable=#3 initializer='"Carlos"'
-   3 | Variable name='languageName' readOnly=true type='string'
+   3 | Variable name='languageName' mutable=false type='string'
    4 | FunctionDeclaration fun=#5 params=[] body=[#7]
    5 | Function name='greeting' type=#6
    6 | FunctionType paramTypes=[] returnType='string'

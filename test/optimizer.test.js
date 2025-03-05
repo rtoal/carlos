@@ -4,8 +4,8 @@ import optimize from "../src/optimizer.js"
 import * as core from "../src/core.js"
 
 // Make some test cases easier to read
-const x = core.variable("x", false, core.intType)
-const a = core.variable("a", false, core.arrayType(core.intType))
+const x = core.variable("x", true, core.intType)
+const a = core.variable("a", true, core.arrayType(core.intType))
 const xpp = core.increment(x)
 const xmm = core.decrement(x)
 const return1p1 = core.returnStatement(core.binary("+", 1, 1, core.intType))

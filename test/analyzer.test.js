@@ -80,6 +80,7 @@ const semanticChecks = [
   ["voids in fn type", "function f(g: (void)->void) {}"],
   ["outer variable", "let x=1; while(false) {print(x);}"],
   ["built-in constants", "print(25.0 * π);"],
+  ["built-in sqrt", "print(sin(25.0));"],
   ["built-in sin", "print(sin(π));"],
   ["built-in cos", "print(cos(93.999));"],
   ["built-in hypot", "print(hypot(-4.0, 3.00001));"],
@@ -195,8 +196,8 @@ describe("The analyzer", () => {
       analyze(parse("let x = π + 2.2;")),
       program([
         variableDeclaration(
-          variable("x", false, floatType),
-          binary("+", variable("π", true, floatType), 2.2, floatType)
+          variable("x", true, floatType),
+          binary("+", variable("π", false, floatType), 2.2, floatType)
         ),
       ])
     )

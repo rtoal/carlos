@@ -102,7 +102,7 @@ const fixtures = [
       function g(): boolean {
         return false;
       }
-      f(z, g());
+      f(sqrt(z), g());
     `,
     expected: dedent`
       let z_1 = 0.5;
@@ -113,7 +113,7 @@ const fixtures = [
       function g_5() {
         return false;
       }
-      f_2(z_1, g_5());
+      f_2(Math.sqrt(z_1), g_5());
     `,
   },
   {

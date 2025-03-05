@@ -6,8 +6,8 @@ export function variableDeclaration(variable, initializer) {
   return { kind: "VariableDeclaration", variable, initializer }
 }
 
-export function variable(name, readOnly, type) {
-  return { kind: "Variable", name, readOnly, type }
+export function variable(name, mutable, type) {
+  return { kind: "Variable", name, mutable, type }
 }
 
 export function typeDeclaration(type) {
@@ -161,7 +161,7 @@ export const standardLibrary = Object.freeze({
   string: stringType,
   void: voidType,
   any: anyType,
-  π: variable("π", true, floatType),
+  π: variable("π", false, floatType),
   print: intrinsicFunction("print", anyToVoidType),
   sqrt: intrinsicFunction("sqrt", floatToFloatType),
   sin: intrinsicFunction("sin", floatToFloatType),

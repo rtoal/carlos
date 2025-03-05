@@ -72,54 +72,44 @@ $ node src/carlos.js examples/intro.carlos parsed
 Syntax is ok
 ```
 
-````
+```
 $ node src/carlos.js examples/intro.carlos analyzed
-   1 | Program statements=[#2,#5,#12,#17]
+   1 | Program statements=[#2,#4,#11,#12]
    2 | VariableDeclaration variable=#3 initializer='"Carlos"'
-   3 | Variable name='languageName' readOnly=true type=#4
-   4 | StringType
-   5 | FunctionDeclaration name='greeting' fun=#6 params=[] body=[#8]
-   6 | Function name='greeting' type=#7
-   7 | FunctionType paramTypes=[] returnType=#4
-   8 | ReturnStatement expression=#9
-   9 | UnaryExpression op='random' operand=#10 type=#4
-  10 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#11
-  11 | ArrayType baseType=#4
-  12 | FunctionCall callee=#13 args=['"👋👋👋"'] type=#16
-  13 | Function name='print' type=#14
-  14 | FunctionType paramTypes=[#15] returnType=#16
-  15 | AnyType
-  16 | VoidType
-  17 | RepeatStatement count=5n body=[#18]
-  18 | FunctionCall callee=#13 args=[#19] type=#16
-  19 | BinaryExpression op='+' left=#20 right=#3 type=#4
-  20 | BinaryExpression op='+' left=#21 right='" "' type=#4
-  21 | FunctionCall callee=#6 args=[] type=#4```
-````
+   3 | Variable name='languageName' readOnly=true type='string'
+   4 | FunctionDeclaration fun=#5 params=[] body=[#7]
+   5 | Function name='greeting' type=#6
+   6 | FunctionType paramTypes=[] returnType='string'
+   7 | ReturnStatement expression=#8
+   8 | UnaryExpression op='random' operand=#9 type='string'
+   9 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#10
+  10 | ArrayType baseType='string'
+  11 | Print args=['"👋👋👋"']
+  12 | RepeatStatement count=5n body=[#13]
+  13 | Print args=[#14]
+  14 | BinaryExpression op='+' left=#15 right=#3 type='string'
+  15 | BinaryExpression op='+' left=#16 right='" "' type='string'
+  16 | FunctionCall callee=#5 args=[] type='string'
+```
 
 ```
 $ node src/carlos.js examples/intro.carlos optimized
-   1 | Program statements=[#2,#5,#12,#17]
+   1 | Program statements=[#2,#4,#11,#12]
    2 | VariableDeclaration variable=#3 initializer='"Carlos"'
-   3 | Variable name='languageName' readOnly=true type=#4
-   4 | StringType
-   5 | FunctionDeclaration name='greeting' fun=#6 params=[] body=[#8]
-   6 | Function name='greeting' type=#7
-   7 | FunctionType paramTypes=[] returnType=#4
-   8 | ReturnStatement expression=#9
-   9 | UnaryExpression op='random' operand=#10 type=#4
-  10 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#11
-  11 | ArrayType baseType=#4
-  12 | FunctionCall callee=#13 args=['"👋👋👋"'] type=#16
-  13 | Function name='print' type=#14
-  14 | FunctionType paramTypes=[#15] returnType=#16
-  15 | AnyType
-  16 | VoidType
-  17 | RepeatStatement count=5n body=[#18]
-  18 | FunctionCall callee=#13 args=[#19] type=#16
-  19 | BinaryExpression op='+' left=#20 right=#3 type=#4
-  20 | BinaryExpression op='+' left=#21 right='" "' type=#4
-  21 | FunctionCall callee=#6 args=[] type=#4
+   3 | Variable name='languageName' readOnly=true type='string'
+   4 | FunctionDeclaration fun=#5 params=[] body=[#7]
+   5 | Function name='greeting' type=#6
+   6 | FunctionType paramTypes=[] returnType='string'
+   7 | ReturnStatement expression=#8
+   8 | UnaryExpression op='random' operand=#9 type='string'
+   9 | ArrayExpression elements=['"Welcome"','"こんにちは"','"Bienvenido"'] type=#10
+  10 | ArrayType baseType='string'
+  11 | Print args=['"👋👋👋"']
+  12 | RepeatStatement count=5n body=[#13]
+  13 | Print args=[#14]
+  14 | BinaryExpression op='+' left=#15 right=#3 type='string'
+  15 | BinaryExpression op='+' left=#16 right='" "' type='string'
+  16 | FunctionCall callee=#5 args=[] type='string'
 ```
 
 ```

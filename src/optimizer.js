@@ -220,4 +220,8 @@ const optimizers = {
     c.args = c.args.map(optimize)
     return c
   },
+  Print(s) {
+    s.args = s.args.map(optimize)
+    return s
+  },
 }

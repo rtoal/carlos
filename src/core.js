@@ -37,6 +37,10 @@ export function fun(name, type) {
   return { kind: "Function", name, type }
 }
 
+export function intrinsicFunction(name, type) {
+  return { kind: "Function", name, type, intrinsic: true }
+}
+
 export function arrayType(baseType) {
   return { kind: "ArrayType", baseType }
 }
@@ -128,6 +132,15 @@ export function memberExpression(object, op, field) {
 }
 
 export function functionCall(callee, args) {
+  if (callee.intrinsic) {
+    if (callee.type.returnType === voidType) {
+      return { kind: callee.name.replace(/^\p{L}/u, c => c.toUpperCase()), args }
+    } else if (callee.type.paramTypes.length === 1) {
+      return unary(callee.name, args[0], callee.type.returnType)
+    } else {
+      return binary(callee.name, args[0], args[1], callee.type.returnType)
+    }
+  }
   return { kind: "FunctionCall", callee, args, type: callee.type.returnType }
 }
 
@@ -149,14 +162,15 @@ export const standardLibrary = Object.freeze({
   void: voidType,
   any: anyType,
   π: variable("π", true, floatType),
-  print: fun("print", anyToVoidType),
-  sin: fun("sin", floatToFloatType),
-  cos: fun("cos", floatToFloatType),
-  exp: fun("exp", floatToFloatType),
-  ln: fun("ln", floatToFloatType),
-  hypot: fun("hypot", floatFloatToFloatType),
-  bytes: fun("bytes", stringToIntsType),
-  codepoints: fun("codepoints", stringToIntsType),
+  print: intrinsicFunction("print", anyToVoidType),
+  sqrt: intrinsicFunction("sqrt", floatToFloatType),
+  sin: intrinsicFunction("sin", floatToFloatType),
+  cos: intrinsicFunction("cos", floatToFloatType),
+  exp: intrinsicFunction("exp", floatToFloatType),
+  ln: intrinsicFunction("ln", floatToFloatType),
+  hypot: intrinsicFunction("hypot", floatFloatToFloatType),
+  bytes: intrinsicFunction("bytes", stringToIntsType),
+  codepoints: intrinsicFunction("codepoints", stringToIntsType),
 })
 
 // We want every expression to have a type property. But we aren't creating

@@ -10,17 +10,6 @@ export default function generate(program) {
   // with newlines and return the result.
   const output = []
 
-  const standardFunctions = new Map([
-    [standardLibrary.print, x => `console.log(${x})`],
-    [standardLibrary.sin, x => `Math.sin(${x})`],
-    [standardLibrary.cos, x => `Math.cos(${x})`],
-    [standardLibrary.exp, x => `Math.exp(${x})`],
-    [standardLibrary.ln, x => `Math.log(${x})`],
-    [standardLibrary.hypot, ([x, y]) => `Math.hypot(${x},${y})`],
-    [standardLibrary.bytes, s => `[...Buffer.from(${s}, "utf8")]`],
-    [standardLibrary.codepoints, s => `[...(${s})].map(s=>s.codePointAt(0))`],
-  ])
-
   // Variable and function names in JS will be suffixed with _1, _2, _3,
   // etc. This is because "switch", for example, is a legal name in Carlos,
   // but not in JS. So, the Carlos variable "switch" must become something
@@ -69,7 +58,7 @@ export default function generate(program) {
       output.push("}")
     },
     Variable(v) {
-      // Standard library constants just get special treatment
+      // Standard library constants get special treatment
       if (v === standardLibrary.π) return "Math.PI"
       return targetName(v)
     },
@@ -139,18 +128,22 @@ export default function generate(program) {
       return `((${gen(e.test)}) ? (${gen(e.consequent)}) : (${gen(e.alternate)}))`
     },
     BinaryExpression(e) {
+      if (e.op === "hypot") return `Math.hypot(${gen(e.left)},${gen(e.right)})`
       const op = { "==": "===", "!=": "!==" }[e.op] ?? e.op
       return `(${gen(e.left)} ${op} ${gen(e.right)})`
     },
     UnaryExpression(e) {
       const operand = gen(e.operand)
-      if (e.op === "some") {
-        return operand
-      } else if (e.op === "#") {
-        return `${operand}.length`
-      } else if (e.op === "random") {
-        return `((a=>a[~~(Math.random()*a.length)])(${operand}))`
-      }
+      if (e.op === "some") return operand
+      if (e.op === "#") return `${operand}.length`
+      if (e.op === "random") return `((a=>a[~~(Math.random()*a.length)])(${operand}))`
+      if (e.op === "codepoints") return `[...(${operand})].map(s=>s.codePointAt(0))`
+      if (e.op === "bytes") return `[...Buffer.from(${operand}, "utf8")]`
+      if (e.op === "sqrt") return `Math.sqrt(${operand})`
+      if (e.op === "sin") return `Math.sin(${operand})`
+      if (e.op === "cos") return `Math.cos(${operand})`
+      if (e.op === "exp") return `Math.exp(${operand})`
+      if (e.op === "ln") return `Math.log(${operand})`
       return `${e.op}(${operand})`
     },
     EmptyOptional(e) {
@@ -172,9 +165,7 @@ export default function generate(program) {
       return `(${object}${chain}[${field}])`
     },
     FunctionCall(c) {
-      const targetCode = standardFunctions.has(c.callee)
-        ? standardFunctions.get(c.callee)(c.args.map(gen))
-        : `${gen(c.callee)}(${c.args.map(gen).join(", ")})`
+      const targetCode = `${gen(c.callee)}(${c.args.map(gen).join(", ")})`
       // Calls in expressions vs in statements are handled differently
       if (c.callee.type.returnType !== voidType) {
         return targetCode
@@ -183,6 +174,9 @@ export default function generate(program) {
     },
     ConstructorCall(c) {
       return `new ${gen(c.callee)}(${c.args.map(gen).join(", ")})`
+    },
+    Print(s) {
+      output.push(`console.log(${s.args.map(gen).join(", ")});`)
     },
   }
 

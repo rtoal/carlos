@@ -14,12 +14,12 @@ export function typeDeclaration(type) {
   return { kind: "TypeDeclaration", type }
 }
 
-export const boolType = { kind: "BoolType" }
-export const intType = { kind: "IntType" }
-export const floatType = { kind: "FloatType" }
-export const stringType = { kind: "StringType" }
-export const voidType = { kind: "VoidType" }
-export const anyType = { kind: "AnyType" }
+export const boolType = "boolean"
+export const intType = "int"
+export const floatType = "float"
+export const stringType = "string"
+export const voidType = "void"
+export const anyType = "any"
 
 export function structType(name, fields) {
   return { kind: "StructType", name, fields }

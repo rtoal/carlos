@@ -126,8 +126,9 @@ export default function analyze(match) {
   }
 
   function mustBeAType(e, at) {
-    // This is a rather ugly hack
-    must(e?.kind.endsWith("Type"), "Type expected", at)
+    const isBasicType = /int|float|string|bool|void|any/.test(e)
+    const isCompositeType = /StructType|FunctionType|ArrayType|OptionalType/.test(e?.kind)
+    must(isBasicType || isCompositeType, "Type expected", at)
   }
 
   function mustBeAnArrayType(t, at) {
@@ -180,30 +181,15 @@ export default function analyze(match) {
   }
 
   function typeDescription(type) {
-    switch (type.kind) {
-      case "IntType":
-        return "int"
-      case "FloatType":
-        return "float"
-      case "StringType":
-        return "string"
-      case "BoolType":
-        return "boolean"
-      case "VoidType":
-        return "void"
-      case "AnyType":
-        return "any"
-      case "StructType":
-        return type.name
-      case "FunctionType":
-        const paramTypes = type.paramTypes.map(typeDescription).join(", ")
-        const returnType = typeDescription(type.returnType)
-        return `(${paramTypes})->${returnType}`
-      case "ArrayType":
-        return `[${typeDescription(type.baseType)}]`
-      case "OptionalType":
-        return `${typeDescription(type.baseType)}?`
+    if (typeof type === "string") return type
+    if (type.kind == "StructType") return type.name
+    if (type.kind == "FunctionType") {
+      const paramTypes = type.paramTypes.map(typeDescription).join(", ")
+      const returnType = typeDescription(type.returnType)
+      return `(${paramTypes})->${returnType}`
     }
+    if (type.kind == "ArrayType") return `[${typeDescription(type.baseType)}]`
+    if (type.kind == "OptionalType") return `${typeDescription(type.baseType)}?`
   }
 
   function mustBeAssignable(e, { toType: type }, at) {

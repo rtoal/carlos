@@ -89,7 +89,7 @@ const tests = [
   [
     "passes through nonoptimizable constructs",
     ...Array(2).fill([
-      core.program([core.shortReturnStatement()]),
+      core.program([core.shortReturnStatement]),
       core.variableDeclaration("x", true, "z"),
       core.typeDeclaration([core.field("x", core.intType)]),
       core.assignment(x, core.binary("*", x, "z")),

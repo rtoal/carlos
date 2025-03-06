@@ -71,9 +71,7 @@ export function returnStatement(expression) {
   return { kind: "ReturnStatement", expression }
 }
 
-export function shortReturnStatement() {
-  return { kind: "ShortReturnStatement" }
-}
+export const shortReturnStatement = { kind: "ShortReturnStatement" }
 
 export function ifStatement(test, consequent, alternate) {
   return { kind: "IfStatement", test, consequent, alternate }

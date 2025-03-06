@@ -12,7 +12,7 @@ const semanticChecks = [
   ["initialize with empty array", "let a = [int]();"],
   ["type declaration", "struct S {f: (int)->boolean? g: string}"],
   ["assign arrays", "let a = [int]();let b=[1];a=b;b=a;"],
-  ["assign to array element", "const a = [1,2,3]; a[1]=100;"],
+  ["assign to array element", "let a = [1,2,3]; a[1]=100;"],
   ["initialize with empty optional", "let a = no int;"],
   ["short return", "function f() { return; }"],
   ["long return", "function f(): boolean { return true; }"],
@@ -57,8 +57,7 @@ const semanticChecks = [
     "call of assigned function in expression",
     `function f(x: int, y: boolean): int {}
     let g = f;
-    print(g(1, true));
-    f = g; // Type check here`,
+    print(g(1, true));`,
   ],
   [
     "pass a function to a function",
@@ -72,6 +71,18 @@ const semanticChecks = [
      function compose(): (int)->int { return square; }`,
   ],
   ["function assign", "function f() {} let g = f; let h = [g, f]; print(h[0]());"],
+  [
+    "covariant return types",
+    `function f(): any { return 1; }
+    function g(): float { return 1.0; }
+    let h = f; h = g;`,
+  ],
+  [
+    "contravariant parameter types",
+    `function f(x: float) {  }
+    function g(x: any) {  }
+    let h = f; h = g;`,
+  ],
   ["struct parameters", "struct S {} function f(x: S) {}"],
   ["array parameters", "function f(x: [int?]) {}"],
   ["optional parameters", "function f(x: [int], y: string?) {}"],
@@ -94,7 +105,28 @@ const semanticErrors = [
   ["undeclared id", "print(x);", /Identifier x not declared/],
   ["redeclared id", "let x = 1;let x = 1;", /Identifier x already declared/],
   ["recursive struct", "struct S { x: int y: S }", /must not be self-containing/],
-  ["assign to const", "const x = 1;x = 2;", /Cannot assign to constant/],
+  ["assign to const", "const x = 1;x = 2;", /Cannot assign to immutable/],
+  [
+    "assign to function",
+    "function f() {} function g() {} f = g;",
+    /Cannot assign to immutable/,
+  ],
+  ["assign to struct", "struct S{} S = 2;", /Cannot assign to immutable/],
+  [
+    "assign to const array element",
+    "const a = [1];a[0] = 2;",
+    /Cannot assign to immutable/,
+  ],
+  [
+    "assign to const optional",
+    "const x = no int;x = some 1;",
+    /Cannot assign to immutable/,
+  ],
+  [
+    "assign to const field",
+    "struct S {x: int} const s = S(1);s.x = 2;",
+    /Cannot assign to immutable/,
+  ],
   ["assign bad type", "let x=1;x=true;", /Cannot assign a boolean to a int/],
   ["assign bad array type", "let x=1;x=[true];", /Cannot assign a \[boolean\] to a int/],
   ["assign bad optional type", "let x=1;x=some 2;", /Cannot assign a int\? to a int/],
@@ -171,10 +203,28 @@ const semanticErrors = [
   ["bad param type in fn assign", "function f(x: int) {} function g(y: float) {} f = g;"],
   [
     "bad return type in fn assign",
-    'function f(x: int): int {return 1;} function g(y: int): string {return "uh-oh";} f = g;',
+    `function f(x: int): int {return 1;}
+    function g(y: int): string {return "uh-oh";}
+    let h = f; h = g;`,
     /Cannot assign a \(int\)->string to a \(int\)->int/,
   ],
-  ["bad call to sin()", "print(sin(true));", /Cannot assign a boolean to a float/],
+  ["type error call to sin()", "print(sin(true));", /Cannot assign a boolean to a float/],
+  [
+    "type error call to sqrt()",
+    "print(sqrt(true));",
+    /Cannot assign a boolean to a float/,
+  ],
+  ["type error call to cos()", "print(cos(true));", /Cannot assign a boolean to a float/],
+  [
+    "type error call to hypot()",
+    'print(hypot("dog", 3.3));',
+    /Cannot assign a string to a float/,
+  ],
+  [
+    "too many arguments to hypot()",
+    "print(hypot(1, 2, 3));",
+    /2 argument\(s\) required but 3 passed/,
+  ],
   ["Non-type in param", "let x=1;function f(y:x){}", /Type expected/],
   ["Non-type in return type", "let x=1;function f():x{return 1;}", /Type expected/],
   ["Non-type in field type", "let x=1;struct S {y:x}", /Type expected/],

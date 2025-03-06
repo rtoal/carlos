@@ -193,8 +193,16 @@ export default function analyze(match) {
     must(assignable(e.type, type), message, at)
   }
 
+  function isMutable(e) {
+    return (
+      (e?.kind === "Variable" && e?.mutable) ||
+      (e?.kind === "SubscriptExpression" && isMutable(e?.array)) ||
+      (e?.kind === "MemberExpression" && isMutable(e?.object))
+    )
+  }
+
   function mustBeMutable(e, at) {
-    must(e.kind !== "Variable" || e.mutable, `Cannot assign to constant ${e.name}`, at)
+    must(isMutable(e), `Cannot assign to immutable ${e.name}`, at)
   }
 
   function mustHaveDistinctFields(type, at) {
@@ -346,8 +354,8 @@ export default function analyze(match) {
     Statement_assign(variable, _eq, expression, _semicolon) {
       const source = expression.rep()
       const target = variable.rep()
-      mustBeAssignable(source, { toType: target.type }, { at: variable })
       mustBeMutable(target, { at: variable })
+      mustBeAssignable(source, { toType: target.type }, { at: variable })
       return core.assignment(target, source)
     },
 

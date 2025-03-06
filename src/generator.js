@@ -53,8 +53,8 @@ export default function generate(program) {
       return targetName(f)
     },
     FunctionDeclaration(d) {
-      output.push(`function ${gen(d.fun)}(${d.params.map(gen).join(", ")}) {`)
-      d.body.forEach(gen)
+      output.push(`function ${gen(d.fun)}(${d.fun.params.map(gen).join(", ")}) {`)
+      d.fun.body.forEach(gen)
       output.push("}")
     },
     Variable(v) {

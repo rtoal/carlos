@@ -29,12 +29,12 @@ export function field(name, type) {
   return { kind: "Field", name, type }
 }
 
-export function functionDeclaration(fun, params, body) {
-  return { kind: "FunctionDeclaration", fun, params, body }
+export function functionDeclaration(fun) {
+  return { kind: "FunctionDeclaration", fun }
 }
 
-export function fun(name, type) {
-  return { kind: "Function", name, type }
+export function fun(name, params, body, type) {
+  return { kind: "Function", name, params, body, type }
 }
 
 export function intrinsicFunction(name, type) {

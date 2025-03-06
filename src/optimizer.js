@@ -41,8 +41,11 @@ const optimizers = {
   },
   FunctionDeclaration(d) {
     d.fun = optimize(d.fun)
-    if (d.body) d.body = d.body.flatMap(optimize)
     return d
+  },
+  Function(f) {
+    if (f.body) f.body = f.body.flatMap(optimize)
+    return f
   },
   Increment(s) {
     s.variable = optimize(s.variable)

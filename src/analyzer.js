@@ -285,21 +285,21 @@ export default function analyze(match) {
 
       // Parameters are part of the child context
       context = context.newChildContext({ inLoop: false, function: fun })
-      const params = parameters.rep()
+      fun.params = parameters.rep()
 
       // Now that the parameters are known, we compute the function's type.
       // This is fine; we did not need the type to analyze the parameters,
       // but we do need to set it before analyzing the body.
-      const paramTypes = params.map(param => param.type)
+      const paramTypes = fun.params.map(param => param.type)
       const returnType = type.children?.[0]?.rep() ?? core.voidType
       fun.type = core.functionType(paramTypes, returnType)
 
       // Analyze body while still in child context
-      const body = block.rep()
+      fun.body = block.rep()
 
       // Go back up to the outer context before returning
       context = context.parent
-      return core.functionDeclaration(fun, params, body)
+      return core.functionDeclaration(fun)
     },
 
     Params(_open, paramList, _close) {

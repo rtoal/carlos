@@ -12,9 +12,12 @@ const return1p1 = core.returnStatement(core.binary("+", 1, 1, core.intType))
 const return2 = core.returnStatement(2)
 const returnX = core.returnStatement(x)
 const onePlusTwo = core.binary("+", 1, 2, core.intType)
-const identity = Object.assign(core.fun("id", core.anyType), { body: returnX })
+const aParam = core.variable("a", false, core.anyType)
+const anyToAny = core.functionType([core.anyType], core.anyType)
+const identity = Object.assign(core.fun("id", [aParam], [returnX], anyToAny))
 const voidInt = core.functionType([], core.intType)
-const intFun = body => core.functionDeclaration("f", core.fun("f", voidInt), [], [body])
+const intFun = body => core.fun("f", [], body, voidInt)
+const intFunDecl = body => core.functionDeclaration(intFun(body))
 const callIdentity = args => core.functionCall(identity, args)
 const or = (...d) => d.reduce((x, y) => core.binary("||", x, y))
 const and = (...c) => c.reduce((x, y) => core.binary("&&", x, y))
@@ -75,7 +78,11 @@ const tests = [
   ["optimizes away nil", unwrapElse(emptyOptional, 3), 3],
   ["optimizes left conditional true", core.conditional(true, 55, 89), 55],
   ["optimizes left conditional false", core.conditional(false, 55, 89), 89],
-  ["optimizes in functions", program([intFun(return1p1)]), program([intFun(return2)])],
+  [
+    "optimizes in functions",
+    program([intFunDecl([return1p1])]),
+    program([intFunDecl([return2])]),
+  ],
   ["optimizes in subscripts", sub(a, onePlusTwo), sub(a, 3)],
   ["optimizes in array literals", array(0, onePlusTwo, 9), array(0, 3, 9)],
   ["optimizes in arguments", callIdentity([times(3, 5)]), callIdentity([15])],

@@ -35,7 +35,7 @@ Features include:
 - Fully first-class functions
 - Function assignment covariant in return type, contravariant in parameter types
 - No explicit pointers
-- Sensible operators for optionals (`?.`, `?[]`, `??`)
+- Optional property accessor (`?.`)
 
 Carlos is completely null-safe. There is no `null` value, and no `null` reference of any kind. Optionals are used for information that is not required.
 

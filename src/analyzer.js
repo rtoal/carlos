@@ -202,7 +202,7 @@ export default function analyze(match) {
   }
 
   function mustBeMutable(e, at) {
-    must(isMutable(e), `Cannot assign to immutable ${e.name}`, at)
+    must(isMutable(e), "Cannot assign to immutable variable", at)
   }
 
   function mustHaveDistinctFields(type, at) {

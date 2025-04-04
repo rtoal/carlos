@@ -129,20 +129,6 @@ export default function analyze(match) {
     must(t?.kind === "ArrayType", "Must be an array type", at)
   }
 
-  function includesAsField(structType, type) {
-    // Whether the struct type has a field of type type, directly or indirectly
-    return structType.fields.some(
-      field =>
-        field.type === type ||
-        (field.type?.kind === "StructType" && includesAsField(field.type, type))
-    )
-  }
-
-  function mustNotBeSelfContaining(structType, at) {
-    const containsSelf = includesAsField(structType, structType)
-    must(!containsSelf, "Struct type must not be self-containing", at)
-  }
-
   function equivalent(t1, t2) {
     return (
       t1 === t2 ||
@@ -270,14 +256,11 @@ export default function analyze(match) {
 
     TypeDecl(_struct, id, _left, fields, _right) {
       mustNotAlreadyBeDeclared(id.sourceString, { at: id })
-      // To allow recursion, enter into context without any fields yet
+      // To allow recursion, enter type name into context before the fields
       const type = core.structType(id.sourceString, [])
       context.add(id.sourceString, type)
-      // Now add the types as you parse and analyze. Since we already added
-      // the struct type itself into the context, we can use it in fields.
       type.fields = fields.children.map(field => field.rep())
       mustHaveDistinctFields(type, { at: id })
-      mustNotBeSelfContaining(type, { at: id })
       return core.typeDeclaration(type)
     },
 

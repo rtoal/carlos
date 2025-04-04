@@ -104,7 +104,6 @@ const semanticErrors = [
   ["non-int decrement", 'let x=some[""];x++;', /an integer/],
   ["undeclared id", "print(x);", /Identifier x not declared/],
   ["redeclared id", "let x = 1;let x = 1;", /Identifier x already declared/],
-  ["recursive struct", "struct S { x: int y: S }", /must not be self-containing/],
   ["assign to const", "const x = 1;x = 2;", /Cannot assign to immutable/],
   [
     "assign to function",
